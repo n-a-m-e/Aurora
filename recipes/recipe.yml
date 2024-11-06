@@ -52,7 +52,6 @@ modules:
         - org.libreoffice.LibreOffice
         - org.gimp.GIMP
         - org.onlyoffice.desktopeditors
-        - org.kde.yakuake
         - org.freedesktop.Platform.ffmpeg-full
         - org.olivevideoeditor.Olive
         - com.github.unrud.VideoDownloader
