@@ -76,7 +76,7 @@ modules:
     scripts:
       - thinlinc.sh
       - other.sh
-      # - printers.sh
+      - printers.sh
       - systemd.sh
 
   - type: systemd
