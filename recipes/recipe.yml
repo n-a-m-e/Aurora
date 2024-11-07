@@ -52,7 +52,6 @@ modules:
         - org.libreoffice.LibreOffice
         - org.gimp.GIMP
         - org.onlyoffice.desktopeditors
-        - org.kde.yakuake
         - org.freedesktop.Platform.ffmpeg-full
         - org.olivevideoeditor.Olive
         - com.github.unrud.VideoDownloader
@@ -88,7 +87,7 @@ modules:
         - tlwebadm.service
         - sshd.service
         - http-server.service
-        # - flatpak-native-messaging-hosts.service
+        - flatpak-native-messaging-hosts.service
         - shared-folder.service
       disabled:
         # - avahi-daemon.socket

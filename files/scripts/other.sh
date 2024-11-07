@@ -5,6 +5,9 @@
 # builds actually ran successfully without any errors!
 set -oue pipefail
 
+#Enable Zed to work without GPU
+echo "ZED_ALLOW_EMULATED_GPU=1" >> /usr/etc/environment
+
 #Override Aurora Changes https://github.com/ublue-os/bluefin/blob/de4cec23b0328857f99bebeb2874679bc23c85d7/build_files/aurora-changes.sh
 sed -i 's|org.gnome.Ptyxis.desktop|org.kde.konsole.desktop|g' /usr/share/plasma/plasmoids/org.kde.plasma.taskmanager/contents/config/main.xml
 sed -i 's|org.gnome.Ptyxis.desktop|org.kde.konsole.desktop|g' /usr/share/plasma/plasmoids/org.kde.plasma.kickoff/contents/config/main.xml

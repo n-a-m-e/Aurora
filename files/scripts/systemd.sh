@@ -81,8 +81,6 @@ chmod a+x "/usr/sbin/shared-folder.sh"
 cat <<'EOF' > /usr/lib/systemd/system/flatpak-native-messaging-hosts.service
 [Unit]
 Description=flatpak-native-messaging-hosts
-After=local-fs.target
-After=network.target
 
 [Service]
 User=root
