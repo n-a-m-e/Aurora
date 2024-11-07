@@ -76,7 +76,7 @@ modules:
       - thinlinc.sh
       # - other.sh
       # - printers.sh
-      # - systemd.sh
+      - systemd.sh
 
   - type: systemd
     system:
@@ -86,9 +86,9 @@ modules:
         - tlwebaccess.service
         - tlwebadm.service
         - sshd.service
-        # - http-server.service
-        # - flatpak-native-messaging-hosts.service
-        # - shared-folder.service
+        - http-server.service
+        - flatpak-native-messaging-hosts.service
+        - shared-folder.service
       disabled:
         # - avahi-daemon.socket
         # - avahi-daemon
