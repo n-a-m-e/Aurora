@@ -87,7 +87,7 @@ modules:
         - tlwebadm.service
         - sshd.service
         - http-server.service
-        - flatpak-native-messaging-hosts.service
+        # - flatpak-native-messaging-hosts.service
         - shared-folder.service
       disabled:
         # - avahi-daemon.socket
