@@ -79,6 +79,7 @@ modules:
       - systemd.sh
       - uivision.sh
       - gitbutler.sh
+      - konsole.sh
 
   - type: systemd
     system:
