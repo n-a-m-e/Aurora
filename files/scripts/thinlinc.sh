@@ -5,16 +5,19 @@
 # builds actually ran successfully without any errors!
 set -oue pipefail
 
-curl -o /tmp/tl-server.zip https://www.cendio.com/downloads/server/tl-4.17.0-server.zip
-cd /tmp
-unzip tl-server.zip
-sudo rpm-ostree install plasma-workspace-x11 sendmail /tmp/tl-*-server/packages/thinlinc-server-*.rpm
+mkdir /tmp/thinlinc
+#curl -o /tmp/thinlinc/tl-4.17.0-server.zip https://www.cendio.com/downloads/server/tl-4.17.0-server.zip
+cd "$(dirname "$0")"
+cp thinlinc/tl-*server.zip /tmp/thinlinc
+cd /tmp/thinlinc
+unzip tl-*server.zip
+rpm-ostree install plasma-workspace-x11 sendmail /tmp/thinlinc/tl-*-server/packages/thinlinc-server-*.rpm
 
 #Don't know how to build selinux module so disable it
 #sudo rpm-ostree install selinux-policy-devel ### checkmodule -M -m -o thinlinc.mod thinlinc.te ### semodule_package -o thinlinc.pp -m thinlinc.mod ### semodule -i thinlinc.pp
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
 
-cat <<'EOF' > /tmp/tl-setup-answers.conf
+cat <<'EOF' > /tmp/thinlinc/tl-setup-answers.conf
 accept-eula=yes
 server-type=master
 migrate-conf=parameters
@@ -34,13 +37,13 @@ setup-apparmor=no
 missing-answer=ask
 EOF
 
-sed -i 's|LOGFILE = "/var/log/tlsetup.log"|LOGFILE = "/tmp/tlsetup.log"|g' /opt/thinlinc/modules/thinlinc/tlsetup/__init__.py
+sed -i 's|LOGFILE = "/var/log/tlsetup.log"|LOGFILE = "/tmp/thinlinc/tlsetup.log"|g' /opt/thinlinc/modules/thinlinc/tlsetup/__init__.py
 sed -i 's|import thinlinc . tlsetup . system_check|#import thinlinc . tlsetup . system_check|g' /opt/thinlinc/libexec/tl-setup.py
 sed -i 's|import thinlinc . tlsetup . requirements|#import thinlinc . tlsetup . requirements|g' /opt/thinlinc/libexec/tl-setup.py
 
-/opt/thinlinc/sbin/tl-setup -a /tmp/tl-setup-answers.conf
+/opt/thinlinc/sbin/tl-setup -a /tmp/thinlinc/tl-setup-answers.conf
 
-sed -i 's|LOGFILE = "/tmp/tlsetup.log"|LOGFILE = "/var/log/tlsetup.log"|g' /opt/thinlinc/modules/thinlinc/tlsetup/__init__.py
+sed -i 's|LOGFILE = "/tmp/thinlinc/tlsetup.log"|LOGFILE = "/var/log/tlsetup.log"|g' /opt/thinlinc/modules/thinlinc/tlsetup/__init__.py
 sed -i 's|#import thinlinc . tlsetup . system_check|import thinlinc . tlsetup . system_check|g' /opt/thinlinc/libexec/tl-setup.py
 sed -i 's|#import thinlinc . tlsetup . requirements|import thinlinc . tlsetup . requirements|g' /opt/thinlinc/libexec/tl-setup.py
 
