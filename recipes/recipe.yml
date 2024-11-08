@@ -75,7 +75,7 @@ modules:
     scripts:
       - thinlinc.sh
       # - other.sh
-      # - printers.sh
+      - printers.sh
       - systemd.sh
       - uivision.sh
       - gitbutler.sh
