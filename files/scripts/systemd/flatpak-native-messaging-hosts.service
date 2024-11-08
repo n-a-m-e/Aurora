@@ -1,0 +1,12 @@
+[Unit]
+Description=flatpak-native-messaging-hosts
+
+[Service]
+User=root
+WorkingDirectory=/
+ExecStart=/usr/sbin/flatpak-native-messaging-hosts.sh
+RemainAfterExit=true
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target
