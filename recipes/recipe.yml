@@ -77,6 +77,8 @@ modules:
       # - other.sh
       # - printers.sh
       - systemd.sh
+      - uivision.sh
+      - gitbutler.sh
 
   - type: systemd
     system:
