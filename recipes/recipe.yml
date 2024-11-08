@@ -74,12 +74,12 @@ modules:
   - type: script
     scripts:
       - thinlinc.sh
-      # - other.sh
       - printers.sh
       - systemd.sh
       - uivision.sh
       - gitbutler.sh
       - konsole.sh
+      - other.sh
 
   - type: systemd
     system:
