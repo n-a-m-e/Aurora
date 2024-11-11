@@ -17,3 +17,10 @@ cp /usr/share/applications/org.kde.konsole.desktop /usr/share/kglobalaccel/org.k
 
 sed -i 's|TerminalApplication=kde-ptyxis|TerminalApplication=konsole|g' /usr/share/kde-settings/kde-profile/default/xdg/kdeglobals
 sed -i 's|TerminalService=org.gnome.Ptyxis.desktop|TerminalService=org.kde.konsole.desktop|g' /usr/share/kde-settings/kde-profile/default/xdg/kdeglobals
+
+#Make Yakuake the default
+sed -i 's|org.kde.konsole.desktop|org.kde.yakuake.desktop|g' /usr/share/plasma/plasmoids/org.kde.plasma.taskmanager/contents/config/main.xml
+sed -i 's|org.kde.konsole.desktop|org.kde.yakuake.desktop|g' /usr/share/plasma/plasmoids/org.kde.plasma.kickoff/contents/config/main.xml
+sed -i 's|TerminalApplication=konsole|TerminalApplication=yakuake|g' /usr/share/kde-settings/kde-profile/default/xdg/kdeglobals
+sed -i 's|TerminalService=org.kde.konsole.desktop|TerminalService=org.kde.yakuake.desktop|g' /usr/share/kde-settings/kde-profile/default/xdg/kdeglobals
+cp /usr/share/applications/org.kde.yakuake.desktop /usr/etc/xdg/autostart/org.kde.yakuake.desktop
