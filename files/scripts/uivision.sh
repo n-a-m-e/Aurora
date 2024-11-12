@@ -7,7 +7,7 @@ set -oue pipefail
 
 mkdir /tmp/uivision
 #curl -o /tmp/uivision/uivision-xmodules-linux-v2.AppImage https://download.ui.vision/x/uivision-xmodules-linux-v2.AppImage
-curl -o /tmp/uivision/uivision-xmodules-linux-v2.AppImage https://github.com/n-a-m-e/Aurora-Files/releases/download/uivision-xmodules-linux-v2.AppImage/uivision-xmodules-linux-v2.AppImage
+wget -O /tmp/uivision/uivision-xmodules-linux-v2.AppImage https://github.com/n-a-m-e/Aurora-Files/releases/download/uivision-xmodules-linux-v2/uivision-xmodules-linux-v2.AppImage
 cd /tmp/uivision
 7z x uivision*.AppImage
 mkdir /usr/lib/opt/uivision
