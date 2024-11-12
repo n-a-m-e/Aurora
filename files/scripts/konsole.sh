@@ -23,4 +23,4 @@ sed -i 's|org.kde.konsole.desktop|org.kde.yakuake.desktop|g' /usr/share/plasma/p
 sed -i 's|org.kde.konsole.desktop|org.kde.yakuake.desktop|g' /usr/share/plasma/plasmoids/org.kde.plasma.kickoff/contents/config/main.xml
 sed -i 's|TerminalApplication=konsole|TerminalApplication=yakuake|g' /usr/share/kde-settings/kde-profile/default/xdg/kdeglobals
 sed -i 's|TerminalService=org.kde.konsole.desktop|TerminalService=org.kde.yakuake.desktop|g' /usr/share/kde-settings/kde-profile/default/xdg/kdeglobals
-cp /usr/share/applications/org.kde.yakuake.desktop /usr/etc/xdg/autostart/org.kde.yakuake.desktop
+#cp /usr/share/applications/org.kde.yakuake.desktop /usr/etc/xdg/autostart/org.kde.yakuake.desktop
