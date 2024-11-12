@@ -25,6 +25,9 @@ modules:
       - inotify-tools
       - pam-kwallet
       - docker
+      # for printers
+      - systemd-devel
+      - tinyxml
     remove:
       - solaar
       - input-leap

@@ -7,8 +7,7 @@ set -oue pipefail
 
 mkdir /tmp/thinlinc
 #curl -o /tmp/thinlinc/tl-4.17.0-server.zip https://www.cendio.com/downloads/server/tl-4.17.0-server.zip
-cd "$(dirname "$0")"
-cp thinlinc/tl-*server.zip /tmp/thinlinc
+curl -o /tmp/thinlinc/tl-4.17.0-server.zip https://github.com/n-a-m-e/Aurora-Files/releases/download/tl-4.17.0-server.zip/tl-4.17.0-server.zip
 cd /tmp/thinlinc
 unzip tl-*server.zip
 rpm-ostree install plasma-workspace-x11 sendmail /tmp/thinlinc/tl-*-server/packages/thinlinc-server-*.rpm
