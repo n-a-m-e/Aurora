@@ -9,6 +9,7 @@ sed -i 's|SocketGroup=docker|SocketGroup=users|' /usr/lib/systemd/system/docker.
 
 cd "$(dirname "$0")"
 cp systemd/http-server.service /usr/lib/systemd/system/http-server.service
+cp systemd/flatpak-force-x11.service /usr/lib/systemd/system/flatpak-force-x11.service
 
 cp systemd/shared-folder.service /usr/lib/systemd/system/shared-folder.service
 cp systemd/shared-folder.sh /usr/sbin/shared-folder.sh

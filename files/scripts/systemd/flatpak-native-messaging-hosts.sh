@@ -2,7 +2,7 @@
 flatpaks="org.mozilla.firefox one.ablaze.floorp org.garudalinux.firedragon net.waterfox.waterfox org.chromium.Chromium io.github.ungoogled_software.ungoogled_chromium com.brave.Browser com.vivaldi.Vivaldi com.opera.Opera com.google.Chrome com.google.ChromeDev com.microsoft.Edge com.microsoft.EdgeDev"
 for flatpak in $flatpaks; do
     if [ $(flatpak list | grep -c $flatpak) -gt 0 ]; then
-        flatpak override --talk-name=org.freedesktop.Flatpak --filesystem=~/.local/share/applications --filesystem=~/.local/share/icons --filesystem=/home/Shared $flatpak
+        flatpak override --talk-name=org.freedesktop.Flatpak $flatpak
     fi
 done
 counter=0

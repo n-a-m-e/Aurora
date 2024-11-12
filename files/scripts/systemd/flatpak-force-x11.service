@@ -1,0 +1,12 @@
+[Unit]
+Description=flatpak-force-x11
+
+[Service]
+User=root
+WorkingDirectory=/
+ExecStart=/bin/bash -c 'flatpak override --nosocket=wayland --socket=fallback-x11 --socket=x11'
+RemainAfterExit=true
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target
