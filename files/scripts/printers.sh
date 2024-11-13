@@ -20,7 +20,7 @@ mkdir /tmp/zebra
 #wget -O /tmp/zebra/Zebra_ZC_Card_Printer_Driver-1.0.0.0-Linux-x86_64-Install.tar.zip https://www.zebra.com/content/dam/support-dam/en/driver/unrestricted/0002/Zebra_ZC_Card_Printer_Driver-1.0.0.0-Linux-x86_64-Install.tar.zip
 wget -O /tmp/zebra/Zebra_ZC_Card_Printer_Driver-1.0.0.0-Linux-x86_64-Install.tar.zip https://github.com/n-a-m-e/Aurora-Files/releases/download/Zebra_ZC_Card_Printer_Driver-1.0.0.0/Zebra_ZC_Card_Printer_Driver-1.0.0.0-Linux-x86_64-Install.tar.zip
 cd /tmp/zebra
-unzip unzip Zebra*.zip
+unzip Zebra*.zip
 rm Zebra*.zip
 7z x -so Zebra*.tar.gz | 7z x -si -ttar
 rm Zebra*.tar.gz
