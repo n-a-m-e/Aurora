@@ -28,6 +28,8 @@ modules:
       # for printers.
       - systemd-devel
       - tinyxml
+      # for gitbutler
+      - dbus-glib
     remove:
       - solaar
       - input-leap
@@ -96,6 +98,7 @@ modules:
         - http-server.service
         - flatpak-native-messaging-hosts.service
         - shared-folder.service
+        - flatpak-force-x11.service
       disabled:
         # - avahi-daemon.socket
         # - avahi-daemon
