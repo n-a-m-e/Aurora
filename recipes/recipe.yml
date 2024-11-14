@@ -98,6 +98,7 @@ modules:
         - flatpak-native-messaging-hosts.service
         - shared-folder.service
         - flatpak-force-x11.service
+        - node-server.service
       disabled:
         # - avahi-daemon.socket
         # - avahi-daemon

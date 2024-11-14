@@ -4,8 +4,7 @@ Description=http-server
 [Service]
 User=root
 WorkingDirectory=/home
-#ExecStart=/bin/bash -c 'mkdir -p /home/Shared && cd /home/Shared && python3 -m http.server'
-ExecStart=/bin/bash -c 'mkdir -p /home/Node && docker run -it --rm -p 8000:8000 -v "/home/Node:/home/Node" -v "/home/Shared:/home/Shared" -w "/home/Node" node:lts-slim bash -c "cd ..; node Node/server.js"'
+ExecStart=/bin/bash -c 'mkdir -p /home/Shared && cd /home/Shared && python3 -m http.server'
 RemainAfterExit=true
 Type=oneshot
 
