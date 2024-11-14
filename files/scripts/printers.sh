@@ -7,7 +7,6 @@ set -oue pipefail
 
 cd "$(dirname "$0")"
 cp printers/KOC751iUX.ppd /usr/share/cups/model/KOC751iUX.ppd
-#cp printers/brother_ql820nwb_printer_en.ppd /usr/share/cups/model/brother_ql820nwb_printer_en.ppd
 #cp printers/ZebraZC300Printer.ppd /usr/share/cups/model/ZebraZC300Printer.ppd
 
 mkdir /tmp/ql820nwb
@@ -16,16 +15,32 @@ wget -O /tmp/ql820nwb/ql820nwbpdrv-3.1.5-0.i386.rpm https://github.com/n-a-m-e/A
 cd /tmp/ql820nwb
 rpm-ostree install /tmp/ql820nwb/ql820nwb*.rpm
 
-#mkdir /tmp/zebra
+mkdir /tmp/zebra
 #wget -O /tmp/zebra/Zebra_ZC_Card_Printer_Driver-1.0.0.0-Linux-x86_64-Install.tar.zip https://www.zebra.com/content/dam/support-dam/en/driver/unrestricted/0002/Zebra_ZC_Card_Printer_Driver-1.0.0.0-Linux-x86_64-Install.tar.zip
-#wget -O /tmp/zebra/Zebra_ZC_Card_Printer_Driver-1.0.0.0-Linux-x86_64-Install.tar.zip https://github.com/n-a-m-e/Aurora-Files/releases/download/Zebra_ZC_Card_Printer_Driver-1.0.0.0/Zebra_ZC_Card_Printer_Driver-1.0.0.0-Linux-x86_64-Install.tar.zip
-#cd /tmp/zebra
-#unzip Zebra*.zip
-#rm Zebra*.zip
-#7z x -so Zebra*.tar.gz | 7z x -si -ttar
-#rm Zebra*.tar.gz
-#chmod a+x ./Zebra*
-#./Zebra* --mode silent
+wget -O /tmp/zebra/Zebra_ZC_Card_Printer_Driver-1.0.0.0-Linux-x86_64-Install.tar.zip https://github.com/n-a-m-e/Aurora-Files/releases/download/Zebra_ZC_Card_Printer_Driver-1.0.0.0/Zebra_ZC_Card_Printer_Driver-1.0.0.0-Linux-x86_64-Install.tar.zip
+cd /tmp/zebra
+unzip Zebra*.zip
+rm Zebra*.zip
+7z x -so Zebra*.tar.gz | 7z x -si -ttar
+rm Zebra*.tar.gz
+chmod a+x ./Zebra*
+./Zebra* --mode silent --prefix /usr/lib/opt/ZebraJaguarDriver
+
+#cat <<'EOF' > /tmp/zebra/zebra-setup-answers.conf
+#InstallDir: /usr/lib/opt/ZebraJaguarDriver
+#InstallMode: Silent
+#InstallType: Ethernet
+#ProgramFolderName: Zebra ZC Card Printer Driver
+#SelectedComponents: Default Component
+#ViewReadme: Yes
+#EOF
+
+
+
+
+
+
+
 
 #cp printers/rastertojg /usr/lib/cups/filter/rastertojg
 #chmod a+x /usr/lib/cups/filter/rastertojg
