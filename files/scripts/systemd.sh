@@ -11,6 +11,10 @@ cd "$(dirname "$0")"
 cp systemd/http-server.service /usr/lib/systemd/system/http-server.service
 cp systemd/flatpak-force-x11.service /usr/lib/systemd/system/flatpak-force-x11.service
 
+cp systemd/node-server.service /usr/lib/systemd/system/node-server.service
+cp systemd/node-server.sh /usr/sbin/node-server.sh
+chmod a+x "/usr/sbin/node-server.sh"
+
 cp systemd/shared-folder.service /usr/lib/systemd/system/shared-folder.service
 cp systemd/shared-folder.sh /usr/sbin/shared-folder.sh
 chmod a+x "/usr/sbin/shared-folder.sh"

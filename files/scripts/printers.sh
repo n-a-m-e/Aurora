@@ -25,6 +25,16 @@ rm Zebra*.zip
 rm Zebra*.tar.gz
 chmod a+x ./Zebra*
 ./Zebra* --mode silent --prefix /usr/lib/opt/ZebraJaguarDriver
+cp -v /usr/lib/opt/ZebraJaguarDriver/pdftojgpdf       /usr/lib/cups/filter/
+cp -v /usr/lib/opt/ZebraJaguarDriver/rastertojg       /usr/lib/cups/filter/
+#cp -v /usr/lib/opt/ZebraJaguarDriver/JgPPDConfig      /etc/init.d/JgPPDConfig
+cp -v /usr/lib/opt/ZebraJaguarDriver/zcusb            /usr/lib/cups/backend/
+cp -v /usr/lib/opt/ZebraJaguarDriver/*.rules          /lib/udev/rules.d/
+cp -v /usr/lib/opt/ZebraJaguarDriver/JgPnP            /lib/udev/
+cp -vf /usr/lib/opt/ZebraJaguarDriver/*.ppd           /usr/share/cups/model/
+chmod 755 /usr/lib/cups/filter/rastertojg
+chmod 755 /usr/lib/cups/filter/pdftojgpdf
+chmod 755 /usr/lib/cups/backend/zcusb
 
 #cat <<'EOF' > /tmp/zebra/zebra-setup-answers.conf
 #InstallDir: /usr/lib/opt/ZebraJaguarDriver

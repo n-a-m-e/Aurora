@@ -1,0 +1,12 @@
+[Unit]
+Description=node-server
+
+[Service]
+User=root
+WorkingDirectory=/
+ExecStart=/usr/sbin/node-server.sh
+RemainAfterExit=true
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target
