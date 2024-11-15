@@ -64,7 +64,32 @@ EOF
 #/opt does not persist after build so move to /usr/lib/opt
 mv /opt/thinlinc /usr/lib/opt/thinlinc
 
-ln -fs /usr/etc/pam.d/sddm /usr/etc/pam.d/thinlinc
+mkdir -p /usr/etc/pam.d
+cat <<'EOF' > /usr/etc/pam.d/thinlinc
+#%PAM-1.0
+auth       substack     password-auth
+-auth       optional     pam_gnome_keyring.so
+-auth       optional     pam_kwallet5.so
+-auth       optional     pam_kwallet.so
+auth       include      postlogin
+account    required     pam_sepermit.so
+account    required     pam_nologin.so
+account    include      password-auth
+password   include      password-auth
+# pam_selinux.so close should be the first session rule
+session    required     pam_selinux.so close
+session    required     pam_loginuid.so
+# pam_selinux.so open should only be followed by sessions to be executed in the user context
+session    required     pam_selinux.so open env_params
+session    required     pam_namespace.so
+session    optional     pam_keyinit.so force revoke
+session    optional     pam_motd.so
+session    include      password-auth
+-session    optional     pam_gnome_keyring.so auto_start
+-session    optional     pam_kwallet5.so auto_start
+-session    optional     pam_kwallet.so auto_start
+session    include      postlogin
+EOF
 
 #create required directories and symlinks at boot
 cat <<'EOF' > /usr/lib/tmpfiles.d/thinlinc.conf
@@ -147,6 +172,3 @@ polkit.addRule(function(action, subject) {
    }
 });
 EOF
-
-#sed -i 's|auth       substack     password-auth|auth       substack     password-auth\n-auth        optional      pam_gnome_keyring.so\n-auth        optional      pam_kwallet5.so\n-auth        optional      pam_kwallet.so|g' /usr/etc/pam.d/sshd
-#sed -i 's|session    include      password-auth|session    include      password-auth\n-session     optional      pam_gnome_keyring.so auto_start\n-session     optional      pam_kwallet5.so auto_start\n-session     optional      pam_kwallet.so auto_start|g' /usr/etc/pam.d/sshd
