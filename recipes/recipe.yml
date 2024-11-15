@@ -85,6 +85,7 @@ modules:
       - gitbutler.sh
       - konsole.sh
       - other.sh
+      - tarsnap.sh
 
   - type: systemd
     system:
