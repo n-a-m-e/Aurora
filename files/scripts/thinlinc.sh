@@ -64,6 +64,8 @@ EOF
 #/opt does not persist after build so move to /usr/lib/opt
 mv /opt/thinlinc /usr/lib/opt/thinlinc
 
+ln -fs /usr/etc/pam.d/sddm /usr/etc/pam.d/thinlinc
+
 #create required directories and symlinks at boot
 cat <<'EOF' > /usr/lib/tmpfiles.d/thinlinc.conf
 d /var/lib/vsm 755 root root -
