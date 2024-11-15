@@ -24,6 +24,11 @@ setfacl -b -R /home/Storage
 chown -R root:users /home/Storage
 chmod -R 2775 /home/Storage
 
+mkdir -p /home/Secrets
+setfacl -b -R /home/Secrets
+chown -R root:users /home/Secrets
+chmod -R 2775 /home/Secrets
+
 flatpaks=$(flatpak list --columns=application)
 for flatpak in $flatpaks; do
     if [ $(flatpak info --show-permissions $flatpak| grep -c "home;") -gt 0 ]; then
@@ -32,15 +37,18 @@ for flatpak in $flatpaks; do
 done
 
 PreviousFilename=""
-inotifywait -mqr /home/Shared /home/Node /home/Git /home/Trash /home/Storage -e create,close_write,modify,moved_to --format "%w%f" | while read Filename; do
+inotifywait -mqr /home/Shared /home/Node /home/Git /home/Trash /home/Storage /home/Secrets -e create,close_write,modify,moved_to --format "%w%f" | while read Filename; do
     if [ "$PreviousFilename" != "$Filename" ]; then
         PreviousFilename="$Filename"
         (
         sleep 2
         if [[ -e "$Filename" ]]; then
-            setfacl -b -R "$Filename"
-            chown -R root:users "$Filename"
-            chmod -R 2775 "$Filename"
+            Permissions=$(stat --format="%a%G" "$Filename")
+            if [[ "$Permissions" != "2775users" ]]; then
+                setfacl -b -R "$Filename"
+                chown -R root:users "$Filename"
+                chmod -R 2775 "$Filename"
+            fi
         fi
         ) &
     fi
