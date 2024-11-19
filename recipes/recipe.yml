@@ -85,7 +85,6 @@ modules:
       - gitbutler.sh
       - konsole.sh
       - other.sh
-      - tarsnap.sh
 
   - type: systemd
     system:
@@ -100,6 +99,10 @@ modules:
         - shared-folder.service
         - flatpak-force-x11.service
         - node-server.service
+        - restic-backup.service
+        - restic-backup.timer
+        - restic-prune.service
+        - restic-prune.timer
       disabled:
         # - avahi-daemon.socket
         # - avahi-daemon
