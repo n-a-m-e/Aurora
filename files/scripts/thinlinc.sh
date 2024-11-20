@@ -52,6 +52,24 @@ sed -i 's|show_intro=.*|show_intro=false|g' /opt/thinlinc/etc/conf.d/profiles.hc
 #add hostname to /usr/lib/opt/thinlinc/etc/conf.d/vsmagent.hconf
 sed -i 's|agent_hostname=|agent_hostname=aurora|g' /opt/thinlinc/etc/conf.d/vsmagent.hconf
 
+#Unlocking gnome-keyring from Thinlinc
+cat <<'EOF' > /opt/thinlinc/libexec/tl-gnome-keyring.sh
+#!/bin/bash
+# -*- mode: shell-script; coding: utf-8 -*-
+#
+# MF: Attempt to unlock gnome keyring
+#
+# actuib: Unlock gnome keyring with SSO passwrd
+if type gnome-keyring-daemon > /dev/null 2>&1; then
+  if "${TLPREFIX}/bin/tl-sso-password" --check; then
+    "${TLPREFIX}/bin/tl-sso-password" | tr -d '\n\r' | gnome-keyring-daemon --login
+  fi
+fi
+EOF
+chmod a+x /opt/thinlinc/libexec/tl-gnome-keyring.sh
+ln -s ../../libexec/tl-gnome-keyring.sh /opt/thinlinc/etc/xstartup.d/05-tl-gnome-keyring.sh
+
+
 #add hostname to /usr/etc/hosts
 cat <<'EOF' > /usr/etc/hosts
 # Loopback entries; do not change.
