@@ -5,8 +5,9 @@ Description=node-server
 User=root
 WorkingDirectory=/
 ExecStart=/usr/sbin/node-server.sh
-RemainAfterExit=true
-Type=oneshot
+Type=simple
+Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target

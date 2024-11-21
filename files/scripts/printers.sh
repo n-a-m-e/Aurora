@@ -14,6 +14,12 @@ mkdir /tmp/ql820nwb
 wget -O /tmp/ql820nwb/ql820nwbpdrv-3.1.5-0.i386.rpm https://github.com/n-a-m-e/Aurora-Files/releases/download/ql820nwbpdrv-3.1.5-0/ql820nwbpdrv-3.1.5-0.i386.rpm
 cd /tmp/ql820nwb
 rpm-ostree install /tmp/ql820nwb/ql820nwb*.rpm
+#/opt does not persist after build so move to /usr/lib/opt
+mv /opt/brother /usr/lib/opt/brother
+#create required directories and symlinks at boot
+cat <<'EOF' > /usr/lib/tmpfiles.d/brother.conf
+L+ /var/opt/brother - - - - /usr/lib/opt/brother
+EOF
 
 mkdir /tmp/zebra
 #wget -O /tmp/zebra/Zebra_ZC_Card_Printer_Driver-1.0.0.0-Linux-x86_64-Install.tar.zip https://www.zebra.com/content/dam/support-dam/en/driver/unrestricted/0002/Zebra_ZC_Card_Printer_Driver-1.0.0.0-Linux-x86_64-Install.tar.zip

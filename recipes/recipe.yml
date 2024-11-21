@@ -26,6 +26,7 @@ modules:
       - pam-kwallet
       - docker
       # for printers.
+      - poppler-glib
       - systemd-devel
       - tinyxml
       # for gitbutler
