@@ -82,6 +82,14 @@ EOF
 #/opt does not persist after build so move to /usr/lib/opt
 mv /opt/thinlinc /usr/lib/opt/thinlinc
 
+mkdir -p /usr/etc/ssh/sshd_config.d
+cat <<'EOF' > /usr/etc/ssh/sshd_config.d/60-thinlinc.conf
+AuthenticationMethods publickey,password
+PasswordAuthentication yes
+PubkeyAuthentication yes
+UsePAM yes
+EOF
+
 mkdir -p /usr/etc/pam.d
 cat <<'EOF' > /usr/etc/pam.d/thinlinc
 #%PAM-1.0
@@ -103,9 +111,9 @@ session    required     pam_namespace.so
 session    optional     pam_keyinit.so force revoke
 session    optional     pam_motd.so
 session    include      password-auth
--session    optional     pam_gnome_keyring.so auto_start
--session    optional     pam_kwallet5.so auto_start
--session    optional     pam_kwallet.so auto_start
+-session    optional     pam_gnome_keyring.so auto_start force_run
+-session    optional     pam_kwallet5.so auto_start force_run
+-session    optional     pam_kwallet.so auto_start force_run
 session    include      postlogin
 EOF
 

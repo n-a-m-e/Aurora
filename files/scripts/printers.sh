@@ -9,6 +9,7 @@ cd "$(dirname "$0")"
 cp printers/KOC751iUX.ppd /usr/share/cups/model/KOC751iUX.ppd
 #cp printers/ZebraZC300Printer.ppd /usr/share/cups/model/ZebraZC300Printer.ppd
 
+pip install brother_ql
 mkdir /tmp/ql820nwb
 #wget -O /tmp/ql820nwb/ql820nwbpdrv-3.1.5-0.i386.rpm https://download.brother.com/welcome/dlfp100344/ql820nwbpdrv-3.1.5-0.i386.rpm
 wget -O /tmp/ql820nwb/ql820nwbpdrv-3.1.5-0.i386.rpm https://github.com/n-a-m-e/Aurora-Files/releases/download/ql820nwbpdrv-3.1.5-0/ql820nwbpdrv-3.1.5-0.i386.rpm
