@@ -84,9 +84,8 @@ mv /opt/thinlinc /usr/lib/opt/thinlinc
 
 mkdir -p /usr/etc/ssh/sshd_config.d
 cat <<'EOF' > /usr/etc/ssh/sshd_config.d/60-thinlinc.conf
-AuthenticationMethods publickey,password
+AuthenticationMethods password
 PasswordAuthentication yes
-PubkeyAuthentication yes
 UsePAM yes
 EOF
 
