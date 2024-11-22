@@ -31,7 +31,7 @@ modules:
       - tinyxml
       # for gitbutler
       - dbus-glib
-      - wireshark-qt
+      - wireshark
     remove:
       - solaar
       - input-leap
