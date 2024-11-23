@@ -77,6 +77,9 @@ cat <<'EOF' > /usr/etc/hosts
 127.0.0.1   aurora localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         aurora localhost localhost.localdomain localhost6 localhost6.localdomain6
 
+# Disable wpad
+127.0.0.1   wpad wpad.*
+
 EOF
 
 #/opt does not persist after build so move to /usr/lib/opt
