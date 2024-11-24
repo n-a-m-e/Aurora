@@ -81,6 +81,7 @@ chmod a+x /opt/thinlinc/libexec/tl-kwallet.sh
 ln -s ../../libexec/tl-kwallet.sh /opt/thinlinc/etc/xstartup.d/05-tl-kwallet.sh
 
 #add kwallet configuration to /usr/etc/xdg/kwalletrc
+mkdir -p /usr/etc/xdg
 cat <<'EOF' > /usr/etc/xdg/kwalletrc
 [Wallet]
 Enabled=true
