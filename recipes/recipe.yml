@@ -32,6 +32,7 @@ modules:
       # for gitbutler
       - dbus-glib
       - wireshark
+      - kwalletcli
     remove:
       - solaar
       - input-leap
