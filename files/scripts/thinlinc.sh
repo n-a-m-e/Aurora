@@ -67,8 +67,27 @@ if type gnome-keyring-daemon > /dev/null 2>&1; then
 fi
 EOF
 chmod a+x /opt/thinlinc/libexec/tl-gnome-keyring.sh
-ln -s ../../libexec/tl-gnome-keyring.sh /opt/thinlinc/etc/xstartup.d/05-tl-gnome-keyring.sh
+#ln -s ../../libexec/tl-gnome-keyring.sh /opt/thinlinc/etc/xstartup.d/05-tl-gnome-keyring.sh
 
+#Unlocking gnome-keyring from Thinlinc
+cat <<'EOF' > /opt/thinlinc/libexec/tl-kwallet.sh
+#!/bin/bash
+if "${TLPREFIX}/bin/tl-sso-password" --check; then
+  PASSWORD=$("${TLPREFIX}/bin/tl-sso-password" | tr -d '\n\r')
+  qdbus org.kde.kwalletd5 /modules/kwalletd5 org.kde.KWallet.open kdewallet 0 "$PASSWORD"
+fi
+EOF
+chmod a+x /opt/thinlinc/libexec/tl-kwallet.sh
+ln -s ../../libexec/tl-kwallet.sh /opt/thinlinc/etc/xstartup.d/05-tl-kwallet.sh
+
+#add kwallet configuration to /usr/etc/xdg/kwalletrc
+mkdir -p /usr/etc/xdg
+cat <<'EOF' > /usr/etc/xdg/kwalletrc
+[Wallet]
+Enabled=true
+First Use=false
+Prompt=false
+EOF
 
 #add hostname to /usr/etc/hosts
 cat <<'EOF' > /usr/etc/hosts
@@ -77,6 +96,9 @@ cat <<'EOF' > /usr/etc/hosts
 127.0.0.1   aurora localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         aurora localhost localhost.localdomain localhost6 localhost6.localdomain6
 
+# Disable wpad
+127.0.0.1   wpad wpad.*
+
 EOF
 
 #/opt does not persist after build so move to /usr/lib/opt
@@ -84,9 +106,8 @@ mv /opt/thinlinc /usr/lib/opt/thinlinc
 
 mkdir -p /usr/etc/ssh/sshd_config.d
 cat <<'EOF' > /usr/etc/ssh/sshd_config.d/60-thinlinc.conf
-AuthenticationMethods publickey,password
+AuthenticationMethods password
 PasswordAuthentication yes
-PubkeyAuthentication yes
 UsePAM yes
 EOF
 
