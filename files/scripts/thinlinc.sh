@@ -78,7 +78,7 @@ if "${TLPREFIX}/bin/tl-sso-password" --check; then
 fi
 EOF
 chmod a+x /opt/thinlinc/libexec/tl-kwallet.sh
-ln -s ../../libexec/tl-kwallet.sh /opt/thinlinc/etc/xstartup.d/05-tl-kwallet.sh
+#ln -s ../../libexec/tl-kwallet.sh /opt/thinlinc/etc/xstartup.d/05-tl-kwallet.sh
 
 #add kwallet configuration to /usr/etc/xdg/kwalletrc
 mkdir -p /usr/etc/xdg
@@ -114,6 +114,7 @@ EOF
 mkdir -p /usr/etc/pam.d
 cat <<'EOF' > /usr/etc/pam.d/thinlinc
 #%PAM-1.0
+auth       required     pam_exec.so expose_authtok /opt/thinlinc/bin/tl-sso-password
 auth       substack     password-auth
 -auth       optional     pam_gnome_keyring.so
 -auth       optional     pam_kwallet5.so
