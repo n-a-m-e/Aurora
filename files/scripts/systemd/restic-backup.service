@@ -4,7 +4,6 @@ Description=Restic backup service
 Type=simple
 Restart=no
 
-LogsDirectory=restic
 StandardOutput=append:/var/log/restic-backup-output.log
 StandardError=append:/var/log/restic-backup-error.log
 
