@@ -12,8 +12,6 @@ cp systemd/http-server.service /usr/lib/systemd/system/http-server.service
 cp systemd/flatpak-force-x11.service /usr/lib/systemd/system/flatpak-force-x11.service
 cp systemd/restic-backup.service /usr/lib/systemd/system/restic-backup.service
 cp systemd/restic-backup.timer /usr/lib/systemd/system/restic-backup.timer
-cp systemd/restic-prune.service /usr/lib/systemd/system/restic-prune.service
-cp systemd/restic-prune.timer /usr/lib/systemd/system/restic-prune.timer
 
 
 cp systemd/node-server.service /usr/lib/systemd/system/node-server.service
