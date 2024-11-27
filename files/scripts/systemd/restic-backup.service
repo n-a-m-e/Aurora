@@ -7,6 +7,7 @@ Restart=no
 StandardOutput=append:/var/log/restic-backup-output.log
 StandardError=append:/var/log/restic-backup-error.log
 
+ExecStartPre=restic unlock
 ExecStart=restic backup --verbose --one-file-system --tag systemd.timer $BACKUP_EXCLUDES $BACKUP_PATHS
-ExecStartPost=restic forget --verbose --tag systemd.timer --group-by "paths,tags" --keep-daily $RETENTION_DAYS --keep-weekly $RETENTION_WEEKS --keep-monthly $RETENTION_MONTHS --keep-yearly $RETENTION_YEARS
+ExecStartPost=restic forget –prune --verbose --tag systemd.timer --group-by "paths,tags" --keep-daily $RETENTION_DAYS --keep-weekly $RETENTION_WEEKS --keep-monthly $RETENTION_MONTHS --keep-yearly $RETENTION_YEARS
 EnvironmentFile=/home/Secrets/restic-backup.conf
