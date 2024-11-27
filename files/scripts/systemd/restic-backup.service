@@ -5,9 +5,8 @@ Type=simple
 Restart=no
 
 LogsDirectory=restic
-StandardOutput=truncate:/var/log/restic/backup-output.log
-StandardError=truncate:/var/log/restic/backup-error.log
-Environment=RESTIC_PROGRESS_FPS=1
+StandardOutput=append:/var/log/restic-backup-output.log
+StandardError=append:/var/log/restic-backup-error.log
 
 ExecStart=restic backup --verbose --one-file-system --tag systemd.timer $BACKUP_EXCLUDES $BACKUP_PATHS
 ExecStartPost=restic forget --verbose --tag systemd.timer --group-by "paths,tags" --keep-daily $RETENTION_DAYS --keep-weekly $RETENTION_WEEKS --keep-monthly $RETENTION_MONTHS --keep-yearly $RETENTION_YEARS
