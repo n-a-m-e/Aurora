@@ -110,11 +110,10 @@ AuthenticationMethods password
 PasswordAuthentication yes
 UsePAM yes
 EOF
-
+#auth       required     pam_exec.so expose_authtok /opt/thinlinc/bin/tl-sso-password
 mkdir -p /usr/etc/pam.d
 cat <<'EOF' > /usr/etc/pam.d/thinlinc
 #%PAM-1.0
-auth       required     pam_exec.so expose_authtok /opt/thinlinc/bin/tl-sso-password
 auth       substack     password-auth
 -auth       optional     pam_gnome_keyring.so
 -auth       optional     pam_kwallet5.so
@@ -124,6 +123,9 @@ account    required     pam_sepermit.so
 account    required     pam_nologin.so
 account    include      password-auth
 password   include      password-auth
+-password   optional     pam_gnome_keyring.so use_authtok
+-password   optional     pam_kwallet5.so use_authtok
+-password   optional     pam_kwallet.so use_authtok
 # pam_selinux.so close should be the first session rule
 session    required     pam_selinux.so close
 session    required     pam_loginuid.so
