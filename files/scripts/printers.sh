@@ -25,7 +25,6 @@ cp printers/KOC751iUX.ppd /usr/share/cups/model/KOC751iUX.ppd
 mkdir /tmp/zebra
 wget -O /tmp/zebra/ZebraJaguarDriver_1.1.0.0_amd64.deb https://www.zebra.com/content/dam/support-dam/en/driver/unrestricted/0002/ZebraJaguarDriver_1.1.0.0_amd64.deb
 cd /tmp/zebra
-unzip Zebra*.deb
 7z x -so Zebra*.deb | 7z x -si -ttar
 cp -v /tmp/zebra/usr/lib/cups/backend/zcusb /usr/lib/cups/backend/zcusb
 cp -v /tmp/zebra/usr/lib/cups/filter/pdftojgpdf /usr/lib/cups/filter/pdftojgpdf
