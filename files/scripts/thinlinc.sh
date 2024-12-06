@@ -53,41 +53,41 @@ sed -i 's|show_intro=.*|show_intro=false|g' /opt/thinlinc/etc/conf.d/profiles.hc
 sed -i 's|agent_hostname=|agent_hostname=aurora|g' /opt/thinlinc/etc/conf.d/vsmagent.hconf
 
 #Unlocking gnome-keyring from Thinlinc
-cat <<'EOF' > /opt/thinlinc/libexec/tl-gnome-keyring.sh
+#cat <<'EOF' > /opt/thinlinc/libexec/tl-gnome-keyring.sh
 #!/bin/bash
 # -*- mode: shell-script; coding: utf-8 -*-
 #
 # MF: Attempt to unlock gnome keyring
 #
 # actuib: Unlock gnome keyring with SSO passwrd
-if type gnome-keyring-daemon > /dev/null 2>&1; then
-  if "${TLPREFIX}/bin/tl-sso-password" --check; then
-    "${TLPREFIX}/bin/tl-sso-password" | tr -d '\n\r' | gnome-keyring-daemon --login
-  fi
-fi
-EOF
-chmod a+x /opt/thinlinc/libexec/tl-gnome-keyring.sh
+#if type gnome-keyring-daemon > /dev/null 2>&1; then
+#  if "${TLPREFIX}/bin/tl-sso-password" --check; then
+#    "${TLPREFIX}/bin/tl-sso-password" | tr -d '\n\r' | gnome-keyring-daemon --login
+#  fi
+#fi
+#EOF
+#chmod a+x /opt/thinlinc/libexec/tl-gnome-keyring.sh
 #ln -s ../../libexec/tl-gnome-keyring.sh /opt/thinlinc/etc/xstartup.d/05-tl-gnome-keyring.sh
 
 #Unlocking gnome-keyring from Thinlinc
-cat <<'EOF' > /opt/thinlinc/libexec/tl-kwallet.sh
+#cat <<'EOF' > /opt/thinlinc/libexec/tl-kwallet.sh
 #!/bin/bash
-if "${TLPREFIX}/bin/tl-sso-password" --check; then
-  PASSWORD=$("${TLPREFIX}/bin/tl-sso-password" | tr -d '\n\r')
-  qdbus org.kde.kwalletd5 /modules/kwalletd5 org.kde.KWallet.open kdewallet 0 "$PASSWORD"
-fi
-EOF
-chmod a+x /opt/thinlinc/libexec/tl-kwallet.sh
+#if "${TLPREFIX}/bin/tl-sso-password" --check; then
+#  PASSWORD=$("${TLPREFIX}/bin/tl-sso-password" | tr -d '\n\r')
+#  qdbus org.kde.kwalletd5 /modules/kwalletd5 org.kde.KWallet.open kdewallet 0 "$PASSWORD"
+#fi
+#EOF
+#chmod a+x /opt/thinlinc/libexec/tl-kwallet.sh
 #ln -s ../../libexec/tl-kwallet.sh /opt/thinlinc/etc/xstartup.d/05-tl-kwallet.sh
 
 #add kwallet configuration to /usr/etc/xdg/kwalletrc
-mkdir -p /usr/etc/xdg
-cat <<'EOF' > /usr/etc/xdg/kwalletrc
-[Wallet]
-Enabled=true
-First Use=false
-Prompt=false
-EOF
+#mkdir -p /usr/etc/xdg
+#cat <<'EOF' > /usr/etc/xdg/kwalletrc
+#[Wallet]
+#Enabled=true
+#First Use=false
+#Prompt=false
+#EOF
 
 #add hostname to /usr/etc/hosts
 cat <<'EOF' > /usr/etc/hosts
@@ -104,42 +104,35 @@ EOF
 #/opt does not persist after build so move to /usr/lib/opt
 mv /opt/thinlinc /usr/lib/opt/thinlinc
 
-mkdir -p /usr/etc/ssh/sshd_config.d
-cat <<'EOF' > /usr/etc/ssh/sshd_config.d/60-thinlinc.conf
-AuthenticationMethods password
-PasswordAuthentication yes
-UsePAM yes
-EOF
+#mkdir -p /usr/etc/ssh/sshd_config.d
+#cat <<'EOF' > /usr/etc/ssh/sshd_config.d/60-thinlinc.conf
+#AuthenticationMethods password
+#PasswordAuthentication yes
+#UsePAM yes
+#EOF
 #auth       required     pam_exec.so expose_authtok /opt/thinlinc/bin/tl-sso-password
-mkdir -p /usr/etc/pam.d
-cat <<'EOF' > /usr/etc/pam.d/thinlinc
-#%PAM-1.0
-auth       substack     password-auth
--auth       optional     pam_gnome_keyring.so
--auth       optional     pam_kwallet5.so
--auth       optional     pam_kwallet.so
-auth       include      postlogin
-account    required     pam_sepermit.so
-account    required     pam_nologin.so
-account    include      password-auth
-password   include      password-auth
--password   optional     pam_gnome_keyring.so use_authtok
--password   optional     pam_kwallet5.so use_authtok
--password   optional     pam_kwallet.so use_authtok
-# pam_selinux.so close should be the first session rule
-session    required     pam_selinux.so close
-session    required     pam_loginuid.so
-# pam_selinux.so open should only be followed by sessions to be executed in the user context
-session    required     pam_selinux.so open env_params
-session    required     pam_namespace.so
-session    optional     pam_keyinit.so force revoke
-session    optional     pam_motd.so
-session    include      password-auth
--session    optional     pam_gnome_keyring.so auto_start force_run
--session    optional     pam_kwallet5.so auto_start force_run
--session    optional     pam_kwallet.so auto_start force_run
-session    include      postlogin
-EOF
+#mkdir -p /usr/etc/pam.d
+#cat <<'EOF' > /usr/etc/pam.d/thinlinc
+##%PAM-1.0
+#auth       substack     password-auth
+#-auth       optional     pam_kwallet5.so debug
+#auth       include      postlogin
+#account    required     pam_sepermit.so
+#account    required     pam_nologin.so
+#account    include      password-auth
+#password   include      password-auth
+#-password   optional     pam_kwallet5.so use_authtok
+## pam_selinux.so close should be the first session rule
+#session    required     pam_selinux.so close
+#session    required     pam_loginuid.so
+## pam_selinux.so open should only be followed by sessions to be executed in the user context
+#session    required     pam_selinux.so open env_params
+#session    optional     pam_keyinit.so force revoke
+#session    required     pam_namespace.so
+#session    include      password-auth
+#-session    optional     pam_kwallet5.so auto_start
+#session    include      postlogin
+#EOF
 
 #create required directories and symlinks at boot
 cat <<'EOF' > /usr/lib/tmpfiles.d/thinlinc.conf
