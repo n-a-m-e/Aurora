@@ -86,7 +86,7 @@ modules:
       - uivision.sh
       - gitbutler.sh
       - konsole.sh
-      - pythonpackages.sh
+      # - pythonpackages.sh
       - other.sh
 
   - type: systemd
