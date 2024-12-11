@@ -1,3 +1,22 @@
+- First rebase to the unsigned image, to get the proper signing keys and policies installed:
+  ```
+  rpm-ostree rebase ostree-unverified-registry:ghcr.io/n-a-m-e/aurora-server:latest
+  rpm-ostree rebase ostree-unverified-registry:ghcr.io/n-a-m-e/aurora-client:latest
+  ```
+- Reboot to complete the rebase:
+  ```
+  systemctl reboot
+  ```
+- Then rebase to the signed image, like so:
+  ```
+  rpm-ostree rebase ostree-image-signed:docker://ghcr.io/n-a-m-e/aurora-server:latest
+  rpm-ostree rebase ostree-image-signed:docker://ghcr.io/n-a-m-e/aurora-client:latest
+  ```
+- Reboot again to complete the installation
+  ```
+  systemctl reboot
+  ```
+
 # Aurora &nbsp; [![bluebuild build badge](https://github.com/n-a-m-e/aurora/actions/workflows/build.yml/badge.svg)](https://github.com/n-a-m-e/aurora/actions/workflows/build.yml)
 
 See the [BlueBuild docs](https://blue-build.org/how-to/setup/) for quick setup instructions for setting up your own repository based on this template.
