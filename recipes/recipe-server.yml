@@ -31,9 +31,6 @@ modules:
       - poppler-glib
       - systemd-devel
       - tinyxml
-      # for gitbutler
-      - dbus-glib
-      - wireshark
     remove:
       - solaar
       - input-leap
