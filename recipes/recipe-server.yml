@@ -82,7 +82,7 @@ modules:
 
   - type: script
     scripts:
-      - thinlinc.sh
+      - thinlinc-server.sh
       - printers.sh
       - systemd.sh
       - uivision.sh
