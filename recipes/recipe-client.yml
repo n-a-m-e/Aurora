@@ -75,7 +75,6 @@ modules:
 
   - type: script
     scripts:
-      - thinlinc-server.sh
       - thinlinc-client.sh
       - konsole.sh
       - other.sh
