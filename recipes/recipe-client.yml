@@ -79,7 +79,7 @@ modules:
 
   - type: script
     scripts:
-      - thinlinc-server.sh
+      #- thinlinc-server.sh
       - thinlinc-client.sh
       - printers.sh
       - systemd.sh
