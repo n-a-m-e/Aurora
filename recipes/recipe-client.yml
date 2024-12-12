@@ -23,14 +23,14 @@ modules:
     install:
       - konsole
       - yakuake
-      - flatpak-builder
-      - inotify-tools
-      - pam-kwallet
-      - docker
+      #- flatpak-builder
+      #- inotify-tools
+      #- pam-kwallet
+      #- docker
       # for printers.
-      - poppler-glib
-      - systemd-devel
-      - tinyxml
+      #- poppler-glib
+      #- systemd-devel
+      #- tinyxml
     remove:
       - solaar
       - input-leap
@@ -79,12 +79,12 @@ modules:
 
   - type: script
     scripts:
-      - thinlinc-server.sh
+      #- thinlinc-server.sh
       - thinlinc-client.sh
-      - printers.sh
-      - systemd.sh
-      - uivision.sh
-      - gitbutler.sh
+      #- printers.sh
+      #- systemd.sh
+      #- uivision.sh
+      #- gitbutler.sh
       - konsole.sh
       # - pythonpackages.sh
       - other.sh
