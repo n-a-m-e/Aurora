@@ -79,12 +79,12 @@ modules:
 
   - type: script
     scripts:
-      #- thinlinc-server.sh
+      - thinlinc-server.sh
       - thinlinc-client.sh
       - printers.sh
       - systemd.sh
       - uivision.sh
-      - gitbutler.sh
+      #- gitbutler.sh
       - konsole.sh
       # - pythonpackages.sh
       - other.sh
