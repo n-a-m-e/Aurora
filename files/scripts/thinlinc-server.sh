@@ -89,16 +89,13 @@ sed -i 's|agent_hostname=|agent_hostname=aurora|g' /opt/thinlinc/etc/conf.d/vsma
 #Prompt=false
 #EOF
 
-#add hostname to /usr/etc/hosts
-cat <<'EOF' > /usr/etc/hosts
+#prepend hostname to /usr/etc/hosts
+cat <<EOF > /usr/etc/hosts
 # Loopback entries; do not change.
-# For historical reasons, localhost precedes localhost.localdomain:
-127.0.0.1   aurora localhost localhost.localdomain localhost4 localhost4.localdomain4
-::1         aurora localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1   aurora
+::1         aurora
 
-# Disable wpad
-127.0.0.1   wpad wpad.*
-
+$(cat /usr/etc/hosts)
 EOF
 
 #/opt does not persist after build so move to /usr/lib/opt
