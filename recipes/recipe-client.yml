@@ -27,10 +27,6 @@ modules:
       - inotify-tools
       - pam-kwallet
       - docker
-      # for printers.
-      - poppler-glib
-      - systemd-devel
-      - tinyxml
     remove:
       - solaar
       - input-leap
@@ -81,12 +77,7 @@ modules:
     scripts:
       - thinlinc-server.sh
       - thinlinc-client.sh
-      - printers.sh
-      - systemd.sh
-      - uivision.sh
-      #- gitbutler.sh
       - konsole.sh
-      # - pythonpackages.sh
       - other.sh
 
   - type: systemd
