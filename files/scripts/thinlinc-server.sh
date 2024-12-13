@@ -15,7 +15,7 @@ unzip tl-*server.zip
 rpm-ostree install plasma-workspace-x11 sendmail /tmp/thinlinc/tl-*-server/packages/thinlinc-server-*.rpm /tmp/thinlinc/thinlinc-client*.rpm
 
 #Don't know how to build selinux module so disable it
-sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+#sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
 
 #/opt does not persist after build so move to /usr/lib/opt
 mv /opt/thinlinc /usr/lib/opt/thinlinc
