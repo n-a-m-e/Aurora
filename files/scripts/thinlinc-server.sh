@@ -15,7 +15,47 @@ unzip tl-*server.zip
 rpm-ostree install plasma-workspace-x11 sendmail /tmp/thinlinc/tl-*-server/packages/thinlinc-server-*.rpm /tmp/thinlinc/thinlinc-client*.rpm
 
 #Don't know how to build selinux module so disable it
-#sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+#sudo rpm-ostree install selinux-policy-devel ### checkmodule -M -m -o thinlinc.mod thinlinc.te ### semodule_package -o thinlinc.pp -m thinlinc.mod ### semodule -i thinlinc.pp
+sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+
+cat <<'EOF' > /tmp/thinlinc/tl-setup-answers.conf
+accept-eula=yes
+server-type=master
+migrate-conf=parameters
+install-required-libs=no
+install-nfs=no
+install-sshd=no
+install-gtk=no
+install-python-ldap=no
+email-address=root@localhost
+# Password = "password"
+tlwebadm-password=$6$e07548c54799799b$Wz7FQKAXvYe5agpnyZVnQ3/kETCjMNnABR4GBWx3nwrQEyemjFNS0YPjP.56IRzi41eHVlE.EfFk0QlbK/A0R/
+setup-thinlocal=no
+setup-nearest=no
+setup-firewall=yes
+setup-selinux=yes
+setup-apparmor=no
+missing-answer=ask
+EOF
+
+sed -i 's|LOGFILE = "/var/log/tlsetup.log"|LOGFILE = "/tmp/thinlinc/tlsetup.log"|g' /opt/thinlinc/modules/thinlinc/tlsetup/__init__.py
+sed -i 's|import thinlinc . tlsetup . system_check|#import thinlinc . tlsetup . system_check|g' /opt/thinlinc/libexec/tl-setup.py
+sed -i 's|import thinlinc . tlsetup . requirements|#import thinlinc . tlsetup . requirements|g' /opt/thinlinc/libexec/tl-setup.py
+
+/opt/thinlinc/sbin/tl-setup -a /tmp/thinlinc/tl-setup-answers.conf
+
+sed -i 's|LOGFILE = "/tmp/thinlinc/tlsetup.log"|LOGFILE = "/var/log/tlsetup.log"|g' /opt/thinlinc/modules/thinlinc/tlsetup/__init__.py
+sed -i 's|#import thinlinc . tlsetup . system_check|import thinlinc . tlsetup . system_check|g' /opt/thinlinc/libexec/tl-setup.py
+sed -i 's|#import thinlinc . tlsetup . requirements|import thinlinc . tlsetup . requirements|g' /opt/thinlinc/libexec/tl-setup.py
+
+#prepend hostname to /usr/etc/hosts
+cat <<EOF > /usr/etc/hosts
+# Loopback entries; do not change.
+127.0.0.1   aurora
+::1         aurora
+
+$(cat /usr/etc/hosts)
+EOF
 
 #/opt does not persist after build so move to /usr/lib/opt
 mv /opt/thinlinc /usr/lib/opt/thinlinc
