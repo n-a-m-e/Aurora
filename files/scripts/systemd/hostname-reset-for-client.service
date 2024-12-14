@@ -1,0 +1,12 @@
+[Unit]
+Description=hostname-reset-for-client
+
+[Service]
+User=root
+WorkingDirectory=/
+ExecStart=/bin/bash -c 'hostnamectl --transient set-hostname aurora-client'
+RemainAfterExit=true
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target
