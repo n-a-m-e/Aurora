@@ -5,11 +5,11 @@
 # builds actually ran successfully without any errors!
 set -oue pipefail
 
-mkdir /tmp/thinlinc-client
-#wget -O /tmp/thinlinc-client/thinlinc-client-4.17.0-3543.x86_64.rpm https://www.cendio.com/downloads/clients/thinlinc-client-4.17.0-3543.x86_64.rpm
-wget -O /tmp/thinlinc-client/thinlinc-client-4.17.0-3543.x86_64.rpm https://github.com/n-a-m-e/Aurora-Files/releases/download/thinlinc-client-4.17.0-3543/thinlinc-client-4.17.0-3543.x86_64.rpm
-cd /tmp/thinlinc-client
-sudo rpm-ostree install /tmp/thinlinc-client/thinlinc-client*.rpm
+mkdir /tmp/thinlinc
+#wget -O /tmp/thinlinc/thinlinc-client-4.17.0-3543.x86_64.rpm https://www.cendio.com/downloads/clients/thinlinc-client-4.17.0-3543.x86_64.rpm
+wget -O /tmp/thinlinc/thinlinc-client-4.17.0-3543.x86_64.rpm https://github.com/n-a-m-e/Aurora-Files/releases/download/thinlinc-client-4.17.0-3543/thinlinc-client-4.17.0-3543.x86_64.rpm
+cd /tmp/thinlinc
+sudo rpm-ostree install /tmp/thinlinc/thinlinc-client*.rpm
 
 #/opt does not persist after build so move to /usr/lib/opt
 mv /opt/thinlinc /usr/lib/opt/thinlinc
