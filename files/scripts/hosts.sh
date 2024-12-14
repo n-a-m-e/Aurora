@@ -5,6 +5,9 @@
 # builds actually ran successfully without any errors!
 set -oue pipefail
 
+#Don't know how to build selinux module so disable it
+sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+
 #add localhost to /usr/etc/hosts
 cat <<'EOF' >> /usr/etc/hosts
 
