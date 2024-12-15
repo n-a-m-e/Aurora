@@ -11,6 +11,10 @@ wget -O /tmp/thinlinc/thinlinc-client-4.17.0-3543.x86_64.rpm https://github.com/
 cd /tmp/thinlinc
 sudo rpm-ostree install /tmp/thinlinc/thinlinc-client*.rpm
 
+#Add client defaults
+sed -i 's|FULL_SCREEN_MODE=.*|FULL_SCREEN_MODE=1|g' /opt/thinlinc/etc/tlclient.conf
+sed -i 's|SERVER_NAME=.*|SERVER_NAME=aurora|g' /opt/thinlinc/etc/tlclient.conf
+
 #/opt does not persist after build so move to /usr/lib/opt
 mv /opt/thinlinc /usr/lib/opt/thinlinc
 
