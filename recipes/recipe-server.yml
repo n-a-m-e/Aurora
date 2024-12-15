@@ -105,7 +105,11 @@ modules:
         - restic-backup.timer
         #- restic-prune.service
         #- restic-prune.timer
-      disabled: []
+      disabled:
+        - sleep.target
+        - suspend.target
+        - hibernate.target
+        - hybrid-sleep.target
         # - avahi-daemon.socket
         # - avahi-daemon
         # - iscsi.service
@@ -119,7 +123,7 @@ modules:
         # - raid-check.timer
         # - nfs-convert.service
         # - nfs-client.target
-        # - my-custom.service
+
     user:
       enabled: []
         # - my-custom.service
