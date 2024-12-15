@@ -78,12 +78,13 @@ modules:
       - thinlinc-client.sh
       - konsole.sh
       - hosts.sh
+      - systemd-client.sh
       - other.sh
 
   - type: systemd
     system:
       enabled: []
-        #- vsmserver.service
+        - hostname-reset-for-client.service
         #- vsmagent.service
         #- tlwebaccess.service
         #- tlwebadm.service
