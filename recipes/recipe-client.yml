@@ -83,7 +83,7 @@ modules:
 
   - type: systemd
     system:
-      enabled: []
+      enabled:
         - hostname-reset-for-client.service
         #- vsmagent.service
         #- tlwebaccess.service
