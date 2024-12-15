@@ -37,7 +37,6 @@ modules:
       - kdebugsettings
       - skanpage
       - plasma-discover
-      - partitionmanager
       # remove if based on ghcr.io/ublue-os/aurora-dx
       # - sysprof
 
