@@ -48,6 +48,12 @@ sed -i 's|LOGFILE = "/tmp/thinlinc/tlsetup.log"|LOGFILE = "/var/log/tlsetup.log"
 sed -i 's|#import thinlinc . tlsetup . system_check|import thinlinc . tlsetup . system_check|g' /opt/thinlinc/libexec/tl-setup.py
 sed -i 's|#import thinlinc . tlsetup . requirements|import thinlinc . tlsetup . requirements|g' /opt/thinlinc/libexec/tl-setup.py
 
+#Remove intro from login
+sed -i 's|show_intro=.*|show_intro=false|g' /opt/thinlinc/etc/conf.d/profiles.hconf
+
+#add hostname to /usr/lib/opt/thinlinc/etc/conf.d/vsmagent.hconf
+sed -i 's|agent_hostname=|agent_hostname=aurora|g' /opt/thinlinc/etc/conf.d/vsmagent.hconf
+
 #prepend hostname to /usr/etc/hosts
 cat <<EOF > /usr/etc/hosts
 # Loopback entries; do not change.
@@ -78,4 +84,66 @@ L+ /var/opt/thinlinc/share - - - - /usr/lib/opt/thinlinc/share
 L+ /var/opt/thinlinc/etc - - - - /usr/lib/opt/thinlinc/etc
 L+ /var/opt/thinlinc/bin - - - - /usr/lib/opt/thinlinc/bin
 L+ /var/opt/thinlinc/libexec - - - - /usr/lib/opt/thinlinc/libexec
+EOF
+
+#Remove Polkit authentication dialogs during login
+cat <<'EOF' > /etc/polkit-1/rules.d/40-thinlinc-no-auth-dialogs.rules
+polkit.addRule(function(action, subject) {
+   if (action.id == "org.freedesktop.color-manager.create-device" ||
+        action.id == "org.freedesktop.color-manager.create-profile" ||
+        action.id == "org.freedesktop.color-manager.delete-device" ||
+        action.id == "org.freedesktop.color-manager.delete-profile" ||
+        action.id == "org.freedesktop.color-manager.modify-device" ||
+        action.id == "org.freedesktop.color-manager.modify-profile") {
+	if (!subject.local) {
+		return polkit.Result.NO;
+	}
+   }
+});
+
+polkit.addRule(function(action, subject) {
+   if (action.id == "org.freedesktop.packagekit.system-network-proxy-configure" ||
+       action.id == "org.freedesktop.packagekit.system-sources-refresh") {
+	if (!subject.local) {
+		return polkit.Result.NO;
+	}
+   }
+});
+
+polkit.addRule(function(action, subject) {
+   if (action.id == "org.freedesktop.NetworkManager.network-control") {
+	if (!subject.local) {
+		return polkit.Result.NO;
+	}
+   }
+});
+
+polkit.addRule(function(action, subject) {
+   if (action.id == "org.freedesktop.login1.suspend" ||
+       action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
+       action.id == "org.freedesktop.login1.suspend-ignore-inhibit" ||
+       action.id == "org.freedesktop.login1.hibernate" ||
+       action.id == "org.freedesktop.login1.hibernate-multiple-sessions" ||
+       action.id == "org.freedesktop.login1.hibernate-ignore-inhibit") {
+	if (!subject.local) {
+		return polkit.Result.NO;
+	}
+   }
+});
+
+polkit.addRule(function(action, subject) {
+   if (action.id == "org.freedesktop.login1.power-off" ||
+       action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+       action.id == "org.freedesktop.login1.power-off-ignore-inhibit" ||
+       action.id == "org.freedesktop.login1.reboot" ||
+       action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
+       action.id == "org.freedesktop.login1.reboot-ignore-inhibit" ||
+       action.id == "org.freedesktop.login1.halt" ||
+       action.id == "org.freedesktop.login1.halt-multiple-sessions" ||
+       action.id == "org.freedesktop.login1.halt-ignore-inhibit") {
+	if (!subject.local) {
+		return polkit.Result.YES;
+	}
+   }
+});
 EOF
