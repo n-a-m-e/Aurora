@@ -36,6 +36,7 @@ modules:
       - input-remapper
       - kdebugsettings
       - skanpage
+      - plasma-discover-notifier
       - plasma-discover
       # remove if based on ghcr.io/ublue-os/aurora-dx
       # - sysprof
