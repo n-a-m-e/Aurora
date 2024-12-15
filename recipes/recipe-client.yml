@@ -89,6 +89,7 @@ modules:
       - hosts.sh
       - systemd-client.sh
       - other.sh
+      - fingerprint.sh
 
   - type: systemd
     system:
