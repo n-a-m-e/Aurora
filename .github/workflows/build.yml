@@ -29,6 +29,7 @@ jobs:
         recipe:
           # !! Add your recipes here
           - recipe-server.yml
+          - recipe-workstation.yml
           - recipe-client.yml
     steps:
       # the build is fully handled by the reusable github action
