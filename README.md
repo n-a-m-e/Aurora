@@ -2,6 +2,7 @@
   ```
   rpm-ostree rebase ostree-unverified-registry:ghcr.io/n-a-m-e/aurora-server:latest
   rpm-ostree rebase ostree-unverified-registry:ghcr.io/n-a-m-e/aurora-client:latest
+  rpm-ostree rebase ostree-unverified-registry:ghcr.io/n-a-m-e/aurora-workstation:latest
   ```
 - Reboot to complete the rebase:
   ```
@@ -11,6 +12,7 @@
   ```
   rpm-ostree rebase ostree-image-signed:docker://ghcr.io/n-a-m-e/aurora-server:latest
   rpm-ostree rebase ostree-image-signed:docker://ghcr.io/n-a-m-e/aurora-client:latest
+  rpm-ostree rebase ostree-image-signed:docker://ghcr.io/n-a-m-e/aurora-workstation:latest
   ```
 - Reboot again to complete the installation
   ```
