@@ -8,6 +8,9 @@ set -oue pipefail
 #Don't know how to build selinux module so disable it
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
 
+#add hostname to /usr/lib/opt/thinlinc/etc/conf.d/vsmagent.hconf
+sed -i 's|agent_hostname=|agent_hostname=aurora|g' /usr/lib/opt/thinlinc/etc/conf.d/vsmagent.hconf
+
 #add localhost to /usr/etc/hosts
 mkdir -p /usr/etc
 cat <<'EOF' >> /usr/etc/hosts
