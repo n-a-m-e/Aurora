@@ -9,6 +9,7 @@ set -oue pipefail
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
 
 #add localhost to /usr/etc/hosts
+mkdir -p /usr/etc
 cat <<'EOF' >> /usr/etc/hosts
 
 # Loopback entries; do not change.
