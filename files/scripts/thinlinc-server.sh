@@ -54,15 +54,6 @@ sed -i 's|show_intro=.*|show_intro=false|g' /opt/thinlinc/etc/conf.d/profiles.hc
 #add hostname to /usr/lib/opt/thinlinc/etc/conf.d/vsmagent.hconf
 sed -i 's|agent_hostname=|agent_hostname=aurora|g' /opt/thinlinc/etc/conf.d/vsmagent.hconf
 
-#prepend hostname to /usr/etc/hosts
-cat <<EOF > /usr/etc/hosts
-# Loopback entries; do not change.
-127.0.0.1   aurora
-::1         aurora
-
-$(cat /usr/etc/hosts)
-EOF
-
 #/opt does not persist after build so move to /usr/lib/opt
 mv /opt/thinlinc /usr/lib/opt/thinlinc
 
