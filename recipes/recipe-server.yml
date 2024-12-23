@@ -80,13 +80,12 @@ modules:
   - type: script
     scripts:
       - thinlinc-server.sh
-      - thinlinc-server-hostname.sh
+      - thinlinc-server-hosts.sh
       - printers.sh
       - systemd.sh
       - uivision.sh
       - gitbutler.sh
       - konsole.sh
-      - hosts.sh
       - other.sh
 
   - type: systemd
