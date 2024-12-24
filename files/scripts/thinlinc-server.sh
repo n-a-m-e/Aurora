@@ -8,11 +8,9 @@ set -oue pipefail
 mkdir /tmp/thinlinc
 #wget -O /tmp/thinlinc/tl-4.17.0-server.zip https://www.cendio.com/downloads/server/tl-4.17.0-server.zip
 wget -O /tmp/thinlinc/tl-4.17.0-server.zip https://github.com/n-a-m-e/Aurora-Files/releases/download/tl-4.17.0-server/tl-4.17.0-server.zip
-#wget -O /tmp/thinlinc-client/thinlinc-client-4.17.0-3543.x86_64.rpm https://www.cendio.com/downloads/clients/thinlinc-client-4.17.0-3543.x86_64.rpm
-wget -O /tmp/thinlinc/thinlinc-client-4.17.0-3543.x86_64.rpm https://github.com/n-a-m-e/Aurora-Files/releases/download/thinlinc-client-4.17.0-3543/thinlinc-client-4.17.0-3543.x86_64.rpm
 cd /tmp/thinlinc
 unzip tl-*server.zip
-rpm-ostree install plasma-workspace-x11 sendmail /tmp/thinlinc/tl-*-server/packages/thinlinc-server-*.rpm /tmp/thinlinc/thinlinc-client*.rpm
+rpm-ostree install plasma-workspace-x11 sendmail /tmp/thinlinc/tl-*-server/packages/thinlinc-server-*.rpm
 
 #Don't know how to build selinux module so disable it
 #sudo rpm-ostree install selinux-policy-devel ### checkmodule -M -m -o thinlinc.mod thinlinc.te ### semodule_package -o thinlinc.pp -m thinlinc.mod ### semodule -i thinlinc.pp
@@ -50,6 +48,9 @@ sed -i 's|#import thinlinc . tlsetup . requirements|import thinlinc . tlsetup . 
 
 #Remove intro from login
 sed -i 's|show_intro=.*|show_intro=false|g' /opt/thinlinc/etc/conf.d/profiles.hconf
+
+#add hostname to /usr/lib/opt/thinlinc/etc/conf.d/vsmagent.hconf
+sed -i 's|agent_hostname=|agent_hostname=aurora|g' /opt/thinlinc/etc/conf.d/vsmagent.hconf
 
 #/opt does not persist after build so move to /usr/lib/opt
 mv /opt/thinlinc /usr/lib/opt/thinlinc
@@ -135,3 +136,41 @@ polkit.addRule(function(action, subject) {
    }
 });
 EOF
+
+#add localhost to /usr/etc/hosts
+mkdir -p /usr/etc
+cat <<'EOF' >> /usr/etc/hosts
+
+# Loopback entries; do not change.
+127.0.0.1   aurora
+::1         aurora
+
+# Loopback entries; do not change.
+# For historical reasons, localhost precedes localhost.localdomain:
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+# Disable wpad
+127.0.0.1   wpad wpad.*
+
+EOF
+
+#Block things via hosts file
+curl https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling-porn/hosts >> /usr/etc/hosts
+#Remove Google Ads Blocking
+sed -i 's/0.0.0.0 google-analytics.com//g' /usr/etc/hosts
+sed -i 's/0.0.0.0 ssl.google-analytics.com//g' /usr/etc/hosts
+sed -i 's/0.0.0.0 www.google-analytics.com//g' /usr/etc/hosts
+sed -i 's/0.0.0.0 ads.google.com//g' /usr/etc/hosts
+sed -i 's/0.0.0.0 adservice.google.com//g' /usr/etc/hosts
+sed -i 's/0.0.0.0 s0-2mdn-net.l.google.com//g' /usr/etc/hosts
+sed -i 's/0.0.0.0 googleadservices.com//g' /usr/etc/hosts
+sed -i 's/0.0.0.0 pagead2.googleadservices.com//g' /usr/etc/hosts
+sed -i 's/0.0.0.0 www.googleadservices.com//g' /usr/etc/hosts
+#sed -i 's/0.0.0.0 static.googleadsserving.cn//g' /usr/etc/hosts
+#sed -i 's/0.0.0.0 googlesyndication.com//g' /usr/etc/hosts
+#sed -i 's/0.0.0.0 ade.googlesyndication.com//g' /usr/etc/hosts
+#sed -i 's/0.0.0.0 pagead.googlesyndication.com//g' /usr/etc/hosts
+#sed -i 's/0.0.0.0 pagead2.googlesyndication.com//g' /usr/etc/hosts
+#sed -i 's/0.0.0.0 tpc.googlesyndication.com//g' /usr/etc/hosts
+#sed -i 's/0.0.0.0 displayads-formats.googleusercontent.com//g' /usr/etc/hosts
