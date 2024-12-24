@@ -28,3 +28,20 @@ EOF
 
 mkdir -p /usr/etc/xdg/autostart
 cp /usr/share/applications/thinlinc-client.desktop /usr/etc/xdg/autostart/thinlinc-client.desktop
+
+#add localhost to /usr/etc/hosts
+mkdir -p /usr/etc
+cat <<'EOF' >> /usr/etc/hosts
+
+# Loopback entries; do not change.
+# For historical reasons, localhost precedes localhost.localdomain:
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+# Disable wpad
+127.0.0.1   wpad wpad.*
+
+EOF
+
+#Block things via hosts file
+curl https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling-porn/hosts >> /usr/etc/hosts
