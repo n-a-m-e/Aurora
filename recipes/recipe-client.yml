@@ -86,7 +86,6 @@ modules:
     scripts:
       - thinlinc-client.sh
       - konsole.sh
-      - hosts.sh
       - systemd-client.sh
       - other.sh
       - fingerprint.sh
