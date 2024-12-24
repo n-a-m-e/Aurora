@@ -1,0 +1,14 @@
+[Unit]
+Description=Vikunja
+After=syslog.target
+After=network.target
+
+[Service]
+RestartSec=2s
+Type=simple
+WorkingDirectory=/opt/vikunja
+ExecStart=/usr/bin/vikunja
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
