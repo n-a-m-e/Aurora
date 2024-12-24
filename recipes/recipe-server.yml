@@ -80,7 +80,6 @@ modules:
   - type: script
     scripts:
       - thinlinc-server.sh
-      - thinlinc-server-hosts.sh
       - printers.sh
       - systemd.sh
       - uivision.sh
