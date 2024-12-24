@@ -81,7 +81,7 @@ modules:
     scripts:
       - thinlinc-workstation.sh
       #- printers.sh
-      - systemd.sh
+      - systemd-workstation.sh
       - uivision.sh
       - gitbutler.sh
       - konsole.sh
