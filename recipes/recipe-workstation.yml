@@ -83,7 +83,6 @@ modules:
       #- printers.sh
       - systemd-workstation.sh
       - uivision.sh
-      - gitbutler.sh
       - konsole.sh
       - other.sh
 
