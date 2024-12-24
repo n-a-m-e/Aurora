@@ -51,6 +51,10 @@ sed -i 's|#import thinlinc . tlsetup . requirements|import thinlinc . tlsetup . 
 #Remove intro from login
 sed -i 's|show_intro=.*|show_intro=false|g' /opt/thinlinc/etc/conf.d/profiles.hconf
 
+#Add client defaults
+sed -i 's|FULL_SCREEN_MODE=.*|FULL_SCREEN_MODE=1|g' /opt/thinlinc/etc/tlclient.conf
+sed -i 's|SERVER_NAME=.*|SERVER_NAME=aurora|g' /opt/thinlinc/etc/tlclient.conf
+
 #/opt does not persist after build so move to /usr/lib/opt
 mv /opt/thinlinc /usr/lib/opt/thinlinc
 
