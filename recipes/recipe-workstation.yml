@@ -95,7 +95,7 @@ modules:
         - tlwebaccess.service
         - tlwebadm.service
         - sshd.service
-        - vikunja.service
+        - vikunja-start.service
         - flatpak-native-messaging-hosts.service
         - shared-folder.service
         #- flatpak-force-x11.service
