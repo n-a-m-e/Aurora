@@ -85,6 +85,7 @@ modules:
       - uivision.sh
       - konsole.sh
       - other.sh
+      - vikunja.sh
 
   - type: systemd
     system:
