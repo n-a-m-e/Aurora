@@ -98,7 +98,7 @@ modules:
         - vikunja.service
         - flatpak-native-messaging-hosts.service
         - shared-folder.service
-        - flatpak-force-x11.service
+        #- flatpak-force-x11.service
         - hostname-reset-for-client.service
         #- node-server.service
         #- restic-backup.service
