@@ -7,7 +7,7 @@ After=network.target
 RestartSec=2s
 Type=simple
 WorkingDirectory=/opt/vikunja
-ExecStart=/usr/bin/vikunja
+ExecStart=/opt/vikunja/vikunja
 Restart=always
 
 [Install]
