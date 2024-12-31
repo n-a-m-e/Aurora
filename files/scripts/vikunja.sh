@@ -6,8 +6,8 @@
 set -oue pipefail
 
 mkdir /tmp/vikunja
-wget -O /tmp/vikunja/vikunja-0.24.6-x86_64.rpm https://dl.vikunja.io/vikunja/0.24.6/vikunja-0.24.6-x86_64.rpm
-#wget -O /tmp/vikunja/vikunja-0.24.6-x86_64.rpm https://github.com/n-a-m-e/Aurora-Files/releases/download/vikunja-0.24.6-x86_64/vikunja-0.24.6-x86_64.rpm
+#wget -O /tmp/vikunja/vikunja-0.24.6-x86_64.rpm https://dl.vikunja.io/vikunja/0.24.6/vikunja-0.24.6-x86_64.rpm
+wget -O /tmp/vikunja/vikunja-0.24.6-x86_64.rpm https://github.com/n-a-m-e/Aurora-Files/releases/download/vikunja-0.24.6-x86_64/vikunja-0.24.6-x86_64.rpm
 cd /tmp/vikunja
 sudo rpm-ostree install /tmp/vikunja/vikunja*.rpm
 
@@ -18,4 +18,5 @@ mv /opt/vikunja /usr/lib/opt/vikunja
 cat <<'EOF' > /usr/lib/tmpfiles.d/vikunja.conf
 d /var/opt/vikunja 755 root root -
 L+ /var/opt/vikunja/vikunja - - - - /usr/lib/opt/vikunja/vikunja
+L+ /usr/bin/vikunja - - - - /var/opt/vikunja/vikunja
 EOF
