@@ -12,7 +12,7 @@ cd /tmp/vikunja
 sudo rpm-ostree install /tmp/vikunja/vikunja*.rpm
 
 #configure options in /etc/vikunja/config.yml
-sed -i 's|timezone:.*|timezone: AEST|g' /etc/vikunja/config.yml
+sed -i 's|timezone:.*|timezone: Australia/Sydney|g' /etc/vikunja/config.yml
 sed -i 's|week_start: 0|week_start: 1|g' /etc/vikunja/config.yml
 sed -i 's|language: <unset>|language: en|g' /etc/vikunja/config.yml
 sed -i 's|path: "./vikunja.db"|path: "/var/opt/vikunja/vikunja.db"|g' /etc/vikunja/config.yml
