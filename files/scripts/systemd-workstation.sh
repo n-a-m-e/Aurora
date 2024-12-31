@@ -9,7 +9,7 @@ sed -i 's|SocketGroup=docker|SocketGroup=users|' /usr/lib/systemd/system/docker.
 
 cd "$(dirname "$0")"
 cp systemd/hostname-reset-for-client.service /usr/lib/systemd/system/hostname-reset-for-client.service
-cp systemd/vikunja.service /usr/lib/systemd/system/vikunja.service
+cp systemd/vikunja-start.service /usr/lib/systemd/system/vikunja-start.service
 cp systemd/http-server.service /usr/lib/systemd/system/http-server.service
 cp systemd/flatpak-force-x11.service /usr/lib/systemd/system/flatpak-force-x11.service
 
