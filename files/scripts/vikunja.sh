@@ -9,7 +9,7 @@ mkdir /tmp/vikunja
 #wget -O /tmp/vikunja/vikunja-0.24.6-x86_64.rpm https://dl.vikunja.io/vikunja/0.24.6/vikunja-0.24.6-x86_64.rpm
 wget -O /tmp/vikunja/vikunja-0.24.6-x86_64.rpm https://github.com/n-a-m-e/Aurora-Files/releases/download/vikunja-0.24.6-x86_64/vikunja-0.24.6-x86_64.rpm
 cd /tmp/vikunja
-sudo rpm-ostree install /tmp/vikunja/vikunja*.rpm
+rpm-ostree install /tmp/vikunja/vikunja*.rpm
 
 #configure options in /etc/vikunja/config.yml
 sed -i 's|timezone:.*|timezone: Australia/Sydney|g' /etc/vikunja/config.yml
