@@ -9,7 +9,7 @@ mkdir /tmp/thinlinc
 #wget -O /tmp/thinlinc/thinlinc-client-4.18.0-3768.x86_64.rpm https://www.cendio.com/downloads/clients/thinlinc-client-4.18.0-3768.x86_64.rpm
 wget -O /tmp/thinlinc/thinlinc-client-4.18.0-3768.x86_64.rpm https://github.com/n-a-m-e/Aurora-Files/releases/download/thinlinc-client-4.18.0-3768/thinlinc-client-4.18.0-3768.x86_64.rpm
 cd /tmp/thinlinc
-sudo rpm-ostree install /tmp/thinlinc/thinlinc-client*.rpm
+rpm-ostree install /tmp/thinlinc/thinlinc-client*.rpm
 
 #Add client defaults
 sed -i 's|FULL_SCREEN_MODE=.*|FULL_SCREEN_MODE=1|g' /opt/thinlinc/etc/tlclient.conf
