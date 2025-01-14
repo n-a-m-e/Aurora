@@ -23,6 +23,7 @@ sed -i ':a;N;$!ba;s|cors:.*origins:|cors:\n  enable: true\n  origins:|g' /etc/vi
 #/opt does not persist after build so move to /usr/lib/opt
 mv /opt/vikunja /usr/lib/opt/vikunja
 
+
 #create required directories and symlinks at boot
 cat <<'EOF' > /usr/lib/tmpfiles.d/vikunja.conf
 d /var/opt/vikunja 755 root root -
