@@ -117,9 +117,7 @@ polkit.addRule(function(action, subject) {
        action.id == "org.freedesktop.login1.hibernate" ||
        action.id == "org.freedesktop.login1.hibernate-multiple-sessions" ||
        action.id == "org.freedesktop.login1.hibernate-ignore-inhibit") {
-	if (!subject.local) {
-		return polkit.Result.NO;
-	}
+	return polkit.Result.NO;
    }
 });
 
