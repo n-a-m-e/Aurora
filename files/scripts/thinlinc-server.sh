@@ -50,7 +50,7 @@ sed -i 's|#import thinlinc . tlsetup . requirements|import thinlinc . tlsetup . 
 sed -i 's|show_intro=.*|show_intro=false|g' /opt/thinlinc/etc/conf.d/profiles.hconf
 
 #add hostname to /usr/lib/opt/thinlinc/etc/conf.d/vsmagent.hconf
-sed -i 's|agent_hostname=|agent_hostname=aurora|g' /opt/thinlinc/etc/conf.d/vsmagent.hconf
+#sed -i 's|agent_hostname=|agent_hostname=aurora|g' /opt/thinlinc/etc/conf.d/vsmagent.hconf
 
 #/opt does not persist after build so move to /usr/lib/opt
 mv /opt/thinlinc /usr/lib/opt/thinlinc
