@@ -102,6 +102,7 @@ modules:
         - shared-folder.service
         - flatpak-force-x11.service
         - node-server.service
+        - pihole.service
         - restic-backup.service
         - restic-backup.timer
         #- restic-prune.service
