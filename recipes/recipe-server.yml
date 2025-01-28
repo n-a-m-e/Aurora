@@ -86,6 +86,7 @@ modules:
       - gitbutler.sh
       - konsole.sh
       - other.sh
+      - vikunja.sh
 
   - type: systemd
     system:
@@ -95,6 +96,7 @@ modules:
         - tlwebaccess.service
         - tlwebadm.service
         - sshd.service
+        - vikunja-start.service
         # - http-server.service
         - flatpak-native-messaging-hosts.service
         - shared-folder.service
