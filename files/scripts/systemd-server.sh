@@ -15,6 +15,10 @@ cp systemd/restic-backup.service /usr/lib/systemd/system/restic-backup.service
 cp systemd/restic-backup.timer /usr/lib/systemd/system/restic-backup.timer
 
 
+cp systemd/pihole.service /usr/lib/systemd/system/pihole.service
+cp systemd/pihole.sh /usr/sbin/pihole.sh
+chmod a+x "/usr/sbin/pihole.sh"
+
 cp systemd/node-server.service /usr/lib/systemd/system/node-server.service
 cp systemd/node-server.sh /usr/sbin/node-server.sh
 chmod a+x "/usr/sbin/node-server.sh"
