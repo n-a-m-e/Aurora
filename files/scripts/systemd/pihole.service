@@ -1,0 +1,13 @@
+[Unit]
+Description=pihole
+
+[Service]
+User=root
+WorkingDirectory=/
+ExecStart=/usr/sbin/pihole.sh
+Type=simple
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
