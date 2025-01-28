@@ -8,6 +8,7 @@ set -oue pipefail
 sed -i 's|SocketGroup=docker|SocketGroup=users|' /usr/lib/systemd/system/docker.socket
 
 cd "$(dirname "$0")"
+cp systemd/vikunja-start.service /usr/lib/systemd/system/vikunja-start.service
 cp systemd/http-server.service /usr/lib/systemd/system/http-server.service
 cp systemd/flatpak-force-x11.service /usr/lib/systemd/system/flatpak-force-x11.service
 cp systemd/restic-backup.service /usr/lib/systemd/system/restic-backup.service
