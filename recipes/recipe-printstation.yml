@@ -81,7 +81,7 @@ modules:
 
   - type: systemd
     system:
-      enabled:
+      enabled: []
         # - http-server.service
         #- restic-prune.service
         #- restic-prune.timer
