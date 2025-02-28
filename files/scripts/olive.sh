@@ -14,3 +14,4 @@ unzip Olive-1e3cf53-x86_64-share.zip
 cp -r /tmp/olive/share /usr/share
 mkdir /usr/lib/opt/olive
 mv /tmp/olive/Olive-1e3cf53-x86_64.AppImage /usr/lib/opt/olive/Olive-1e3cf53-x86_64.AppImage
+chmod a+x "/usr/lib/opt/olive/Olive-1e3cf53-x86_64.AppImage"
