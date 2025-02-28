@@ -32,7 +32,7 @@ modules:
       #- systemd-devel
       #- tinyxml
     remove:
-      - solaar
+      # - solaar
       - kdeconnectd
       - kde-connect-libs
       - kde-connect
