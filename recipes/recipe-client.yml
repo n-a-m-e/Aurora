@@ -28,7 +28,7 @@ modules:
       - pam-kwallet
       - docker
     remove:
-      - solaar
+      # - solaar
       - kdeconnectd
       - kde-connect-libs
       - kde-connect
