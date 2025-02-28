@@ -33,7 +33,6 @@ modules:
       #- tinyxml
     remove:
       - solaar
-      - input-leap
       - kdeconnectd
       - kde-connect-libs
       - kde-connect
