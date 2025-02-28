@@ -87,6 +87,7 @@ modules:
       - konsole.sh
       - other.sh
       - vikunja.sh
+      - olive.sh
 
   - type: systemd
     system:
