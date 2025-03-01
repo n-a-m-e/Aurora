@@ -21,4 +21,5 @@ update-mime-database /usr/share/mime
 cat <<'EOF' > /usr/lib/tmpfiles.d/olive.conf
 d /var/opt/olive 755 root root -
 L+ /var/opt/olive/Olive-1e3cf53-x86_64.AppImage - - - - /usr/lib/opt/olive/Olive-1e3cf53-x86_64.AppImage
+L+ /var/opt/olive/Olive-8ac191ce-Linux-x86_64.AppImage - - - - /usr/lib/opt/olive/Olive-8ac191ce-Linux-x86_64.AppImage
 EOF
