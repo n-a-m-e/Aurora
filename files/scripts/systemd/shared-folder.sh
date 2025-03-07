@@ -36,20 +36,32 @@ for flatpak in $flatpaks; do
     fi
 done
 
-PreviousFilename=""
-inotifywait -mqr /home/Shared /home/Node /home/Git /home/Trash /home/Storage /home/Secrets -e create,close_write,modify,moved_to --format "%w%f" | while read Filename; do
-    if [ "$PreviousFilename" != "$Filename" ]; then
-        PreviousFilename="$Filename"
-        (
-        sleep 2
-        if [[ -e "$Filename" ]]; then
-            Permissions=$(stat --format="%a%G" "$Filename")
-            if [[ "$Permissions" != "2775users" ]]; then
-                setfacl -b -R "$Filename"
-                chown -R root:users "$Filename"
-                chmod -R 2775 "$Filename"
+process_file() {
+    local filename="$1"
+    if [[ -e "$filename" ]]; then
+        if ! fuser "$filename" >/dev/null 2>&1; then
+            local permissions=$(stat --format="%a%G" "$filename")
+            if [[ "$permissions" != "2775users" ]]; then
+                setfacl -b -R "$filename"
+                chown -R root:users "$filename"
+                chmod -R 2775 "$filename"
             fi
+        else
+            sleep 30
+            process_file "$filename"
         fi
+    fi
+}
+
+# Use inotifywait to monitor directories for file changes
+previousFilename=""
+inotifywait -mqr /home/Shared /home/Node /home/Git /home/Trash /home/Storage /home/Secrets -e create,close_write,modify,moved_to --format "%w%f" |
+while read filename; do
+    if [ "$previousFilename" != "$filename" ]; then
+        previousFilename="$filename"
+        (
+        sleep 3
+        process_file "$filename"
         ) &
     fi
 done
