@@ -10,7 +10,7 @@ mkdir /tmp/nix
 wget -O /tmp/nix/nix-installer-x86_64-linux https://install.determinate.systems/nix/nix-installer-x86_64-linux
 chmod a+x "/tmp/nix/nix-installer-x86_64-linux"
 cd /tmp/nix
-./nix-installer-x86_64-linux
+./nix-installer-x86_64-linux install --verbose
 
 nix-channel --add https://github.com/nix-community/nixGL/archive/main.tar.gz nixgl && nix-channel --update
 
