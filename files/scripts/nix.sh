@@ -6,11 +6,11 @@
 set -oue pipefail
 
 mkdir /tmp/nix
-#wget -O /tmp/vikunja/vikunja-0.24.6-x86_64.rpm https://dl.vikunja.io/vikunja/0.24.6/vikunja-0.24.6-x86_64.rpm
-wget -O /tmp/nix/nix-installer-x86_64-linux https://install.determinate.systems/nix/nix-installer-x86_64-linux
+#wget -O /tmp/nix/nix-installer-x86_64-linux https://install.determinate.systems/nix/nix-installer-x86_64-linux
+wget -O /tmp/nix/nix-installer-x86_64-linux https://github.com/n-a-m-e/Aurora-Files/releases/download/nix-installer-x86_64-linux/nix-installer-x86_64-linux
 chmod a+x "/tmp/nix/nix-installer-x86_64-linux"
 cd /tmp/nix
-./nix-installer-x86_64-linux install --verbose --no-start-daemon
+./nix-installer-x86_64-linux install --verbose -- --no-start-daemon
 
 nix-channel --add https://github.com/nix-community/nixGL/archive/main.tar.gz nixgl && nix-channel --update
 
