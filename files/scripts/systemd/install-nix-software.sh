@@ -10,7 +10,14 @@ else
   chmod a+x "/tmp/nix/nix-installer-x86_64-linux"
   cd /tmp/nix
   ./nix-installer-x86_64-linux install ostree --determinate --no-confirm
-  nix-channel --add https://github.com/nix-community/nixGL/archive/main.tar.gz nixgl && nix-channel --update
+fi
+
+if command -v nixGL >&2; then
+  echo nixGL is available
+else
+  echo nixGL is not available
+  while ! ping -c1 github.com; do sleep 2; done
+  /bin/bash -c 'nix-channel --add https://github.com/nix-community/nixGL/archive/main.tar.gz nixgl && nix-channel --update'
   #auto.nixGLDefault: Tries to auto-detect and install Nvidia, if not, fallback to mesa. Recommended. Invoke with nixGL program.
   #auto.nixGLNvidia: Proprietary Nvidia driver (auto detection of version)
   #auto.nixGLNvidiaBumblebee: Proprietary Nvidia driver on hybrid hardware (auto detection).
@@ -18,5 +25,13 @@ else
   #auto.nixVulkanNvidia: Proprietary Nvidia driver (auto detection).
   #nixVulkanIntel: Mesa Vulkan implementation.
   #nix-env -iA nixgl.nixGLIntel or replace `nixGLDefault` with your desired wrapper
-  nix-env -iA nixgl.nixGLIntel -iA nixos.davinci-resolvenix-env -iA nixos.davinci-resolve
+  /bin/bash -c 'nix-env -iA nixgl.nixGLIntel'
+fi
+
+if command -v davinci-resolve >&2; then
+  echo davinci-resolve is available
+else
+  echo davinci-resolve is not available
+  while ! ping -c1 github.com; do sleep 2; done
+  /bin/bash -c 'nix-env -iA nixos.davinci-resolvenix-env -iA nixos.davinci-resolve'
 fi
