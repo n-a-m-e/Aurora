@@ -1,6 +1,6 @@
 [Unit]
 Description=install-nix-software
-After=network-online.target
+After=network-online.target ensure-symlinked-units-resolve.service
 Requires=network-online.target
 
 [Service]
