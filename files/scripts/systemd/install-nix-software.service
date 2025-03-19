@@ -1,5 +1,7 @@
 [Unit]
 Description=install-nix-software
+After=network-online.target
+Requires=network-online.target
 
 [Service]
 User=root
