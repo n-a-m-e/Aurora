@@ -1,0 +1,12 @@
+[Unit]
+Description=install-nix-software
+
+[Service]
+User=root
+WorkingDirectory=/
+ExecStart=/usr/sbin/install-nix-software.sh
+RemainAfterExit=true
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target
