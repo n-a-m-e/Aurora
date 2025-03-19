@@ -13,18 +13,18 @@ else
   . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 fi
 
-if command -v nixGL >&2; then
-  echo nixGL is available
+#auto.nixGLDefault: Tries to auto-detect and install Nvidia, if not, fallback to mesa. Recommended. Invoke with nixGL program.
+#auto.nixGLNvidia: Proprietary Nvidia driver (auto detection of version)
+#auto.nixGLNvidiaBumblebee: Proprietary Nvidia driver on hybrid hardware (auto detection).
+#nixGLIntel: Mesa OpenGL implementation (intel, amd, nouveau, ...).
+#auto.nixVulkanNvidia: Proprietary Nvidia driver (auto detection).
+#nixVulkanIntel: Mesa Vulkan implementation.
+if command -v nixGLIntel >&2; then
+  echo nixGLIntel is available
 else
-  echo nixGL is not available
+  echo nixGLIntel is not available
   while ! ping -c1 github.com; do sleep 2; done
   nix-channel --add https://github.com/nix-community/nixGL/archive/main.tar.gz nixgl && nix-channel --update
-  #auto.nixGLDefault: Tries to auto-detect and install Nvidia, if not, fallback to mesa. Recommended. Invoke with nixGL program.
-  #auto.nixGLNvidia: Proprietary Nvidia driver (auto detection of version)
-  #auto.nixGLNvidiaBumblebee: Proprietary Nvidia driver on hybrid hardware (auto detection).
-  #nixGLIntel: Mesa OpenGL implementation (intel, amd, nouveau, ...).
-  #auto.nixVulkanNvidia: Proprietary Nvidia driver (auto detection).
-  #nixVulkanIntel: Mesa Vulkan implementation.
   #nix-env -iA nixgl.nixGLIntel or replace `nixGLDefault` with your desired wrapper
   nix-env -iA nixgl.nixGLIntel
 fi
