@@ -6,11 +6,9 @@
 set -oue pipefail
 
 mkdir /tmp/nix
-#wget -O /tmp/nix/nix-installer-x86_64-linux https://install.determinate.systems/nix/nix-installer-x86_64-linux
-wget -O /tmp/nix/nix-installer-x86_64-linux https://github.com/n-a-m-e/Aurora-Files/releases/download/nix-installer-x86_64-linux/nix-installer-x86_64-linux
-chmod a+x "/tmp/nix/nix-installer-x86_64-linux"
+wget -O /tmp/nix/nix-multi-user-2.24.10.rpm https://nix-community.github.io/nix-installers/nix/x86_64/nix-multi-user-2.24.10.rpm
 cd /tmp/nix
-./nix-installer-x86_64-linux install ostree --determinate --no-confirm --verbose -- --no-start-daemon
+rpm-ostree install /tmp/nix/nix-multi-user*.rpm
 
 nix-channel --add https://github.com/nix-community/nixGL/archive/main.tar.gz nixgl && nix-channel --update
 
@@ -23,3 +21,11 @@ nix-channel --add https://github.com/nix-community/nixGL/archive/main.tar.gz nix
 
 nix-env -iA nixgl.nixGLIntel   # or replace `nixGLDefault` with your desired wrapper
 nix-env -iA nixos.davinci-resolvenix-env -iA nixos.davinci-resolve
+
+#/nix does not persist after build so move to /usr/nix
+mv /nix /usr/nix
+
+#create required directories and symlinks at boot
+cat <<'EOF' > /usr/lib/tmpfiles.d/nix.conf
+L+ /nix - - - - /usr/nix
+EOF
