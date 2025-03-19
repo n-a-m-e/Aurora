@@ -4,6 +4,7 @@ if command -v nix >&2; then
   echo nix is available
 else
   echo nix is not available
+  while ! ping -c1 install.determinate.systems; do sleep 2; done
   mkdir /tmp/nix
   wget -O /tmp/nix/nix-installer-x86_64-linux https://install.determinate.systems/nix/nix-installer-x86_64-linux
   chmod a+x "/tmp/nix/nix-installer-x86_64-linux"
