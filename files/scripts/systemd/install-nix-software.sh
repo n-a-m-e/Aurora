@@ -130,8 +130,8 @@ else
   home-manager init
 fi
 
+home-manager switch
+
 if [ ! -d /home/nix/opengl-driver ]; then
   nix-build --out-link /home/nix/opengl-driver /root/.config/home-manager/opengl-dir.nix
 fi
-
-home-manager switch
