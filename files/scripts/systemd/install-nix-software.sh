@@ -1,32 +1,5 @@
 #!/bin/bash
 
-while ! ping -c1 github.com; do sleep 2; done
-
-if [ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
-  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-fi
-
-if command -v nix >&2; then
-  echo nix is available
-else
-  echo nix is not available
-  mkdir /tmp/nix
-  wget -O /tmp/nix/nix-installer-x86_64-linux https://install.determinate.systems/nix/nix-installer-x86_64-linux
-  chmod a+x "/tmp/nix/nix-installer-x86_64-linux"
-  cd /tmp/nix
-  ./nix-installer-x86_64-linux install ostree --no-confirm
-  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-fi
-
-if command -v home-manager >&2; then
-  echo home-manager is available
-else
-  echo home-manager is not available
-  nix-channel --add https://github.com/nix-community/home-manager/archive/master.tar.gz home-manager && nix-channel --update
-  nix-shell '<home-manager>' -A install
-  home-manager init
-fi
-
 cat <<'EOF' > /root/.config/home-manager/home.nix
 {config, pkgs, lib, ...}: {
   home.username = "root";
@@ -125,6 +98,33 @@ cat <<'EOF' > /etc/environment.d/nixshare.conf
 XDG_DATA_DIRS=${XDG_DATA_DIRS:+$XDG_DATA_DIRS:}/root/.nix-profile/share
 XCURSOR_PATH=${XCURSOR_PATH:+$XCURSOR_PATH:}/root/.nix-profile/share/icons
 EOF
+
+while ! ping -c1 github.com; do sleep 2; done
+
+if [ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
+  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+fi
+
+if command -v nix >&2; then
+  echo nix is available
+else
+  echo nix is not available
+  mkdir /tmp/nix
+  wget -O /tmp/nix/nix-installer-x86_64-linux https://install.determinate.systems/nix/nix-installer-x86_64-linux
+  chmod a+x "/tmp/nix/nix-installer-x86_64-linux"
+  cd /tmp/nix
+  ./nix-installer-x86_64-linux install ostree --no-confirm
+  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+fi
+
+if command -v home-manager >&2; then
+  echo home-manager is available
+else
+  echo home-manager is not available
+  nix-channel --add https://github.com/nix-community/home-manager/archive/master.tar.gz home-manager && nix-channel --update
+  nix-shell '<home-manager>' -A install
+  home-manager init
+fi
 
 if [ ! -d /home/nix/opengl-driver ]; then
   nix-build --out-link /home/nix/opengl-driver /root/.config/home-manager/opengl-dir.nix
