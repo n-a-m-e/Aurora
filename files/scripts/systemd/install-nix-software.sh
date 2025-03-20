@@ -86,6 +86,31 @@ cat <<'EOF' > /root/.config/home-manager/flake.nix
 }
 EOF
 
+cat <<'EOF' > /root/.config/home-manager/opengl-dir.nix
+{
+  lib ? import ( <nixpkgs> + /lib),
+  pkgs ? import <nixpkgs> {
+    config.allowUnfreePredicate =
+      pkg:
+      builtins.elem (lib.getName pkg) [
+        "nvidia-x11"
+      ];
+  },
+  buildEnv ? pkgs.buildEnv,
+  mesa ? pkgs.mesa,
+  linuxPackages ? pkgs.linuxPackages,
+  nvidia-vaapi-driver ? pkgs.nvidia-vaapi-driver
+}:
+buildEnv {
+  name = "opengl-dir";
+  paths = [
+    mesa.drivers
+    linuxPackages.nvidia_x11.out
+    nvidia-vaapi-driver
+  ];
+}
+EOF
+
 cat <<'EOF' > /etc/X11/Xsession.d/10nixshare
 export XDG_DATA_DIRS="$XDG_DATA_DIRS:/root/.nix-profile/share"
 export XCURSOR_PATH="$XCURSOR_PATH:/root/.nix-profile/share/icons"
@@ -100,5 +125,9 @@ cat <<'EOF' > /etc/environment.d/nixshare.conf
 XDG_DATA_DIRS=${XDG_DATA_DIRS:+$XDG_DATA_DIRS:}/root/.nix-profile/share
 XCURSOR_PATH=${XCURSOR_PATH:+$XCURSOR_PATH:}/root/.nix-profile/share/icons
 EOF
+
+if [ ! -d /home/nix/opengl-driver ]; then
+  nix-build --out-link /home/nix/opengl-driver /root/.config/home-manager/opengl-dir.nix
+fi
 
 home-manager switch
