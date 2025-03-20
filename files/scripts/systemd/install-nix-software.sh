@@ -28,35 +28,13 @@ else
 fi
 
 cat <<'EOF' > /root/.config/home-manager/home.nix
-{config, pkgs, nixgl, lib, ...}:
-let
-  nixGLWrap = pkg: pkgs.runCommand "${pkg.name}-nixgl-wrapper" {} ''
-    mkdir $out
-    for folder in $(cd ${pkg} && find -L -type d -links 2); do
-      folder=$(echo $folder | cut -c 2-)
-      mkdir -p "$out$folder"
-    done;
-    for file in $(cd ${pkg} && find -L); do
-      file=$(echo $file | cut -c 2-)
-      if [[ -f ${pkg}$file ]]; then
-        if [[ $file == *.desktop ]]; then
-          cp "${pkg}$file" "$out$file"
-          sed -i 's|TryExec=.*||' "$out$file"
-          sed -i 's|Exec=|Exec=nixGLIntel |' "$out$file"
-        else
-          ln -s "${pkg}$file" "$out$file"
-        fi
-      fi
-    done;
-  '';
-in {
+{config, pkgs, lib, ...}: {
   home.username = "root";
   home.homeDirectory = "/root";
   home.stateVersion = "24.11";
   home.packages = [
-    nixgl.nixGLIntel
-    (nixGLWrap pkgs.davinci-resolvenix-env)
-    (nixGLWrap pkgs.davinci-resolve)
+    pkgs.davinci-resolvenix-env
+    pkgs.davinci-resolve
   ];
   home.pointerCursor = {
     name = "breeze_cursors";
@@ -91,27 +69,17 @@ cat <<'EOF' > /root/.config/home-manager/flake.nix
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nixGL = {
-      url = "github:guibou/nixGL";
-      flake = false;
-    };
   };
-  outputs = { nixpkgs, home-manager, nixGL, ... }:
+  outputs = { nixpkgs, home-manager, ... }:
   let
     system = "x86_64-linux";
     pkgs = import nixpkgs {
       inherit system;
       config.allowUnfree = true;
     };
-    nixgl = import nixGL {
-      inherit pkgs;
-    };
   in {
     homeConfigurations."root" = home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
-      extraSpecialArgs = {
-        inherit nixgl;
-      };
       modules = [ ./home.nix ];
     };
   };
