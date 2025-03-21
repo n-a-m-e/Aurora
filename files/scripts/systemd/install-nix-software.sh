@@ -10,26 +10,6 @@ cat <<'EOF' > /root/.config/home-manager/home.nix
     pkgs.davinci-resolvenix-env
     pkgs.davinci-resolve
   ];
-  home.pointerCursor = {
-    name = "breeze_cursors";
-    package = pkgs.libsForQt5.breeze-icons;
-    size = 24;
-    x11 = {
-      enable = true;
-      defaultCursor = "breeze_cursors";
-    };
-  };
-  gtk = {
-    enable = true;
-    iconTheme = {
-      package = pkgs.libsForQt5.breeze-icons;
-      name = "breeze";
-    };
-    theme = {
-      package = pkgs.libsForQt5.breeze-gtk;
-      name = "Breeze";
-    };
-  };
   programs.home-manager.enable = true;
 }
 EOF
@@ -85,23 +65,23 @@ buildEnv {
 }
 EOF
 
-mkdir -p /etc/X11/Xsession.d
-cat <<'EOF' > /etc/X11/Xsession.d/10nixshare
-export XDG_DATA_DIRS="$XDG_DATA_DIRS:/root/.nix-profile/share"
-export XCURSOR_PATH="$XCURSOR_PATH:/root/.nix-profile/share/icons"
-EOF
+#mkdir -p /etc/X11/Xsession.d
+#cat <<'EOF' > /etc/X11/Xsession.d/10nixshare
+#export XDG_DATA_DIRS="$XDG_DATA_DIRS:/root/.nix-profile/share"
+#export XCURSOR_PATH="$XCURSOR_PATH:/root/.nix-profile/share/icons"
+#EOF
 
-mkdir -p /etc/profile.d
-cat <<'EOF' > /etc/profile.d/nixshare.sh
-export XDG_DATA_DIRS="$XDG_DATA_DIRS:/root/.nix-profile/share"
-export XCURSOR_PATH="$XCURSOR_PATH:/root/.nix-profile/share/icons"
-EOF
+#mkdir -p /etc/profile.d
+#cat <<'EOF' > /etc/profile.d/nixshare.sh
+#export XDG_DATA_DIRS="$XDG_DATA_DIRS:/root/.nix-profile/share"
+#export XCURSOR_PATH="$XCURSOR_PATH:/root/.nix-profile/share/icons"
+#EOF
 
-mkdir -p /etc/environment.d
-cat <<'EOF' > /etc/environment.d/nixshare.conf
-XDG_DATA_DIRS=${XDG_DATA_DIRS:+$XDG_DATA_DIRS:}/root/.nix-profile/share
-XCURSOR_PATH=${XCURSOR_PATH:+$XCURSOR_PATH:}/root/.nix-profile/share/icons
-EOF
+#mkdir -p /etc/environment.d
+#cat <<'EOF' > /etc/environment.d/nixshare.conf
+#XDG_DATA_DIRS=${XDG_DATA_DIRS:+$XDG_DATA_DIRS:}/root/.nix-profile/share
+#XCURSOR_PATH=${XCURSOR_PATH:+$XCURSOR_PATH:}/root/.nix-profile/share/icons
+#EOF
 
 while ! ping -c1 github.com; do sleep 2; done
 
