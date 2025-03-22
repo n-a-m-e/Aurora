@@ -1,15 +1,45 @@
 #!/bin/bash
 
+
+#(config.lib.nixGL.wrap pkgs.lapce)
+
 mkdir -p /root/.config/home-manager
+
 cat <<'EOF' > /root/.config/home-manager/home.nix
-{config, pkgs, lib, ...}: {
+{config, pkgs, nixgl, lib, ...}:
+{
+  nixGL.packages = import nixgl { inherit pkgs; };
+  nixGL.defaultWrapper = "mesa"; # or the driver you need
+  nixGL.installScripts = [ "mesa" ];
   home.username = "root";
   home.homeDirectory = "/root";
   home.stateVersion = "24.11";
   home.packages = [
-    pkgs.davinci-resolvenix-env
-    pkgs.davinci-resolve
+    (config.lib.nixGL.wrap pkgs.olive-editor)
+    (config.lib.nixGL.wrap pkgs.gimp-with-plugins)
+    (config.lib.nixGL.wrap pkgs.davinci-resolvenix-env)
+    (config.lib.nixGL.wrap pkgs.davinci-resolve)
   ];
+  home.pointerCursor = {
+    name = "breeze_cursors";
+    package = pkgs.libsForQt5.breeze-icons;
+    size = 24;
+    x11 = {
+      enable = true;
+      defaultCursor = "breeze_cursors";
+    };
+  };
+  gtk = {
+    enable = true;
+    iconTheme = {
+      package = pkgs.libsForQt5.breeze-icons;
+      name = "breeze";
+    };
+    theme = {
+      package = pkgs.libsForQt5.breeze-gtk;
+      name = "Breeze";
+    };
+  };
   programs.home-manager.enable = true;
 }
 EOF
@@ -19,12 +49,13 @@ cat <<'EOF' > /root/.config/home-manager/flake.nix
   description = "Home Manager configuration of root";
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixgl.url   = "github:nix-community/nixGL";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs = { nixpkgs, home-manager, ... }:
+  outputs = { nixpkgs, home-manager, nixgl, ... }:
   let
     system = "x86_64-linux";
     pkgs = import nixpkgs {
@@ -33,35 +64,13 @@ cat <<'EOF' > /root/.config/home-manager/flake.nix
     };
   in {
     homeConfigurations."root" = home-manager.lib.homeManagerConfiguration {
-      inherit pkgs;
+      inherit pkgs system;
+      extraSpecialArgs = {
+        inherit nixgl;
+      };
       modules = [ ./home.nix ];
     };
   };
-}
-EOF
-
-cat <<'EOF' > /root/.config/home-manager/opengl-dir.nix
-{
-  lib ? import ( <nixpkgs> + /lib),
-  pkgs ? import <nixpkgs> {
-    config.allowUnfreePredicate =
-      pkg:
-      builtins.elem (lib.getName pkg) [
-        "nvidia-x11"
-      ];
-  },
-  buildEnv ? pkgs.buildEnv,
-  mesa ? pkgs.mesa,
-  linuxPackages ? pkgs.linuxPackages,
-  nvidia-vaapi-driver ? pkgs.nvidia-vaapi-driver
-}:
-buildEnv {
-  name = "opengl-dir";
-  paths = [
-    mesa.drivers
-    linuxPackages.nvidia_x11.out
-    nvidia-vaapi-driver
-  ];
 }
 EOF
 
