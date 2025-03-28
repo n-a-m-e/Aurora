@@ -50,10 +50,13 @@ wget -O /tmp/davinci-resolve/DaVinci_Resolve_19.1.4_Linux.run.z01 https://github
 cd /tmp/davinci-resolve
 zip -F DaVinci_Resolve_19.1.4_Linux.run.zip --out DaVinci_Resolve_19.1.4_Linux.zip
 unzip DaVinci_Resolve_19.1.4_Linux.zip
+echo unziped
 distrobox create -i ghcr.io/zelikos/davincibox-opencl:latest -n davincibox
+echo created
 ./DaVinci_Resolve_19.1.4_Linux.run --appimage-extract
-distrobox enter davincibox -- setup-davinci squashfs-root/AppRun distrobox
-
+echo extracted
+#distrobox enter davincibox -- setup-davinci squashfs-root/AppRun distrobox
+#echo entered
 
 
 #You have existing.zip but want to split it into 50M sized parts.
