@@ -16,7 +16,7 @@ cd /tmp/davinci-resolve
 zip -F DaVinci_Resolve_19.1.4_Linux.run.zip --out DaVinci_Resolve_19.1.4_Linux.zip
 unzip DaVinci_Resolve_19.1.4_Linux.zip
 echo "Unziped Linux.run..."
-DaVinci_Resolve_19.1.4_Linux.run --appimage-extract
+./DaVinci_Resolve_19.1.4_Linux.run --appimage-extract
 
 # See https://github.com/zelikos/davincibox/issues/35
 QT_QPA_PLATFORM=minimal SKIP_PACKAGE_CHECK=1 /tmp/davinci-resolve/DaVinci_Resolve_19.1.4_Linux/squashfs-root/AppRun -i -a -y
