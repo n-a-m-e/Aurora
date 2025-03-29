@@ -87,8 +87,8 @@ modules:
       - konsole.sh
       - other.sh
       - vikunja.sh
-      - olive.sh
-      - davinci-resolve.sh
+      #- olive.sh
+      #- davinci-resolve.sh
 
   - type: systemd
     system:
