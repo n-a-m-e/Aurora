@@ -19,7 +19,7 @@ echo "Unziped Linux.run..."
 ./DaVinci_Resolve_19.1.4_Linux.run --appimage-extract
 
 # See https://github.com/zelikos/davincibox/issues/35
-QT_QPA_PLATFORM=minimal SKIP_PACKAGE_CHECK=1 /tmp/davinci-resolve/DaVinci_Resolve_19.1.4_Linux/squashfs-root/AppRun -i -a -y
+QT_QPA_PLATFORM=minimal SKIP_PACKAGE_CHECK=1 /tmp/davinci-resolve/squashfs-root/AppRun -i -a -y
 
 # Patch davinci binaries to remove need for LD_PRELOAD workaround mentioned in
 # https://www.reddit.com/r/voidlinux/comments/12g71x0/comment/l2cwo27/
