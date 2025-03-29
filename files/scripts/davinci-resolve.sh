@@ -21,39 +21,22 @@ echo "Unziped Linux.run..."
 # See https://github.com/zelikos/davincibox/issues/35
 QT_QPA_PLATFORM=minimal SKIP_PACKAGE_CHECK=1 /tmp/davinci-resolve/squashfs-root/AppRun -i -a -y
 
-# Patch davinci binaries to remove need for LD_PRELOAD workaround mentioned in
-# https://www.reddit.com/r/voidlinux/comments/12g71x0/comment/l2cwo27/
-echo "Patching resolve binaries..."
-libs=(
-    /usr/lib64/libglib-2.0.so.0
-    /usr/lib64/libgdk_pixbuf-2.0.so.0
-    /usr/lib64/libgio-2.0.so.0
-    /usr/lib64/libgmodule-2.0.so.0
-)
-patchelf_args=""
-for lib in "${libs[@]}"; do
-    patchelf_args="${patchelf_args} --add-needed ${lib} "
-done
-unset lib -v
+mv /opt/resolve/BlackmagicRAWPlayer/BlackmagicRawAPI/libDecoderOpenCL.so /opt/resolve/BlackmagicRAWPlayer/BlackmagicRawAPI/libDecoderOpenCL.so.bak
+mv /opt/resolve/BlackmagicRAWSpeedTest/BlackmagicRawAPI/libDecoderOpenCL.so /opt/resolve/BlackmagicRAWSpeedTest/BlackmagicRawAPI/libDecoderOpenCL.so.bak
 
-# shellcheck disable=SC2086
-find /opt/resolve/bin -executable -type f -exec patchelf $patchelf_args {} \;
-unset libs -v
-
-echo "Applying workaround for companion programs..."
-
-decoders=(
-    /opt/resolve/BlackmagicRAWPlayer/BlackmagicRawAPI/libDecoderOpenCL.so
-    /opt/resolve/BlackmagicRAWSpeedTest/BlackmagicRawAPI/libDecoderOpenCL.so
-)
-
-for decoder in "${decoders[@]}"; do
-    mv $decoder "${decoder}.bak"
-done
-unset decoder -v
-unset decoders -v
+cd /opt/resolve/libs
+mkdir disabled-libraries
+mv libglib* disabled-libraries
+mv libgdk_pixbuf* disabled-libraries
+mv libgio* disabled-libraries
+mv libgmodule* disabled-libraries 
 
 mv /opt/resolve /usr/lib/opt/resolve
+
+#create required directories and symlinks at boot
+cat <<'EOF' > /usr/lib/tmpfiles.d/davinci-resolve.conf
+L+ /var/opt/resolve - - - - /usr/lib/opt/resolve
+EOF
 
 #You have existing.zip but want to split it into 50M sized parts.
 #zip existing.zip --out new.zip -s 50m
