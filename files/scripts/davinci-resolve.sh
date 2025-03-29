@@ -27,7 +27,6 @@ mv /opt/resolve/BlackmagicRAWSpeedTest/BlackmagicRawAPI/libDecoderOpenCL.so /opt
 cd /opt/resolve/libs
 mkdir disabled-libraries
 mv libglib* disabled-libraries
-mv libgdk_pixbuf* disabled-libraries
 mv libgio* disabled-libraries
 mv libgmodule* disabled-libraries 
 
