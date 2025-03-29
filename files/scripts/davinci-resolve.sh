@@ -5,44 +5,9 @@
 # builds actually ran successfully without any errors!
 set -oue pipefail
 
-#/run/host/var/home/Shared/DaVinci_Resolve_19.1.4_Linux/squashfs-root/installer: error while loading shared libraries: libQt5Widgets.so.5: cannot open shared object file: No such file or directory
-#Patching resolve binaries...
-#find: ‘/opt/resolve/bin’: No such file or directory
-#Applying workaround for companion programs...
-#mv: cannot stat '/opt/resolve/BlackmagicRAWPlayer/BlackmagicRawAPI/libDecoderOpenCL.so': No such file or directory
-#mv: cannot stat '/opt/resolve/BlackmagicRAWSpeedTest/BlackmagicRawAPI/libDecoderOpenCL.so': No such file or directory
-#Add DaVinci Resolve launcher? Y/n
-#y
-#Adding launcher for Distrobox...
-#Copying graphics...
-#cp: cannot stat '/opt/resolve/graphics/DV_*': No such file or directory
-#cp: cannot stat '/opt/resolve/graphics/application-x-braw-clip_256x256_mimetypes.png': No such file or directory
-#cp: cannot stat '/opt/resolve/graphics/application-x-braw-clip_48x48_mimetypes.png': No such file or directory
-#cp: cannot stat '/opt/resolve/graphics/application-x-braw-sidecar_256x256_mimetypes.png': No such file or directory
-#cp: cannot stat '/opt/resolve/graphics/application-x-braw-sidecar_48x48_mimetypes.png': No such file or directory
-#cp: cannot stat '/opt/resolve/graphics/blackmagicraw-player_256x256_apps.png': No such file or directory
-#cp: cannot stat '/opt/resolve/graphics/blackmagicraw-player_48x48_apps.png': No such file or directory
-#cp: cannot stat '/opt/resolve/graphics/blackmagicraw-speedtest_256x256_apps.png': No such file or directory
-#cp: cannot stat '/opt/resolve/graphics/blackmagicraw-speedtest_48x48_apps.png': No such file or directory
-#Setting up launchers...
-#cp: cannot stat '/opt/resolve/share/*.desktop': No such file or directory
-#rm: cannot remove '/root/.local/share/applications/DaVinciResolveInstaller.desktop': No such file or directory
-#sed: can't read /root/.local/share/applications/blackmagicraw*.desktop: No such file or directory
-#sed: can't read /root/.local/share/applications/DaVinci*.desktop: No such file or directory
-#sed: can't read /root/.local/share/applications/DaVinci*.desktop: No such file or directory
-#sed: can't read /root/.local/share/applications/blackmagicraw*.desktop: No such file or directory
-#sed: can't read /root/.local/share/applications/DaVinci*.desktop: No such file or directory
-#sed: can't read /root/.local/share/applications/blackmagicraw*.desktop: No such file or directory
-#sed: can't read /root/.local/share/applications/DaVinci*.desktop: No such file or directory
-#Launcher setup complete.
-#You can now launch DaVinci Resolve from your application menu.
+#!/bin/bash
 
-#If you want to remove the launchers later,
-#re-run this command with the remove argument,
-#or delete the launchers directly from:
-#/root/.local/share/applications
-#bash-5.2# 
-
+rpm-ostree install apr apr-util libxcrypt-compat libcurl libcurl-devel mesa-libGLU
 
 mkdir /tmp/davinci-resolve
 wget -O /tmp/davinci-resolve/DaVinci_Resolve_19.1.4_Linux.run.zip https://github.com/n-a-m-e/Aurora-Files/releases/download/DaVinci_Resolve_19.1.4_Linux/DaVinci_Resolve_19.1.4_Linux.run.zip
@@ -50,14 +15,45 @@ wget -O /tmp/davinci-resolve/DaVinci_Resolve_19.1.4_Linux.run.z01 https://github
 cd /tmp/davinci-resolve
 zip -F DaVinci_Resolve_19.1.4_Linux.run.zip --out DaVinci_Resolve_19.1.4_Linux.zip
 unzip DaVinci_Resolve_19.1.4_Linux.zip
-echo unziped
-distrobox create -i ghcr.io/zelikos/davincibox-opencl:latest -n davincibox
-echo created
-./DaVinci_Resolve_19.1.4_Linux.run --appimage-extract
-echo extracted
-#distrobox enter davincibox -- setup-davinci squashfs-root/AppRun distrobox
-#echo entered
+echo "Unziped Linux.run..."
+DaVinci_Resolve_19.1.4_Linux.run --appimage-extract
 
+# See https://github.com/zelikos/davincibox/issues/35
+QT_QPA_PLATFORM=minimal SKIP_PACKAGE_CHECK=1 /tmp/davinci-resolve/DaVinci_Resolve_19.1.4_Linux/squashfs-root/AppRun -i -a -y
+
+# Patch davinci binaries to remove need for LD_PRELOAD workaround mentioned in
+# https://www.reddit.com/r/voidlinux/comments/12g71x0/comment/l2cwo27/
+echo "Patching resolve binaries..."
+libs=(
+    /usr/lib64/libglib-2.0.so.0
+    /usr/lib64/libgdk_pixbuf-2.0.so.0
+    /usr/lib64/libgio-2.0.so.0
+    /usr/lib64/libgmodule-2.0.so.0
+)
+patchelf_args=""
+for lib in "${libs[@]}"; do
+    patchelf_args="${patchelf_args} --add-needed ${lib} "
+done
+unset lib -v
+
+# shellcheck disable=SC2086
+find /opt/resolve/bin -executable -type f -exec patchelf $patchelf_args {} \;
+unset libs -v
+
+echo "Applying workaround for companion programs..."
+
+decoders=(
+    /opt/resolve/BlackmagicRAWPlayer/BlackmagicRawAPI/libDecoderOpenCL.so
+    /opt/resolve/BlackmagicRAWSpeedTest/BlackmagicRawAPI/libDecoderOpenCL.so
+)
+
+for decoder in "${decoders[@]}"; do
+    mv $decoder "${decoder}.bak"
+done
+unset decoder -v
+unset decoders -v
+
+mv /opt/resolve /usr/lib/opt/resolve
 
 #You have existing.zip but want to split it into 50M sized parts.
 #zip existing.zip --out new.zip -s 50m
