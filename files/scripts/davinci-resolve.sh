@@ -7,7 +7,7 @@ set -oue pipefail
 
 #!/bin/bash
 
-rpm-ostree install apr apr-util libxcrypt-compat libcurl libcurl-devel mesa-libGLU mesa-libOpenCL rocminfo rocm-opencl rocm-clinfo rocm-hip
+rpm-ostree install apr apr-util libxcrypt-compat libcurl libcurl-devel mesa-libGLU rocminfo rocm-opencl rocm-clinfo rocm-hip
 
 mkdir /tmp/davinci-resolve
 wget -O /tmp/davinci-resolve/DaVinci_Resolve_19.1.4_Linux.run.zip https://github.com/n-a-m-e/Aurora-Files/releases/download/DaVinci_Resolve_19.1.4_Linux/DaVinci_Resolve_19.1.4_Linux.run.zip
