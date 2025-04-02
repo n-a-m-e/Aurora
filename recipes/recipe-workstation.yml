@@ -85,7 +85,7 @@ modules:
       - konsole.sh
       - other.sh
       - vikunja.sh
-      - davinci-resolve.sh
+      #- davinci-resolve.sh
       #- nix.sh
 
   - type: systemd
