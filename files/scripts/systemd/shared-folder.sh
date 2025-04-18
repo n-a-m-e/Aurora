@@ -38,7 +38,7 @@ done
 
 process_file() {
     local filename="$1"
-    if [[ -e "$filename" ]]; then
+    if [[ -e "$filename" && "$filename" != *.csv ]]; then
         if ! fuser "$filename" >/dev/null 2>&1; then
             local permissions=$(stat --format="%a%G" "$filename")
             if [[ "$permissions" != "2775users" ]]; then
