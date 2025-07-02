@@ -51,6 +51,30 @@ modules:
       # repo-name: flathub
       # repo-title: "Flathub (system-wide)" # Optional; this sets the remote's user-facing name in graphical frontends like GNOME Software
       install: []
+      #com.anydesk.Anydesk
+      #com.github.tchx84.Flatseal
+      #com.sejda.Sejda
+      #io.mpv.Mpv
+      #io.vikunja.Vikunja
+      #md.obsidian.Obsidian
+      #net.code_industry.MasterPDFEditor
+      #org.fedoraproject.MediaWriter
+      #org.filezillaproject.Filezilla
+      #org.freedesktop.Platform.ffmpeg-full
+      #org.gimp.GIMP
+      #org.gimp.GIMP.HEIC
+      #org.kde.gwenview
+      #org.kde.kcalc
+      #org.kde.okular
+      #org.libreoffice.LibreOffice
+      #org.mozilla.Thunderbird
+      #org.mozilla.firefox
+      #org.olivevideoeditor.Olive
+      #org.onlyoffice.desktopeditors
+      #org.chromium.Chromium
+      #com.moderncsv.ModernCSV
+      #com.gitbutler.app
+      #io.github.overwatcheddude.flatpak_java_launcher
         #- net.codeindustry.MasterPDFEditor
         #- org.kde.gwenview
         #- org.kde.okular
