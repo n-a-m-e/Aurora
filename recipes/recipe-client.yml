@@ -34,7 +34,7 @@ modules:
       - kde-connect
       - input-remapper
       - kdebugsettings
-      - skanpage
+      # - skanpage
       - plasma-discover-flatpak
       - plasma-discover-notifier
       - plasma-discover
