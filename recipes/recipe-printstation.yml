@@ -35,7 +35,7 @@ modules:
       - kde-connect
       - input-remapper
       - kdebugsettings
-      - skanpage
+      # - skanpage
       # remove if based on ghcr.io/ublue-os/aurora-dx
       # - sysprof
 
