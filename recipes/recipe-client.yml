@@ -42,43 +42,47 @@ modules:
       # - sysprof
 
   - type: default-flatpaks
-    notify: true # Send notification after install/uninstall is finished (true/false)
-    system:
-      # If no repo information is specified, Flathub will be used by default
-      # repo-url: https://dl.flathub.org/repo/flathub.flatpakrepo
-      # repo-name: flathub
-      # repo-title: "Flathub (system-wide)" # Optional; this sets the remote's user-facing name in graphical frontends like GNOME Software
-      install: []
-        #- net.codeindustry.MasterPDFEditor
-        #- org.kde.gwenview
-        #- org.kde.okular
-        #- org.kde.kcalc
-        #- org.libreoffice.LibreOffice
-        #- org.gimp.GIMP
-        #- org.onlyoffice.desktopeditors
-        #- org.freedesktop.Platform.ffmpeg-full
-        #- org.olivevideoeditor.Olive
-        #- com.github.unrud.VideoDownloader
-        # - org.gnome.Loupe
-        # - one.ablaze.floorp//lightning # This is an example of flatpak which has multiple branches in selection (flatpak//branch).
-      # Flatpak runtimes are not supported (like org.winehq.Wine//stable-23.08),
-      # only normal flatpak applications are (like Floorp Lightning web browser in this example).
-      # Installing different branches of the same Flatpak is not supported.
-      remove:
-        - org.kde.kontact
-        - org.kde.kweather
-        - org.kde.kclock
-        - org.gnome.World.PikaBackup
-        - org.fkoehler.KTailctl
-        - io.github.dvlv.boxbuddyrs
-        - org.gnome.DejaDup
-        - io.podman_desktop.PodmanDesktop
-        - org.fedoraproject.MediaWriter
-        - org.kde.filelight
-        - org.ked.haruna
-        - com.github.tchx84.Flatseal
-        - org.mozilla.Thunderbird
-        - io.github.flattool.Warehouse
+    configurations:
+      - notify: false # Send notification after install/uninstall is finished (true/false)
+        scope: system
+        # If no repo information is specified, Flathub will be used by default
+        # repo-url: https://dl.flathub.org/repo/flathub.flatpakrepo
+        # repo-name: flathub
+        # repo-title: "Flathub (system-wide)" # Optional; this sets the remote's user-facing name in graphical frontends like GNOME Software
+        install: []
+          # - org.mozilla.firefox
+          # - org.libreoffice.LibreOffice
+          # - org.kde.kcalc
+          # - org.kde.okular
+          # - org.kde.gwenview
+          # - com.anydesk.Anydesk
+          # - com.github.tchx84.Flatseal
+          # - com.sejda.Sejda
+          # - io.mpv.Mpv
+          # - net.code_industry.MasterPDFEditor
+          # - org.fedoraproject.MediaWriter
+          # - org.filezillaproject.Filezilla
+          # - org.freedesktop.Platform.ffmpeg-full
+          # - org.gimp.GIMP
+          # - org.gimp.GIMP.HEIC
+          # - org.mozilla.Thunderbird
+          # - org.onlyoffice.desktopeditors
+          # - org.chromium.Chromium
+      #remove:
+        #- org.kde.kontact
+        #- org.kde.kweather
+        #- org.kde.kclock
+        #- org.gnome.World.PikaBackup
+        #- org.fkoehler.KTailctl
+        #- io.github.dvlv.boxbuddyrs
+        #- org.gnome.DejaDup
+        #- io.podman_desktop.PodmanDesktop
+        #- org.fedoraproject.MediaWriter
+        #- org.kde.filelight
+        #- org.ked.haruna
+        #- com.github.tchx84.Flatseal
+        #- org.mozilla.Thunderbird
+        #- io.github.flattool.Warehouse
       # - org.gnome.eog
 
   - type: script
