@@ -56,7 +56,7 @@ sed -i 's|FULL_SCREEN_MODE=.*|FULL_SCREEN_MODE=1|g' /opt/thinlinc/etc/tlclient.c
 sed -i 's|SERVER_NAME=.*|SERVER_NAME=aurora|g' /opt/thinlinc/etc/tlclient.conf
 
 #/opt does not persist after build so move to /usr/lib/opt
-mv /opt/thinlinc /usr/lib/opt/thinlinc
+#mv /opt/thinlinc /usr/lib/opt/thinlinc
 
 #create required directories and symlinks at boot
 cat <<'EOF' > /usr/lib/tmpfiles.d/thinlinc.conf
