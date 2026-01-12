@@ -53,7 +53,7 @@ sed -i 's|show_intro=.*|show_intro=false|g' /opt/thinlinc/etc/conf.d/profiles.hc
 #sed -i 's|agent_hostname=|agent_hostname=aurora|g' /opt/thinlinc/etc/conf.d/vsmagent.hconf
 
 #/opt does not persist after build so move to /usr/lib/opt
-mv /opt/thinlinc /usr/lib/opt/thinlinc
+#mv /opt/thinlinc /usr/lib/opt/thinlinc
 
 #create required directories and symlinks at boot
 cat <<'EOF' > /usr/lib/tmpfiles.d/thinlinc.conf
