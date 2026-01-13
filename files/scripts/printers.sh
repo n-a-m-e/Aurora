@@ -22,27 +22,37 @@ cp printers/KOC751iUX.ppd /usr/share/cups/model/KOC751iUX.ppd
 #L+ /var/opt/brother - - - - /usr/lib/opt/brother
 #EOF
 
-mkdir /tmp/zebra
-wget -O /tmp/zebra/ZebraJaguarDriver_1.1.0.0_amd64.deb https://www.zebra.com/content/dam/support-dam/en/driver/unrestricted/0002/ZebraJaguarDriver_1.1.0.0_amd64.deb
-cd /tmp/zebra
-7z x -so Zebra*.deb | 7z x -si -ttar
-cp -v /tmp/zebra/usr/lib/cups/backend/zcusb /usr/lib/cups/backend/zcusb
-cp -v /tmp/zebra/usr/lib/cups/filter/pdftojgpdf /usr/lib/cups/filter/pdftojgpdf
-cp -v /tmp/zebra/usr/lib/cups/filter/rastertojg /usr/lib/cups/filter/rastertojg
-cp -v /tmp/zebra/usr/lib/libzmjxml.so /usr/lib/libzmjxml.so
-cp -v /tmp/zebra/usr/share/cups/model/ZebraZC300Printer.ppd /usr/share/cups/model/ZebraZC300Printer.ppd
 
-chmod 755 /usr/lib/cups/backend/zcusb
-chmod 755 /usr/lib/cups/filter/pdftojgpdf
-chmod 755 /usr/lib/cups/filter/rastertojg
-chmod 755 /usr/lib/libzmjxml.so
 
-chmod a+x /usr/lib/cups/backend/zcusb
-chmod a+x /usr/lib/cups/filter/pdftojgpdf
-chmod a+x /usr/lib/cups/filter/rastertojg
-chmod a+x /usr/lib/libzmjxml.so
 
-ln -s /usr/lib64/libtinyxml.so.0.2.6.2 /usr/lib64/libtinyxml.so.2.6.2
+
+#mkdir /tmp/zebra
+#wget -O /tmp/zebra/ZebraJaguarDriver_1.1.0.0_amd64.deb https://www.zebra.com/content/dam/support-dam/en/driver/unrestricted/0002/ZebraJaguarDriver_1.1.0.0_amd64.deb
+#cd /tmp/zebra
+#7z x -so Zebra*.deb | 7z x -si -ttar
+#cp -v /tmp/zebra/usr/lib/cups/backend/zcusb /usr/lib/cups/backend/zcusb
+#cp -v /tmp/zebra/usr/lib/cups/filter/pdftojgpdf /usr/lib/cups/filter/pdftojgpdf
+#cp -v /tmp/zebra/usr/lib/cups/filter/rastertojg /usr/lib/cups/filter/rastertojg
+#cp -v /tmp/zebra/usr/lib/libzmjxml.so /usr/lib/libzmjxml.so
+#cp -v /tmp/zebra/usr/share/cups/model/ZebraZC300Printer.ppd /usr/share/cups/model/ZebraZC300Printer.ppd
+
+#chmod 755 /usr/lib/cups/backend/zcusb
+#chmod 755 /usr/lib/cups/filter/pdftojgpdf
+#chmod 755 /usr/lib/cups/filter/rastertojg
+#chmod 755 /usr/lib/libzmjxml.so
+
+#chmod a+x /usr/lib/cups/backend/zcusb
+#chmod a+x /usr/lib/cups/filter/pdftojgpdf
+#chmod a+x /usr/lib/cups/filter/rastertojg
+#chmod a+x /usr/lib/libzmjxml.so
+
+#ln -s /usr/lib64/libtinyxml.so.0.2.6.2 /usr/lib64/libtinyxml.so.2.6.2
+
+
+
+
+
+
 
 
 
