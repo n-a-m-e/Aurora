@@ -6,8 +6,8 @@
 set -oue pipefail
 
 #Override Aurora Changes https://github.com/ublue-os/bluefin/blob/de4cec23b0328857f99bebeb2874679bc23c85d7/build_files/aurora-changes.sh
-sed -i 's|org.gnome.Ptyxis.desktop|org.kde.konsole.desktop|g' /usr/share/plasma/plasmoids/org.kde.plasma.taskmanager/contents/config/main.xml
-sed -i 's|org.gnome.Ptyxis.desktop|org.kde.konsole.desktop|g' /usr/share/plasma/plasmoids/org.kde.plasma.kickoff/contents/config/main.xml
+#sed -i 's|org.gnome.Ptyxis.desktop|org.kde.konsole.desktop|g' /usr/share/plasma/plasmoids/org.kde.plasma.taskmanager/contents/config/main.xml
+#sed -i 's|org.gnome.Ptyxis.desktop|org.kde.konsole.desktop|g' /usr/share/plasma/plasmoids/org.kde.plasma.kickoff/contents/config/main.xml
 sed -i 's|X-KDE-Shortcuts=Ctrl+Alt+T||g' /usr/share/applications/org.gnome.Ptyxis.desktop
 sed -i 's|Keywords=konsole;console;|Keywords=|g' /usr/share/applications/org.gnome.Ptyxis.desktop
 sed -i 's|\[Desktop Entry\]|\[Desktop Entry\]\nNoDisplay=true|g' /usr/share/applications/org.gnome.Ptyxis.desktop
@@ -19,8 +19,8 @@ sed -i 's|TerminalApplication=kde-ptyxis|TerminalApplication=konsole|g' /usr/sha
 sed -i 's|TerminalService=org.gnome.Ptyxis.desktop|TerminalService=org.kde.konsole.desktop|g' /usr/share/kde-settings/kde-profile/default/xdg/kdeglobals
 
 #Make Yakuake the default
-sed -i 's|org.kde.konsole.desktop|org.kde.yakuake.desktop|g' /usr/share/plasma/plasmoids/org.kde.plasma.taskmanager/contents/config/main.xml
-sed -i 's|org.kde.konsole.desktop|org.kde.yakuake.desktop|g' /usr/share/plasma/plasmoids/org.kde.plasma.kickoff/contents/config/main.xml
+#sed -i 's|org.kde.konsole.desktop|org.kde.yakuake.desktop|g' /usr/share/plasma/plasmoids/org.kde.plasma.taskmanager/contents/config/main.xml
+#sed -i 's|org.kde.konsole.desktop|org.kde.yakuake.desktop|g' /usr/share/plasma/plasmoids/org.kde.plasma.kickoff/contents/config/main.xml
 sed -i 's|TerminalApplication=konsole|TerminalApplication=yakuake|g' /usr/share/kde-settings/kde-profile/default/xdg/kdeglobals
 sed -i 's|TerminalService=org.kde.konsole.desktop|TerminalService=org.kde.yakuake.desktop|g' /usr/share/kde-settings/kde-profile/default/xdg/kdeglobals
 mkdir -p /usr/etc/xdg/autostart
