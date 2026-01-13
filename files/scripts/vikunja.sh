@@ -21,7 +21,7 @@ sed -i 's|path: /opt/vikunja/logs|path: /var/opt/vikunja/logs|g' /etc/vikunja/co
 sed -i ':a;N;$!ba;s|cors:.*origins:|cors:\n  enable: true\n  origins:|g' /etc/vikunja/config.yml
 
 #/opt does not persist after build so move to /usr/lib/opt
-mv /opt/vikunja /usr/lib/opt/vikunja
+#mv /opt/vikunja /usr/lib/opt/vikunja
 
 
 #create required directories and symlinks at boot
