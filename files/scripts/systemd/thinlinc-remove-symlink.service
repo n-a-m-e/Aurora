@@ -1,11 +1,13 @@
 [Unit]
 Description=thinlinc-remove-symlink
-DefaultDependencies=no
-After=local-fs.target
-Before=systemd-tmpfiles-setup.service
+After=local-fs.target systemd-tmpfiles-setup.service
+Before=vsmserver.service vsmagent.service
+RequiresMountsFor=/var
+ConditionPathIsSymbolicLink=/var/opt/thinlinc
 
 [Service]
-ExecStart=/bin/bash -c '[ -L /var/opt/thinlinc ] && rm -f /var/opt/thinlinc'
+ExecStart=/usr/bin/rm -f /var/opt/thinlinc
+ExecStartPost=/usr/bin/systemd-tmpfiles --create /usr/lib/tmpfiles.d/thinlinc.conf
 RemainAfterExit=true
 Type=oneshot
 
