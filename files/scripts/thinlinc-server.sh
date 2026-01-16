@@ -58,7 +58,7 @@ sed -i 's|show_intro=.*|show_intro=false|g' /opt/thinlinc/etc/conf.d/profiles.hc
 #create required directories and symlinks at boot
 cat <<'EOF' > /usr/lib/tmpfiles.d/thinlinc.conf
 d /var/lib/vsm 755 root root -
-L+ /var/opt/thinlinc - - - - /usr/lib/opt/thinlinc
+d /var/opt/thinlinc 755 root root -
 d /var/opt/thinlinc/sessions 755 root root -
 d /var/opt/thinlinc/utils 755 root root -
 d /var/opt/thinlinc/utils/tl-printer 755 root root -
