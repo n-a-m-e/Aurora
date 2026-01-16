@@ -1,0 +1,13 @@
+[Unit]
+Description=thinlinc-remove-symlink
+DefaultDependencies=no
+After=local-fs.target
+Before=systemd-tmpfiles-setup.service
+
+[Service]
+ExecStart=/bin/bash -c '[ -L /var/opt/thinlinc ] && rm -f /var/opt/thinlinc'
+RemainAfterExit=true
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target
