@@ -7,35 +7,9 @@ Wants=dbus.service display-manager.service
 Type=simple
 
 ExecStartPre=/usr/bin/mkdir -p /etc/sddm.conf.d
-ExecStartPre=/usr/bin/bash -c '
-if [ ! -f /etc/sddm.conf.d/autologin.conf ]; then
-  printf "%s\n" "[Autologin]" "User=laptop" "Session=plasma" > /etc/sddm.conf.d/autologin.conf
-  chmod 0644 /etc/sddm.conf.d/autologin.conf
-  systemctl try-restart sddm.service || true
-fi
-'
+ExecStartPre=/usr/bin/bash -c 'if [ ! -f /etc/sddm.conf.d/autologin.conf ]; then printf "%s\n" "[Autologin]" "User=laptop" "Session=plasma" > /etc/sddm.conf.d/autologin.conf; chmod 0644 /etc/sddm.conf.d/autologin.conf; systemctl try-restart sddm.service || true; fi'
 
-ExecStart=/usr/bin/bash -c '
-dbus-monitor --system \
-  "type='\''signal'\'',interface='\''org.freedesktop.login1.Manager'\''" \
-  "type='\''method_call'\'',interface='\''net.reactivated.Fprint.Device'\''" \
-| while IFS= read -r l; do
-  if [[ "$l" == *"member=SessionNew"* ]]; then
-    sid="$(loginctl list-sessions --no-legend 2>/dev/null | awk '\''$3=="laptop"{print $1; exit}'\'')"
-    [[ -n "$sid" ]] || continue
-    [[ "$(loginctl show-session "$sid" -p Type --value 2>/dev/null || true)" == wayland ]] || continue
-    [[ "$(loginctl show-session "$sid" -p LockedHint --value 2>/dev/null || true)" == yes ]] && continue
-    loginctl lock-session "$sid" 2>/dev/null || true
-    continue
-  fi
-  if [[ "$l" == *"member=VerifyStop"* ]]; then
-    sid="$(loginctl list-sessions --no-legend 2>/dev/null | awk '\''$3=="laptop"{print $1; exit}'\'')"
-    [[ -n "$sid" ]] || continue
-    [[ "$(loginctl show-session "$sid" -p LockedHint --value 2>/dev/null || true)" == yes ]] || continue
-    pkill -u laptop -x kscreenlocker_greet >/dev/null 2>&1 || true
-  fi
-done
-'
+ExecStart=/usr/bin/bash -c 'dbus-monitor --system "type='\''signal'\'',interface='\''org.freedesktop.login1.Manager'\''" "type='\''method_call'\'',interface='\''net.reactivated.Fprint.Device'\''" 2>/dev/null | while IFS= read -r l; do if [[ "$l" == *"member=SessionNew"* ]]; then sid="$(loginctl list-sessions --no-legend 2>/dev/null | awk '\''$3=="laptop"{print $1; exit}'\'')"; [[ -n "$sid" ]] || continue; [[ "$(loginctl show-session "$sid" -p Type --value 2>/dev/null || true)" == wayland ]] || continue; [[ "$(loginctl show-session "$sid" -p LockedHint --value 2>/dev/null || true)" == yes ]] && continue; loginctl lock-session "$sid" 2>/dev/null || true; continue; fi; if [[ "$l" == *"member=VerifyStop"* ]]; then sid="$(loginctl list-sessions --no-legend 2>/dev/null | awk '\''$3=="laptop"{print $1; exit}'\'')"; [[ -n "$sid" ]] || continue; [[ "$(loginctl show-session "$sid" -p LockedHint --value 2>/dev/null || true)" == yes ]] || continue; pkill -u laptop -x kscreenlocker_greet >/dev/null 2>&1 || true; fi; done'
 
 Restart=always
 RestartSec=2
