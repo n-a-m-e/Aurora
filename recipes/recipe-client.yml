@@ -97,6 +97,7 @@ modules:
     system:
       enabled:
         - hostname-reset-for-client.service
+        - kscreenlocker-fprint-login.service
         #- vsmagent.service
         #- tlwebaccess.service
         #- tlwebadm.service
