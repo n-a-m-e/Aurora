@@ -29,11 +29,16 @@ dbus-monitor --system \
   if [[ "$l" == *"member=SessionNew"* ]]; then
     mkdir -p /etc/sddm.conf.d
     printf "%s\n" "[Autologin]" "User=$user" "Session=plasma" > /etc/sddm.conf.d/autologin.conf
-    loginctl lock-session "$sid" 2>/dev/null || true
+
+    for _ in {1..10}; do
+      loginctl lock-session "$sid" 2>/dev/null || true
+      [[ "$(loginctl show-session "$sid" -p LockedHint --value 2>/dev/null || true)" == yes ]] && break
+      sleep 0.5
+    done
     continue
   fi
 
   [[ "$(loginctl show-session "$sid" -p LockedHint --value 2>/dev/null || true)" == yes ]] || continue
-  pgrep -u "$user" -x kscreenlocker_greet >/dev/null 2>&1 || continue
-  pkill -u "$user" -x kscreenlocker_greet >/dev/null 2>&1 || true
+  pgrep -u "$user" -f kscreenlocker_greet >/dev/null 2>&1 || continue
+  pkill -u "$user" -f kscreenlocker_greet >/dev/null 2>&1 || true
 done
