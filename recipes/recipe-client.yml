@@ -111,7 +111,9 @@ modules:
         #- restic-backup.timer
         #- restic-prune.service
         #- restic-prune.timer
-      disabled: []
+      disabled:
+        - zfs-import-cache.service
+        - NetworkManager-wait-online.service
         # - avahi-daemon.socket
         # - avahi-daemon
         # - iscsi.service
