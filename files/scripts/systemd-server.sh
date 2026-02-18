@@ -24,6 +24,7 @@ cp systemd/node-server.sh /usr/sbin/node-server.sh
 chmod a+x "/usr/sbin/node-server.sh"
 
 cp systemd/shared-folder.service /usr/lib/systemd/system/shared-folder.service
+cp systemd/shared-folder.timer /usr/lib/systemd/system/shared-folder.timer
 cp systemd/shared-folder.sh /usr/sbin/shared-folder.sh
 chmod a+x "/usr/sbin/shared-folder.sh"
 
