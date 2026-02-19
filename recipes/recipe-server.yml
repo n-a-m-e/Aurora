@@ -97,6 +97,7 @@ modules:
         # - http-server.service
         - flatpak-native-messaging-hosts.service
         - shared-folder.service
+        - shared-folder.timer
         - flatpak-force-x11.service
         - node-server.service
         - pihole.service
