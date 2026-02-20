@@ -10,6 +10,11 @@ umask 002
 DIRS=(/home/Shared /home/Node /home/Git /home/Trash /home/Storage /home/Secrets)
 USER_FOLDERS=(Desktop Documents Downloads Music Pictures Videos)
 
+# FTP dropbox (printer scans land here)
+FTP_USER="ftpsecure"
+FTP_BASE="/home/Public"
+FTP_UPLOADS="$FTP_BASE/Uploads"
+
 # Ensure group "users" exists
 getent group users >/dev/null || groupadd users
 
@@ -24,25 +29,114 @@ if ( set -o noclobber; : >"/run/shared-folder.boot-done" ) 2>/dev/null; then
   fi
 fi
 
-# Ensure top dirs exist (ACLs applied later)
-for DIR in "${DIRS[@]}"; do
-  mkdir -p "$DIR"
-  chown root:users "$DIR"
-  chmod 2770 "$DIR"
+ensure_ftp_user() {
+  if ! id -u "$FTP_USER" >/dev/null 2>&1; then
+    useradd \
+      --system \
+      --gid users \
+      --shell /usr/sbin/nologin \
+      --home-dir /nonexistent \
+      --no-create-home \
+      "$FTP_USER"
+  else
+    # Ensure primary group is users
+    local cur_gid users_gid
+    cur_gid="$(id -g "$FTP_USER")"
+    users_gid="$(getent group users | awk -F: '{print $3}')"
+    if [[ -n "${users_gid:-}" && "$cur_gid" != "$users_gid" ]]; then
+      usermod -g users "$FTP_USER" || true
+    fi
+  fi
+}
+
+ensure_dir_root_users_2770() {
+  local d="$1"
+  mkdir -p "$d"
+  chown root:users "$d"
+  chmod 2770 "$d"
+}
+
+set_acl_tree_users_rwx() {
+  local d="$1"
+
+  if (( FULL )); then
+    setfacl -Rb "$d"
+    chgrp -R users "$d"
+    chmod -R g+rwX,o-rwx "$d"
+    find "$d" -type d \
+      -exec chmod g+s,o-rwx {} + \
+      -exec setfacl -m u::rwx,g::rwx,o::--- {} + \
+      -exec setfacl -d -m u::rwx,g::rwx,o::--- {} +
+  else
+    find "$d" "${FIND_MMIN[@]}" -exec chgrp users {} + -exec chmod g+rwX,o-rwx {} +
+    find "$d" -type d "${FIND_MMIN[@]}" \
+      -exec chmod g+s,o-rwx {} + \
+      -exec setfacl -m u::rwx,g::rwx,o::--- {} + \
+      -exec setfacl -d -m u::rwx,g::rwx,o::--- {} +
+  fi
+
+  # Ensure top-level ACLs always correct
+  setfacl -m  u::rwx,g::rwx,o::--- "$d"
+  setfacl -d -m u::rwx,g::rwx,o::--- "$d"
+}
+
+ensure_ftp_dropbox() {
+  mkdir -p "$FTP_UPLOADS"
+
+  # Container: readable/traversable by group users, not writable
+  chown root:users "$FTP_BASE"
+  chmod 2755 "$FTP_BASE"
+
+  # Uploads: writable; setgid ensures group 'users' on new files/dirs
+  chown "$FTP_USER":users "$FTP_UPLOADS"
+  chmod 2775 "$FTP_UPLOADS"
+
+  if (( FULL )); then
+    setfacl -b "$FTP_BASE" 2>/dev/null || true
+    setfacl -b "$FTP_UPLOADS" 2>/dev/null || true
+  fi
+
+  setfacl -m  u::rwx,g::r-x,o::--- "$FTP_BASE"
+  setfacl -d -m u::rwx,g::r-x,o::--- "$FTP_BASE"
+
+  setfacl -m  u::rwx,g::rwx,o::--- "$FTP_UPLOADS"
+  setfacl -d -m u::rwx,g::rwx,o::--- "$FTP_UPLOADS"
+}
+
+ensure_ftp_user
+ensure_ftp_dropbox
+
+# Ensure shared top dirs exist (ACLs applied later)
+for d in "${DIRS[@]}"; do
+  ensure_dir_root_users_2770 "$d"
 done
 
 UID_MIN="$(awk '$1=="UID_MIN"{print $2}' /etc/login.defs 2>/dev/null | tail -n1 || echo 1000)"
 
 # Migrate + symlink per-user folders
-while IFS=: read -r user _ uid _ _ home shell; do
+while IFS=: read -r user _ uid gid _ home shell; do
   [[ "$uid" =~ ^[0-9]+$ ]] || continue
   (( uid >= UID_MIN && uid != 65534 )) || continue
   case "$shell" in */nologin|*/false) continue ;; esac
   [[ -d "$home" ]] || continue
 
-  # Only add to group if not already in it
-  if ! id -nG "$user" 2>/dev/null | grep -qw users; then
-    usermod -aG users "$user" || true
+  # If user is NOT in supplementary group "users":
+  # - preserve old primary as supplementary unless it's the per-user group
+  # - set primary group to "users"
+  # - remove and delete per-user group (name == username) if empty + unused
+  if ! id -nG "$user" 2>/dev/null | tr ' ' '\n' | grep -qx users; then
+    pg="$(getent group "$gid" | cut -d: -f1)"
+
+    [[ -n "$pg" && "$pg" != "$user" ]] && usermod -aG "$pg" "$user" || true
+    usermod -g users "$user" || true
+
+    if getent group "$user" >/dev/null; then
+      gpasswd -d "$user" "$user" >/dev/null 2>&1 || true
+      ugid="$(getent group "$user" | cut -d: -f3)"
+      [[ -z "$(getent group "$user" | cut -d: -f4)" ]] &&
+      ! getent passwd | awk -F: -v g="$ugid" '$4==g{exit 1}' &&
+      groupdel "$user" || true
+    fi
   fi
 
   ts="$(date +%Y%m%d-%H%M%S)"
@@ -51,7 +145,6 @@ while IFS=: read -r user _ uid _ _ home shell; do
   for folder in "${USER_FOLDERS[@]}"; do
     src="$home/$folder"
     dest="/home/Shared/$folder/$user"
-
     mkdir -p "$dest"
 
     # Missing -> symlink
@@ -101,34 +194,21 @@ while IFS=: read -r user _ uid _ _ home shell; do
   rmdir --ignore-fail-on-non-empty "$overflow" 2>/dev/null || true
 done < <(getent passwd)
 
-# Permissions / ACL enforcement
-for DIR in "${DIRS[@]}"; do
-  if (( FULL )); then
-    setfacl -Rb "$DIR"
-  fi
-
-  setfacl -m  u::rwx,g::rwx,o::--- "$DIR"
-  setfacl -d -m u::rwx,g::rwx,o::--- "$DIR"
-
-  if (( FULL )); then
-    chgrp -R users "$DIR"
-    chmod -R g+rwX,o-rwx "$DIR"
-    find "$DIR" -type d \
-      -exec chmod g+s,o-rwx {} + \
-      -exec setfacl -m u::rwx,g::rwx,o::--- {} + \
-      -exec setfacl -d -m u::rwx,g::rwx,o::--- {} +
-  else
-    find "$DIR" "${FIND_MMIN[@]}" -exec chgrp users {} + -exec chmod g+rwX,o-rwx {} +
-    find "$DIR" -type d "${FIND_MMIN[@]}" \
-      -exec chmod g+s,o-rwx {} + \
-      -exec setfacl -m u::rwx,g::rwx,o::--- {} + \
-      -exec setfacl -d -m u::rwx,g::rwx,o::--- {} +
-  fi
+# Permissions / ACL enforcement for shared dirs
+for d in "${DIRS[@]}"; do
+  set_acl_tree_users_rwx "$d"
 done
 
+# Flatpak overrides (keep as-is)
 flatpaks=$(flatpak list --columns=application)
 for flatpak in $flatpaks; do
-    if [ $(flatpak info --show-permissions $flatpak| grep -c "home;") -gt 0 ]; then
-        flatpak override --filesystem=/home/Shared --filesystem=/home/Node --filesystem=/home/Git --filesystem=/home/Trash --filesystem=/home/Storage $flatpak
-    fi
+  if [ "$(flatpak info --show-permissions "$flatpak" | grep -c "home;")" -gt 0 ]; then
+    flatpak override \
+      --filesystem=/home/Shared \
+      --filesystem=/home/Node \
+      --filesystem=/home/Git \
+      --filesystem=/home/Trash \
+      --filesystem=/home/Storage \
+      "$flatpak"
+  fi
 done
