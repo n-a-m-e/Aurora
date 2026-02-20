@@ -8,8 +8,6 @@ set -oue pipefail
 sed -i 's|SocketGroup=docker|SocketGroup=users|' /usr/lib/systemd/system/docker.socket
 
 cd "$(dirname "$0")"
-cp systemd/vsftpd.service.d/10-hardening.conf /usr/lib/systemd/system/vsftpd.service.d/10-hardening.conf
-
 cp systemd/thinlinc-remove-symlink.service /usr/lib/systemd/system/thinlinc-remove-symlink.service
 cp systemd/vikunja-start.service /usr/lib/systemd/system/vikunja-start.service
 cp systemd/http-server.service /usr/lib/systemd/system/http-server.service
