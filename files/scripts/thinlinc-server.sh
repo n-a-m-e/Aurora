@@ -131,7 +131,11 @@ polkit.addRule(function(action, subject) {
        action.id == "org.freedesktop.login1.halt-multiple-sessions" ||
        action.id == "org.freedesktop.login1.halt-ignore-inhibit") {
 	if (!subject.local) {
-		return polkit.Result.YES;
+  		var now = new Date();
+		var day = now.getDay();
+		var mins = now.getHours() * 60 + now.getMinutes();
+		var businessHours = (day >= 1 && day <= 5) && (mins >= 510 && mins < 1050);
+		return businessHours ? polkit.Result.AUTH_ADMIN : polkit.Result.YES;
 	}
    }
 });
