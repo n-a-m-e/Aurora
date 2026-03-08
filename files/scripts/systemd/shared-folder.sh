@@ -147,26 +147,25 @@ while IFS=: read -r user _ uid gid _ home shell; do
     dest="/home/Shared/$folder/$user"
     mkdir -p "$dest"
 
-    # Missing -> symlink
+    # Missing -> bind mount
     if [[ ! -e "$src" ]]; then
-      ln -s "$dest" "$src"
+      mkdir -p "$src"
+      mount --bind "$dest" "$src"
       continue
     fi
 
-    # Symlink -> ensure correct target (broken-safe)
+    # Symlink -> replace with bind mount
     if [[ -L "$src" ]]; then
-      link="$(readlink -f -- "$src" 2>/dev/null || true)"
-      [[ "$link" == "$dest" ]] || { rm -f -- "$src"; ln -s "$dest" "$src"; }
+      rm -f -- "$src"
+      mkdir -p "$src"
+      mount --bind "$dest" "$src"
       continue
     fi
 
-    # Directory -> merge without overwrite; leftovers -> single overflow; then symlink
+    # Directory -> merge without overwrite; leftovers -> single overflow; then bind mount
     if [[ -d "$src" ]]; then
-      # Safety: never rm -rf a mountpoint directory
+      # If already a mountpoint, leave it alone
       if mountpoint -q "$src"; then
-        mkdir -p "$overflow"
-        mv -- "$src" "$overflow/${folder}.mountpoint" 2>/dev/null || true
-        ln -s "$dest" "$src"
         continue
       fi
 
@@ -179,15 +178,16 @@ while IFS=: read -r user _ uid gid _ home shell; do
         find "$src" -type d -empty -delete
       fi
 
-      rm -rf -- "$src"
-      ln -s "$dest" "$src"
+      mkdir -p "$src"
+      mount --bind "$dest" "$src"
       continue
     fi
 
-    # Other type -> move to overflow; symlink
+    # Other type -> move to overflow; bind mount
     mkdir -p "$overflow/$folder"
     mv -n -- "$src" "$overflow/$folder"/ 2>/dev/null || mv -- "$src" "$overflow/$folder"/
-    ln -s "$dest" "$src"
+    mkdir -p "$src"
+    mount --bind "$dest" "$src"
   done
 
   # Remove overflow if nothing ended up there
