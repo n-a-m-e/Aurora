@@ -15,9 +15,13 @@ cp systemd/flatpak-force-x11.service /usr/lib/systemd/system/flatpak-force-x11.s
 cp systemd/restic-backup.service /usr/lib/systemd/system/restic-backup.service
 cp systemd/restic-backup.timer /usr/lib/systemd/system/restic-backup.timer
 
-cp systemd/pihole.service /usr/lib/systemd/system/pihole.service
-cp systemd/pihole.sh /usr/sbin/pihole.sh
-chmod a+x "/usr/sbin/pihole.sh"
+cp systemd/node-server.service /usr/lib/systemd/system/node-server.service
+cp systemd/node-server.sh /usr/sbin/node-server.sh
+chmod a+x "/usr/sbin/node-server.sh"
+
+cp systemd/install-davinci-resolve.service /usr/lib/systemd/system/install-davinci-resolve.service
+cp systemd/install-davinci-resolve.sh /usr/sbin/install-davinci-resolve.sh
+chmod a+x "/usr/sbin/install-davinci-resolve.sh"
 
 cp systemd/node-server.service /usr/lib/systemd/system/node-server.service
 cp systemd/node-server.sh /usr/sbin/node-server.sh
