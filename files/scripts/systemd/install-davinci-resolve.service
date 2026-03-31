@@ -1,0 +1,12 @@
+[Unit]
+Description=Install DaVinci Resolve if missing
+After=systemd-tmpfiles-setup.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/install-davinci-resolve.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
