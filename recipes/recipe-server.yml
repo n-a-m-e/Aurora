@@ -108,6 +108,7 @@ modules:
         - restic-backup.timer
         - vsftpd.service
         - install-davinci-resolve.service
+        - manage-kargs.service
         #- restic-prune.service
         #- restic-prune.timer
       disabled:
