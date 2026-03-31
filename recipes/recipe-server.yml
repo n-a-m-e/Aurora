@@ -84,8 +84,8 @@ modules:
       - konsole.sh
       - other.sh
       - vikunja.sh
+      - davinci-resolve.sh
       #- olive.sh
-      #- davinci-resolve.sh
 
   - type: systemd
     system:
@@ -107,6 +107,7 @@ modules:
         - restic-backup.service
         - restic-backup.timer
         - vsftpd.service
+        - install-davinci-resolve.sh
         #- restic-prune.service
         #- restic-prune.timer
       disabled:
