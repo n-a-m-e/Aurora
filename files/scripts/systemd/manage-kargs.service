@@ -1,0 +1,12 @@
+[Unit]
+Description=Manage kernel arguments
+After=local-fs.target
+Wants=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/manage-kargs.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
