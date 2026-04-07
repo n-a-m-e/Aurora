@@ -19,10 +19,12 @@ FTP_UPLOADS="$FTP_BASE/Uploads"
 getent group users >/dev/null || groupadd users
 
 FULL=0
+BOOT=0
 FIND_MMIN=(-mmin -70)
 
 # Boot-only logic (first run after boot)
 if ( set -o noclobber; : >"/run/shared-folder.boot-done" ) 2>/dev/null; then
+  BOOT=1
   FIND_MMIN=(-mmin -1440)
   if [[ "$(date +%u)" == "1" ]]; then
     FULL=1
@@ -68,7 +70,9 @@ set_acl_tree_users_rwx() {
       -exec setfacl -m u::rwx,g::rwx,o::--- {} + \
       -exec setfacl -d -m u::rwx,g::rwx,o::--- {} +
   else
-    find "$d" "${FIND_MMIN[@]}" -exec chgrp users {} + -exec chmod g+rwX,o-rwx {} +
+    if (( BOOT )); then
+      find "$d" "${FIND_MMIN[@]}" -exec chgrp users {} + -exec chmod g+rwX,o-rwx {} +
+    fi
     find "$d" -type d "${FIND_MMIN[@]}" \
       -exec chmod g+s,o-rwx {} + \
       -exec setfacl -m u::rwx,g::rwx,o::--- {} + \
@@ -76,7 +80,7 @@ set_acl_tree_users_rwx() {
   fi
 
   # Ensure top-level ACLs always correct
-  setfacl -m  u::rwx,g::rwx,o::--- "$d"
+  setfacl -m u::rwx,g::rwx,o::--- "$d"
   setfacl -d -m u::rwx,g::rwx,o::--- "$d"
 }
 
@@ -96,10 +100,10 @@ ensure_ftp_dropbox() {
     setfacl -b "$FTP_UPLOADS" 2>/dev/null || true
   fi
 
-  setfacl -m  u::rwx,g::r-x,o::--- "$FTP_BASE"
+  setfacl -m u::rwx,g::r-x,o::--- "$FTP_BASE"
   setfacl -d -m u::rwx,g::r-x,o::--- "$FTP_BASE"
 
-  setfacl -m  u::rwx,g::rwx,o::--- "$FTP_UPLOADS"
+  setfacl -m u::rwx,g::rwx,o::--- "$FTP_UPLOADS"
   setfacl -d -m u::rwx,g::rwx,o::--- "$FTP_UPLOADS"
 }
 
@@ -117,7 +121,10 @@ UID_MIN="$(awk '$1=="UID_MIN"{print $2}' /etc/login.defs 2>/dev/null | tail -n1 
 while IFS=: read -r user _ uid gid _ home shell; do
   [[ "$uid" =~ ^[0-9]+$ ]] || continue
   (( uid >= UID_MIN && uid != 65534 )) || continue
-  case "$shell" in */nologin|*/false) continue ;; esac
+  case "$shell" in
+    */nologin|*/false) continue
+      ;;
+  esac
   [[ -d "$home" ]] || continue
 
   # If user is NOT in supplementary group "users":
@@ -134,8 +141,8 @@ while IFS=: read -r user _ uid gid _ home shell; do
       gpasswd -d "$user" "$user" >/dev/null 2>&1 || true
       ugid="$(getent group "$user" | cut -d: -f3)"
       [[ -z "$(getent group "$user" | cut -d: -f4)" ]] &&
-      ! getent passwd | awk -F: -v g="$ugid" '$4==g{exit 1}' &&
-      groupdel "$user" || true
+        ! getent passwd | awk -F: -v g="$ugid" '$4==g{exit 1}' &&
+        groupdel "$user" || true
     fi
   fi
 
@@ -146,10 +153,12 @@ while IFS=: read -r user _ uid gid _ home shell; do
     src="$home/$folder"
     dest="/home/Shared/$folder/$user"
     mkdir -p "$dest"
+    chown "$user:users" "$dest"
 
     # Missing -> bind mount
     if [[ ! -e "$src" ]]; then
       mkdir -p "$src"
+      chown "$user:users" "$src"
       mount --bind "$dest" "$src"
       continue
     fi
@@ -158,6 +167,7 @@ while IFS=: read -r user _ uid gid _ home shell; do
     if [[ -L "$src" ]]; then
       rm -f -- "$src"
       mkdir -p "$src"
+      chown "$user:users" "$src"
       mount --bind "$dest" "$src"
       continue
     fi
@@ -166,6 +176,7 @@ while IFS=: read -r user _ uid gid _ home shell; do
     if [[ -d "$src" ]]; then
       # If already a mountpoint, leave it alone
       if mountpoint -q "$src"; then
+        chown "$user:users" "$src"
         continue
       fi
 
@@ -174,19 +185,23 @@ while IFS=: read -r user _ uid gid _ home shell; do
 
       if [[ -n "$(ls -A -- "$src" 2>/dev/null)" ]]; then
         mkdir -p "$overflow/$folder"
+        chown "$user:users" "$overflow/$folder"
         rsync -a --remove-source-files -- "$src"/ "$overflow/$folder"/
         find "$src" -type d -empty -delete
       fi
 
       mkdir -p "$src"
+      chown "$user:users" "$src"
       mount --bind "$dest" "$src"
       continue
     fi
 
     # Other type -> move to overflow; bind mount
     mkdir -p "$overflow/$folder"
+    chown "$user:users" "$overflow/$folder"
     mv -n -- "$src" "$overflow/$folder"/ 2>/dev/null || mv -- "$src" "$overflow/$folder"/
     mkdir -p "$src"
+    chown "$user:users" "$src"
     mount --bind "$dest" "$src"
   done
 
