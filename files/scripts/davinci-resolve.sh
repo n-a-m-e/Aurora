@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -oue pipefail
 
-rpm-ostree install apr apr-util libxcrypt-compat libcurl libcurl-devel mesa-libGLU rocminfo rocm-opencl rocm-clinfo rocm-hip unzip
+rpm-ostree install apr apr-util libxcrypt-compat mesa-libGLU rocminfo rocm-opencl rocm-clinfo rocm-hip unzip
 
 cat <<'EOF' > /usr/lib/tmpfiles.d/davinci-resolve.conf
 d /var/opt/resolve 0755 root root -
