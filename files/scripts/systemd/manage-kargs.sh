@@ -105,6 +105,19 @@ else
   echo "No AMD GPU detected; leaving existing GPU kargs unchanged."
 fi
 
+if ! grep -qxF 'pcie_aspm=off' <<< "$CURRENT_KARGS"; then
+  ERROR_COUNT="$(journalctl -k -b --no-pager 2>/dev/null | grep -Eci 'PCIe Bus Error|AER:|BadTLP|BadDLLP|Timeout' || true)"
+  echo "PCIe/AER-like error count this boot: ${ERROR_COUNT:-0}"
+
+  if [ "${ERROR_COUNT:-0}" -ge 20 ]; then
+    ensure_karg "pcie_aspm=off"
+  else
+    echo "Not enough PCIe/AER-like errors; leaving pcie_aspm unchanged."
+  fi
+else
+  echo "pcie_aspm=off already present."
+fi
+
 if [ "$CHANGED" -eq 1 ]; then
   echo "Kernel args changed. Rebooting..."
   systemctl reboot
