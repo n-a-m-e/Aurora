@@ -85,6 +85,7 @@ modules:
       - other.sh
       - vikunja.sh
       - davinci-resolve.sh
+      - sunshine.sh
       #- olive.sh
 
   - type: systemd
