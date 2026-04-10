@@ -10,7 +10,8 @@ image-version: 43
 modules:
   - type: dnf
     repos:
-      - https://copr.fedorainfracloud.org/coprs/ferdiu/moonlight/repo/fedora-%OS_VERSION%/ferdiu-moonlight-fedora-%OS_VERSION%.repo
+      files:
+        - https://copr.fedorainfracloud.org/coprs/ferdiu/moonlight/repo/fedora-%OS_VERSION%/ferdiu-moonlight-fedora-%OS_VERSION%.repo
     install:
       packages:
         - labwc
@@ -26,7 +27,6 @@ modules:
         - wget
         - ca-certificates
         - moonlight-qt
-      urls:
         - https://github.com/n-a-m-e/Aurora-Files/releases/download/thinlinc-client-4.20.0-4284/thinlinc-client-4.20.0-4284.x86_64.rpm
 
   - type: script
