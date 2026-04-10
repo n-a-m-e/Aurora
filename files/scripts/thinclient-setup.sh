@@ -5,13 +5,29 @@ THINCLIENT_USER="thinclient"
 THINCLIENT_HOME="/var/home/${THINCLIENT_USER}"
 
 # Ensure thinclient user exists
-if ! getent passwd "${THINCLIENT_USER}" >/dev/null; then
-  useradd \
-    --create-home \
-    --home-dir "${THINCLIENT_HOME}" \
-    --groups video,input,audio \
-    --shell /bin/bash \
-    "${THINCLIENT_USER}"
+if ! getent passwd "${THINCLIENT_USER}" >/dev/null 2>&1; then
+  EXTRA_GROUPS=()
+
+  for grp in video input audio wheel; do
+    if getent group "${grp}" >/dev/null 2>&1; then
+      EXTRA_GROUPS+=("${grp}")
+    fi
+  done
+
+  if [ "${#EXTRA_GROUPS[@]}" -gt 0 ]; then
+    useradd \
+      --create-home \
+      --home-dir "${THINCLIENT_HOME}" \
+      --groups "$(IFS=,; echo "${EXTRA_GROUPS[*]}")" \
+      --shell /bin/bash \
+      "${THINCLIENT_USER}"
+  else
+    useradd \
+      --create-home \
+      --home-dir "${THINCLIENT_HOME}" \
+      --shell /bin/bash \
+      "${THINCLIENT_USER}"
+  fi
 fi
 
 # ThinLinc defaults
