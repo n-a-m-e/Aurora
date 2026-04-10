@@ -3,6 +3,9 @@
   sudo rpm-ostree rebase ostree-unverified-registry:ghcr.io/n-a-m-e/aurora-server:latest
   ```
   ```
+  sudo rpm-ostree rebase ostree-unverified-registry:ghcr.io/n-a-m-e/aurora-thinclient:latest
+  ```
+  ```
   sudo rpm-ostree rebase ostree-unverified-registry:ghcr.io/n-a-m-e/aurora-client:latest
   ```
   ```
@@ -18,6 +21,9 @@
 - Then rebase to the signed image, like so:
   ```
   sudo rpm-ostree rebase ostree-image-signed:docker://ghcr.io/n-a-m-e/aurora-server:latest
+  ```
+  ```
+  sudo rpm-ostree rebase ostree-image-signed:docker://ghcr.io/n-a-m-e/aurora-thinclient:latest
   ```
   ```
   sudo rpm-ostree rebase ostree-image-signed:docker://ghcr.io/n-a-m-e/aurora-client:latest
