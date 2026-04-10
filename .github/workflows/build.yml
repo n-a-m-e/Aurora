@@ -30,6 +30,7 @@ jobs:
           # !! Add your recipes here
           - recipe-server.yml
           - recipe-workstation.yml
+          - recipe-thinclient.yml
           - recipe-client.yml
           - recipe-printstation.yml
     steps:
