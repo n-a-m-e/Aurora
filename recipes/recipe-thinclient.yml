@@ -1,0 +1,42 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+
+name: aurora-thinclient
+description: Minimal Fedora bootc thinclient with ThinLinc, Moonlight, and Terminal
+
+base-image: quay.io/fedora/fedora-bootc
+image-version: 43
+
+modules:
+  - type: dnf
+    repos:
+      - https://copr.fedorainfracloud.org/coprs/ferdiu/moonlight/repo/fedora-%OS_VERSION%/ferdiu-moonlight-fedora-%OS_VERSION%.repo
+    install:
+      packages:
+        - labwc
+        - foot
+        - fuzzel
+        - greetd
+        - tuigreet
+        - seatd
+        - dbus-daemon
+        - NetworkManager
+        - xdg-desktop-portal
+        - xdg-desktop-portal-wlr
+        - wget
+        - ca-certificates
+        - moonlight-qt
+      urls:
+        - https://github.com/n-a-m-e/Aurora-Files/releases/download/thinlinc-client-4.20.0-4284/thinlinc-client-4.20.0-4284.x86_64.rpm
+
+  - type: script
+    scripts:
+      - thinclient-setup.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - greetd.service
+        - NetworkManager.service
+
+  - type: signing
