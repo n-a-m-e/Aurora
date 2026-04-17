@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import asyncio, socket, subprocess, sys
+import asyncio, socket, subprocess, sys, signal
 from pathlib import Path
 
 SOCKET = "/run/remote-shutdown.sock"
