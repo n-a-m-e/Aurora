@@ -35,6 +35,7 @@ modules:
       - poppler-glib
       - systemd-devel
       - tinyxml
+      - python3-tkinter
     remove:
       # - solaar
       - kdeconnectd
