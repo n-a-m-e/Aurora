@@ -1,4 +1,6 @@
 name: bluebuild
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 on:
   schedule:
     - cron: "00 06 * * *"
@@ -11,8 +13,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 jobs:
-  bluebuild:
-    name: Build Custom Image
+  build-server-client:
+    name: Build Server and Client Images
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     permissions:
@@ -24,7 +26,6 @@ jobs:
       matrix:
         recipe:
           - recipe-server.yml
-          - recipe-thinclient.yml
           - recipe-client.yml
     steps:
       - name: Build Custom Image
@@ -35,11 +36,45 @@ jobs:
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
           maximize_build_space: true
+  thinclient-changes:
+    name: Detect Thinclient Changes
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      thinclient: ${{ steps.changes.outputs.thinclient }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            thinclient:
+              - 'recipes/recipe-thinclient.yml'
+              - 'files/scripts/thinclient-setup.sh'
+              - '.github/workflows/build.yml'
+  build-thinclient:
+    name: Build Thinclient Image
+    runs-on: ubuntu-latest
+    needs: thinclient-changes
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || needs.thinclient-changes.outputs.thinclient == 'true')
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Build Thinclient Image
+        uses: blue-build/github-action@v1.11
+        with:
+          recipe: recipe-thinclient.yml
+          cosign_private_key: ${{ secrets.SIGNING_SECRET }}
+          registry_token: ${{ github.token }}
+          pr_event_number: ${{ github.event.number }}
+          maximize_build_space: true
   thinclient-iso:
     name: Build Thinclient ISO and publish Release
     runs-on: ubuntu-24.04
-    needs: bluebuild
-    if: github.ref == 'refs/heads/main'
+    needs: [thinclient-changes, build-thinclient]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || needs.thinclient-changes.outputs.thinclient == 'true')
     permissions:
       contents: write
       packages: read
@@ -61,8 +96,9 @@ jobs:
           additional-args: --use-librepo=True
       - name: Rename ISO
         run: |
-          iso=$(find "${{ steps.iso.outputs.output-directory }}" -name '*.iso' | head -n1)
-          mv "$iso" "${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
+          iso=$(sudo find "${{ steps.iso.outputs.output-directory }}" -name '*.iso' | head -n1)
+          sudo cp "$iso" "${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
+          sudo chown "$(id -u):$(id -g)" "${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
         with:
