@@ -110,6 +110,7 @@ modules:
         - vsftpd.service
         - install-davinci-resolve.service
         - manage-kargs.service
+        - remote-shutdown.service
         #- restic-prune.service
         #- restic-prune.timer
       disabled:
