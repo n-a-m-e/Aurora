@@ -46,7 +46,7 @@ jobs:
     steps:
       - name: Build ISO
         id: iso
-        uses: osbuild/bootc-image-builder-action@v0
+        uses: osbuild/bootc-image-builder-action@v0.0.2
         with:
           image: ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest
           types: iso
@@ -57,7 +57,7 @@ jobs:
           iso=$(find "${{ steps.iso.outputs.output-directory }}" -name '*.iso' | head -n1)
           mv "$iso" "${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: thinclient-iso-latest
           name: Aurora Thinclient ISO
