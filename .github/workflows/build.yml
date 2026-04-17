@@ -63,15 +63,15 @@ jobs:
       id-token: write
     steps:
       - name: Build Thinclient Image
-        uses: blue-build/github-action@v1.11
+        uses: blue-build/github-action@v1.11.1
         with:
           recipe: recipe-thinclient.yml
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
           maximize_build_space: true
-  thinclient-iso:
-    name: Build Thinclient ISO and publish Release
+  thinclient-raw:
+    name: Build Thinclient RAW and publish Release
     runs-on: ubuntu-24.04
     needs: [thinclient-changes, build-thinclient]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || needs.thinclient-changes.outputs.thinclient == 'true')
@@ -79,34 +79,38 @@ jobs:
       contents: write
       packages: read
     steps:
-      - uses: actions/checkout@v4
-      - name: Write ISO config
+      - uses: actions/checkout@v6
+      - name: Write RAW config
         run: |
-          cat > iso-config.toml <<'EOF'
+          cat > image-config.toml <<'EOF'
           [customizations]
           EOF
-      - name: Build ISO
-        id: iso
+      - name: Build RAW
+        id: raw
         uses: osbuild/bootc-image-builder-action@v0.0.2
         with:
-          config-file: ./iso-config.toml
+          config-file: ./image-config.toml
           image: ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest
-          types: iso
+          types: raw
           rootfs: xfs
           additional-args: --use-librepo=True
-      - name: Rename ISO
+      - name: Rename and compress RAW
         run: |
-          iso=$(sudo find "${{ steps.iso.outputs.output-directory }}" -name '*.iso' | head -n1)
-          sudo cp "$iso" "${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
-          sudo chown "$(id -u):$(id -g)" "${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
+          raw=$(sudo find "${{ steps.raw.outputs.output-directory }}" -name '*.raw' | head -n1)
+          sudo cp "$raw" "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
+          sudo xz -T0 -z "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
+          sudo chown "$(id -u):$(id -g)" "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw.xz"
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: thinclient-iso-latest
-          name: Aurora Thinclient ISO
+          tag_name: thinclient-raw-latest
+          name: Aurora Thinclient RAW
           prerelease: true
-          files: ${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso
+          files: ${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw.xz
           overwrite_files: true
           fail_on_unmatched_files: true
           body: |
-            Latest bootable installer ISO for Aurora Thinclient.
+            Latest compressed RAW disk image for Aurora Thinclient.
+
+            Write to USB with:
+            xz -dc aurora-thinclient-latest.raw.xz | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
