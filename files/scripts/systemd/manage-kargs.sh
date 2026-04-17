@@ -7,7 +7,6 @@ CURRENT_KARGS="$(rpm-ostree kargs | tr ' ' '\n')"
 SDDM_CONF=/etc/sddm.conf.d/99-sunshine.conf
 SDDM_AUTOLOGIN_USER="sunshine"
 SDDM_AUTOLOGIN_SESSION="plasmax11.desktop"
-
 SDDM_XSETUP=/etc/sddm/Xsetup
 
 SUNSHINE_USER="sunshine"
@@ -24,10 +23,10 @@ LEGACY_KARGS=(
 )
 
 LEGACY_WRONG_KARGS=(
-  '^radeon\.si_support=0'
-  '^amdgpu\.si_support=1'
-  '^radeon\.cik_support=0'
-  '^amdgpu\.cik_support=1'
+  '^radeon\.si_support=0$'
+  '^amdgpu\.si_support=1$'
+  '^radeon\.cik_support=0$'
+  '^amdgpu\.cik_support=1$'
 )
 
 MODERN_REMOVE_KARGS=(
@@ -52,7 +51,7 @@ sync_kargs() {
 
   if [[ "$mode" == "remove" || "$mode" == "keep" ]]; then
     for pattern in "${items[@]}"; do
-      mapfile -t matches < <(grep "$pattern" <<< "$CURRENT_KARGS" || true)
+      mapfile -t matches < <(grep -E "$pattern" <<< "$CURRENT_KARGS" || true)
       for karg in "${matches[@]}"; do
         [[ -z "$karg" ]] && continue
         [[ "$mode" == "keep" && "$karg" == "$value" ]] && continue
@@ -72,6 +71,50 @@ sync_kargs() {
       fi
     done
   fi
+}
+
+get_amd_gpu() {
+  local dev vendor device class pci
+
+  for dev in /sys/bus/pci/devices/*; do
+    [[ -r "$dev/vendor" && -r "$dev/device" && -r "$dev/class" ]] || continue
+
+    vendor="$(<"$dev/vendor" 2>/dev/null || true)"
+    device="$(<"$dev/device" 2>/dev/null || true)"
+    class="$(<"$dev/class" 2>/dev/null || true)"
+    pci="$(basename "$dev")"
+
+    [[ "$vendor" == "0x1002" ]] || continue
+    [[ "$class" == "0x030000" || "$class" == "0x030200" ]] || continue
+
+    printf '%s %s %s\n' "$vendor" "$device" "$pci"
+    return 0
+  done
+
+  return 1
+}
+
+classify_amd_gpu() {
+  case "${1#0x}" in
+    $LEGACY_IDS) echo "LEGACY" ;;
+    *)           echo "MODERN" ;;
+  esac
+}
+
+gpu_has_connected_display() {
+  local target_pci="$1" card status
+
+  for card in /sys/class/drm/card[0-9]*; do
+    [[ -e "$card/device" ]] || continue
+    [[ "$(basename "$(readlink -f "$card/device")")" == "$target_pci" ]] || continue
+
+    for status in "$card"-*/status; do
+      [[ -e "$status" ]] || continue
+      [[ "$(<"$status" 2>/dev/null || true)" == "connected" ]] && return 0
+    done
+  done
+
+  return 1
 }
 
 ensure_sunshine_service_enabled() {
@@ -114,52 +157,14 @@ remove_streaming_display_setup() {
   done
 }
 
-get_amd_gpu() {
-  local d vendor device pci
-
-  for d in /sys/class/drm/card*/device; do
-    vendor="$(<"$d/vendor" 2>/dev/null || true)"
-    device="$(<"$d/device" 2>/dev/null || true)"
-    [[ "$vendor" == "0x1002" ]] || continue
-    pci="$(basename "$(readlink -f "$d")")"
-    printf '%s %s %s\n' "$vendor" "$device" "$pci"
-    return 0
-  done
-
-  return 1
-}
-
-classify_amd_gpu() {
-  case "${1#0x}" in
-    $LEGACY_IDS) echo "LEGACY" ;;
-    *)           echo "MODERN" ;;
-  esac
-}
-
-gpu_has_connected_display() {
-  local target_pci="$1" card status
-
-  for card in /sys/class/drm/card[0-9]*; do
-    [[ -e "$card/device" ]] || continue
-    [[ "$(basename "$(readlink -f "$card/device")")" == "$target_pci" ]] || continue
-
-    for status in "$card"-*/status; do
-      [[ -e "$status" ]] || continue
-      [[ "$(<"$status" 2>/dev/null || true)" == "connected" ]] && return 0
-    done
-  done
-
-  return 1
-}
-
-ensure_legacy_state() {
+ensure_legacy_kargs() {
   sync_kargs ensure '' '' LEGACY_KARGS
   sync_kargs remove '' '' LEGACY_WRONG_KARGS
   sync_kargs remove '^amdgpu\.virtual_display='
   remove_streaming_display_setup
 }
 
-ensure_modern_state() {
+ensure_modern_kargs() {
   local pci="$1" vd="amdgpu.virtual_display=${pci},1"
   local sunshine_ready=0
 
@@ -182,29 +187,36 @@ ensure_modern_state() {
   fi
 }
 
-sync_kargs ensure "" "selinux=0"
+main() {
+  local gpu_info vendor device pci gpu_class error_count
 
-if gpu_info="$(get_amd_gpu)"; then
-  read -r vendor device pci <<< "$gpu_info"
-  gpu_class="$(classify_amd_gpu "$device")"
-  echo "Detected AMD GPU: vendor=$vendor device=$device pci=$pci class=$gpu_class"
+  sync_kargs ensure "" "selinux=0"
 
-  case "$gpu_class" in
-    LEGACY) ensure_legacy_state ;;
-    MODERN) ensure_modern_state "$pci" ;;
-  esac
-else
-  echo "No AMD GPU detected; leaving existing GPU kargs unchanged."
-fi
+  if gpu_info="$(get_amd_gpu)"; then
+    read -r vendor device pci <<< "$gpu_info"
+    gpu_class="$(classify_amd_gpu "$device")"
+    echo "Detected AMD GPU: vendor=$vendor device=$device pci=$pci class=$gpu_class"
 
-ERROR_COUNT="$(journalctl -k -b --no-pager 2>/dev/null | grep -Eci 'PCIe Bus Error|AER:|BadTLP|BadDLLP|Timeout' || true)"
-echo "PCIe/AER-like error count this boot: $ERROR_COUNT"
+    case "$gpu_class" in
+      LEGACY) ensure_legacy_kargs ;;
+      MODERN) ensure_modern_kargs "$pci" ;;
+    esac
+  else
+    echo "No AMD GPU found on PCI"
+    sync_kargs remove '^amdgpu\.virtual_display='
+    remove_streaming_display_setup
+  fi
 
-(( ERROR_COUNT >= 20 )) && sync_kargs ensure "" "pcie_aspm=off"
+  error_count="$(journalctl -k -b --no-pager 2>/dev/null | grep -Eci 'PCIe Bus Error|AER:|BadTLP|BadDLLP|Timeout' || true)"
+  echo "PCIe/AER-like error count this boot: $error_count"
+  (( error_count >= 20 )) && sync_kargs ensure "" "pcie_aspm=off"
 
-if (( CHANGED )); then
-  echo "Kernel args, Sunshine user service, or streaming display config changed. Rebooting..."
-  systemctl reboot
-else
-  echo "No changes made. No reboot needed."
-fi
+  if (( CHANGED )); then
+    echo "Kernel args, Sunshine user service, or streaming display config changed. Rebooting..."
+    systemctl reboot
+  else
+    echo "No changes made. No reboot needed."
+  fi
+}
+
+main "$@"
