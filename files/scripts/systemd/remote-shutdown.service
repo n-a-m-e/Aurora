@@ -1,0 +1,12 @@
+[Unit]
+Description=Remote shutdown daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/remote-shutdown.py serve
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target
