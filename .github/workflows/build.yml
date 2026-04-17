@@ -44,10 +44,17 @@ jobs:
       contents: write
       packages: read
     steps:
+      - uses: actions/checkout@v4
+      - name: Write ISO config
+        run: |
+          cat > iso-config.toml <<'EOF'
+          [customizations]
+          EOF
       - name: Build ISO
         id: iso
         uses: osbuild/bootc-image-builder-action@v0.0.2
         with:
+          config-file: ./iso-config.toml
           image: ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest
           types: iso
           rootfs: xfs
