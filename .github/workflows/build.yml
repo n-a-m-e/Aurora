@@ -107,7 +107,7 @@ jobs:
           BLOCKS=$(sudo resize2fs -P "${LOOP}p4" 2>/dev/null | awk -F: '{gsub(/ /,"",$2); print $2}')
           START=$(sudo parted -sm "$LOOP" unit s print | awk -F: '$1=="4"{gsub("s","",$2); print $2}')
           NEW_END=$((START + BLOCKS * 8 + 2047))
-          sudo parted -s "$LOOP" unit s resizepart 4 "${NEW_END}s"
+          yes | sudo parted "$LOOP" unit s resizepart 4 "${NEW_END}s"
           sudo partprobe "$LOOP"
           sudo losetup -d "$LOOP"
           NEW_SIZE=$(( (NEW_END + 1) * 512 ))
@@ -126,5 +126,6 @@ jobs:
           fail_on_unmatched_files: true
           body: |
             Latest compressed RAW disk image for Aurora Thinclient.
+
             Write to USB with:
             xz -dc aurora-thinclient-latest.raw.xz | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
