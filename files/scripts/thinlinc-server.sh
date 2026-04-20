@@ -121,25 +121,33 @@ polkit.addRule(function(action, subject) {
 });
 
 polkit.addRule(function(action, subject) {
-   if (action.id == "org.freedesktop.login1.power-off" ||
-       action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
-       action.id == "org.freedesktop.login1.power-off-ignore-inhibit" ||
-       action.id == "org.freedesktop.login1.reboot" ||
-       action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
-       action.id == "org.freedesktop.login1.reboot-ignore-inhibit" ||
-       action.id == "org.freedesktop.login1.halt" ||
-       action.id == "org.freedesktop.login1.halt-multiple-sessions" ||
-       action.id == "org.freedesktop.login1.halt-ignore-inhibit") {
-	if (!subject.local) {
-        try {
-            polkit.spawn(["/usr/sbin/remote-shutdown.py", "request", subject.user || "", subject.session || "", action.id]);
+    if (action.id == "org.freedesktop.login1.power-off" ||
+        action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+        action.id == "org.freedesktop.login1.power-off-ignore-inhibit" ||
+        action.id == "org.freedesktop.login1.reboot" ||
+        action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
+        action.id == "org.freedesktop.login1.reboot-ignore-inhibit" ||
+        action.id == "org.freedesktop.login1.halt" ||
+        action.id == "org.freedesktop.login1.halt-multiple-sessions" ||
+        action.id == "org.freedesktop.login1.halt-ignore-inhibit") {
+        if (!subject.local) {
+            try {
+                var pid = String(subject.pid || "");
+                var exe = "";
+                if (pid !== "") {
+                    exe = polkit.spawn(["/usr/bin/readlink", "-f", "/proc/" + pid + "/exe"]).trim();
+                }
+                if (exe == "/usr/libexec/org_kde_powerdevil") {
+                    polkit.log("Denied remote login1 power action from Powerdevil: pid=" + pid + " action=" + action.id);
+                } else {
+                    polkit.spawn(["/usr/sbin/remote-shutdown.py", "request", subject.user || "", subject.session || "", action.id]);
+                }
+            } catch (e) {
+                polkit.log("remote-shutdown handling failed, blocking action: " + e);
+            }
             return polkit.Result.NO;
-        } catch (e) {
-            polkit.log("remote-shutdown request failed, allowing action: " + e);
-            return polkit.Result.YES;
         }
-	}
-   }
+    }
 });
 EOF
 
