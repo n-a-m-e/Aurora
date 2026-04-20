@@ -107,7 +107,7 @@ jobs:
           BLOCKS=$(sudo resize2fs -P "${LOOP}p4" 2>/dev/null | awk -F: '{gsub(/ /,"",$2); print $2}')
           START=$(sudo parted -sm "$LOOP" unit s print | awk -F: '$1=="4"{gsub("s","",$2); print $2}')
           NEW_END=$((START + BLOCKS * 8 + 2047))
-          yes | sudo parted "$LOOP" unit s resizepart 4 "${NEW_END}s"
+          printf 'resizepart\n4\nYes\n%ss\nquit\n' "$NEW_END" | sudo parted "$LOOP" ---pretend-input-tty
           sudo partprobe "$LOOP"
           sudo losetup -d "$LOOP"
           NEW_SIZE=$(( (NEW_END + 1) * 512 ))
