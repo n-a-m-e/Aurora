@@ -82,14 +82,6 @@ jobs:
         run: |
           cat > image-config.toml <<'EOF'
           [customizations]
-
-          [[customizations.filesystem]]
-          mountpoint = "/"
-          minsize = "5 GiB"
-
-          [[customizations.filesystem]]
-          mountpoint = "/boot"
-          minsize = "512 MiB"
           EOF
       - name: Build RAW
         id: raw
@@ -98,14 +90,31 @@ jobs:
           config-file: ./image-config.toml
           image: ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest
           types: raw
-          rootfs: xfs
+          rootfs: ext4
           additional-args: --use-librepo=True
-      - name: Rename and compress RAW
+      - name: Rename RAW
         run: |
           raw=$(sudo find "${{ steps.raw.outputs.output-directory }}" -name '*.raw' | head -n1)
           sudo cp "$raw" "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
-          sudo xz -T0 -z "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
-          sudo chown "$(id -u):$(id -g)" "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw.xz"
+          sudo chown "$(id -u):$(id -g)" "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
+      - name: Shrink RAW
+        run: |
+          RAW="${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
+          LOOP=$(sudo losetup --find --show --partscan "$RAW")
+          echo "Loop device: $LOOP"
+          sudo e2fsck -fy "${LOOP}p4"
+          sudo resize2fs -M "${LOOP}p4"
+          BLOCKS=$(sudo resize2fs -P "${LOOP}p4" 2>/dev/null | awk -F: '{gsub(/ /,"",$2); print $2}')
+          START=$(sudo parted -sm "$LOOP" unit s print | awk -F: '$1=="4"{gsub("s","",$2); print $2}')
+          NEW_END=$((START + BLOCKS * 8 + 2047))
+          sudo parted -s "$LOOP" unit s resizepart 4 "${NEW_END}s"
+          sudo partprobe "$LOOP"
+          sudo losetup -d "$LOOP"
+          NEW_SIZE=$(( (NEW_END + 1) * 512 ))
+          truncate -s "$NEW_SIZE" "$RAW"
+      - name: Compress RAW
+        run: |
+          xz -T0 -z "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
         with:
@@ -117,6 +126,5 @@ jobs:
           fail_on_unmatched_files: true
           body: |
             Latest compressed RAW disk image for Aurora Thinclient.
-
             Write to USB with:
             xz -dc aurora-thinclient-latest.raw.xz | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
