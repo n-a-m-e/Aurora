@@ -82,6 +82,14 @@ jobs:
         run: |
           cat > image-config.toml <<'EOF'
           [customizations]
+
+          [[customizations.filesystem]]
+          mountpoint = "/"
+          minsize = "5 GiB"
+
+          [[customizations.filesystem]]
+          mountpoint = "/boot"
+          minsize = "512 MiB"
           EOF
       - name: Build RAW
         id: raw
