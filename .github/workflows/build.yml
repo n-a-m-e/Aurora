@@ -112,6 +112,13 @@ jobs:
           sudo losetup -d "$LOOP"
           NEW_SIZE=$(( (NEW_END + 1) * 512 ))
           truncate -s "$NEW_SIZE" "$RAW"
+      - name: Install gdisk
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gdisk
+      - name: Fix GPT after shrink
+        run: |
+          sudo sgdisk -e "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
       - name: Compress RAW
         run: |
           sudo xz -T0 -z "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
