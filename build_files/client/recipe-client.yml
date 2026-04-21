@@ -1,0 +1,51 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+name: aurora-client
+description: This is my personal OS image.
+
+base-image: ghcr.io/ublue-os/aurora
+image-version: stable
+
+modules:
+  - type: files
+    files:
+      - source: ../shared/files/system
+        destination: /
+      - source: files/system
+        destination: /
+
+  - type: rpm-ostree
+    repos: []
+    install:
+      - konsole
+      - yakuake
+    remove:
+      - kdeconnectd
+      - kde-connect-libs
+      - kde-connect
+      - input-remapper
+      - kdebugsettings
+      - plasma-discover-flatpak
+      - plasma-discover-notifier
+      - plasma-discover
+
+  - type: script
+    scripts:
+      - scripts/thinlinc-client.sh
+      - scripts/systemd-client.sh
+      - scripts/fingerprint.sh
+      - ../shared/scripts/konsole.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - hostname-reset-for-client.service
+        - kscreenlocker-fprint-login.service
+      disabled:
+        - zfs-import-cache.service
+        - NetworkManager-wait-online.service
+    user:
+      enabled: []
+      disabled: []
+
+  - type: signing
