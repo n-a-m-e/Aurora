@@ -1,6 +1,5 @@
 ---
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
-
 name: aurora-thinclient
 description: Minimal Fedora bootc thinclient with ThinLinc, Moonlight, and Terminal
 
@@ -31,7 +30,7 @@ modules:
 
   - type: script
     scripts:
-      - thinclient-setup.sh
+      - scripts/thinclient-setup.sh
 
   - type: systemd
     system:
