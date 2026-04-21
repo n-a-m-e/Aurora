@@ -57,15 +57,15 @@ modules:
         - tlwebaccess.service
         - tlwebadm.service
         - sshd.service
-        - vikunja-start.service
+        #- vikunja-start.service
         - flatpak-native-messaging-hosts.service
         - shared-folder.service
         - shared-folder.timer
         - flatpak-force-x11.service
         - node-server.service
-        - pihole.service
-        - restic-backup.service
-        - restic-backup.timer
+        #- pihole.service
+        #- restic-backup.service
+        #- restic-backup.timer
         - vsftpd.service
         - install-davinci-resolve.service
         - manage-kargs.service
