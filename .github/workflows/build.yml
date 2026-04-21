@@ -158,7 +158,7 @@ jobs:
 
           BLOCK_COUNT=$(sudo dumpe2fs -h "${LOOP}p4" 2>/dev/null | awk -F: '/Block count:/ {gsub(/ /,"",$2); print $2}')
           BLOCK_SIZE=$(sudo dumpe2fs -h "${LOOP}p4" 2>/dev/null | awk -F: '/Block size:/ {gsub(/ /,"",$2); print $2}')
-          START=$(sudo sgdisk -i 4 "$LOOP" | awk -F: '/First sector:/ {gsub(/ /,"",$2); print $2}')
+          START=$(sudo sgdisk -i 4 "$LOOP" | awk -F: '/First sector:/ {print $2}' | awk '{print $1}')
 
           FS_SECTORS=$(( BLOCK_COUNT * BLOCK_SIZE / 512 ))
           NEW_END=$(( START + FS_SECTORS - 1 ))
