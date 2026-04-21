@@ -38,12 +38,11 @@ modules:
 
   - type: script
     scripts:
+      - ../shared/scripts/konsole.sh
       - scripts/thinlinc-server.sh
       - scripts/printers.sh
       - scripts/systemd-server.sh
       - scripts/uivision.sh
-      - scripts/gitbutler.sh
-      - ../shared/scripts/konsole.sh
       - scripts/other.sh
       - scripts/davinci-resolve.sh
       - scripts/sunshine.sh
