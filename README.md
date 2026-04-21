@@ -8,12 +8,6 @@
   ```
   sudo rpm-ostree rebase ostree-unverified-registry:ghcr.io/n-a-m-e/aurora-client:latest
   ```
-  ```
-  sudo rpm-ostree rebase ostree-unverified-registry:ghcr.io/n-a-m-e/aurora-workstation:latest
-  ```
-  ```
-  sudo rpm-ostree rebase ostree-unverified-registry:ghcr.io/n-a-m-e/aurora-printstation:latest
-  ```
 - Reboot to complete the rebase:
   ```
   sudo systemctl reboot
@@ -27,12 +21,6 @@
   ```
   ```
   sudo rpm-ostree rebase ostree-image-signed:docker://ghcr.io/n-a-m-e/aurora-client:latest
-  ```
-  ```
-  sudo rpm-ostree rebase ostree-image-signed:docker://ghcr.io/n-a-m-e/aurora-workstation:latest
-  ```
-  ```
-  sudo rpm-ostree rebase ostree-image-signed:docker://ghcr.io/n-a-m-e/aurora-printstation:latest
   ```
 - Reboot again to complete the installation
   ```
