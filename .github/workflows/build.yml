@@ -182,9 +182,11 @@ jobs:
           echo "=== GPT after recreate before truncate ==="
           sudo sgdisk -p "$RAW" || true
 
-          NEW_LAST_SECTOR=$(( NEW_END + 33 ))
+          GPT_SLACK_SECTORS=4096
+          NEW_LAST_SECTOR=$(( NEW_END + GPT_SLACK_SECTORS ))
           NEW_SIZE=$(( (NEW_LAST_SECTOR + 1) * 512 ))
 
+          echo "GPT_SLACK_SECTORS=$GPT_SLACK_SECTORS"
           echo "NEW_LAST_SECTOR=$NEW_LAST_SECTOR"
           echo "NEW_SIZE=$NEW_SIZE"
 
