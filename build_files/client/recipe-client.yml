@@ -7,13 +7,6 @@ base-image: ghcr.io/ublue-os/aurora
 image-version: stable
 
 modules:
-  - type: files
-    files:
-      - source: ../shared/files/system
-        destination: /
-      - source: files/system
-        destination: /
-
   - type: rpm-ostree
     repos: []
     install:
