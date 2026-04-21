@@ -45,7 +45,6 @@ modules:
       - scripts/gitbutler.sh
       - ../shared/scripts/konsole.sh
       - scripts/other.sh
-      - scripts/vikunja.sh
       - scripts/davinci-resolve.sh
       - scripts/sunshine.sh
       # - scripts/olive.sh
