@@ -9,19 +9,11 @@ sed -i 's|SocketGroup=docker|SocketGroup=users|' /usr/lib/systemd/system/docker.
 
 cd "$(dirname "$0")"
 cp systemd/thinlinc-remove-symlink.service /usr/lib/systemd/system/thinlinc-remove-symlink.service
-cp systemd/vikunja-start.service /usr/lib/systemd/system/vikunja-start.service
-cp systemd/http-server.service /usr/lib/systemd/system/http-server.service
 cp systemd/flatpak-force-x11.service /usr/lib/systemd/system/flatpak-force-x11.service
-cp systemd/restic-backup.service /usr/lib/systemd/system/restic-backup.service
-cp systemd/restic-backup.timer /usr/lib/systemd/system/restic-backup.timer
 
 cp systemd/remote-shutdown.service /usr/lib/systemd/system/remote-shutdown.service
 cp systemd/remote-shutdown.py /usr/sbin/remote-shutdown.py
 chmod a+x "/usr/sbin/remote-shutdown.py"
-
-cp systemd/pihole.service /usr/lib/systemd/system/pihole.service
-cp systemd/pihole.sh /usr/sbin/pihole.sh
-chmod a+x "/usr/sbin/pihole.sh"
 
 cp systemd/manage-kargs.service /usr/lib/systemd/system/manage-kargs.service
 cp systemd/manage-kargs.sh /usr/sbin/manage-kargs.sh
