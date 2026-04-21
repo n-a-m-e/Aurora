@@ -1,0 +1,94 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+name: aurora-server
+description: This is my personal OS image.
+
+base-image: ghcr.io/ublue-os/aurora
+image-version: stable
+
+modules:
+  - type: files
+    files:
+      - source: ../shared/files/system
+        destination: /
+      - source: files/system
+        destination: /
+      - source: files/vsftpd
+        destination: /
+
+  - type: rpm-ostree
+    repos: []
+    install:
+      - qpdf
+      - konsole
+      - yakuake
+      - flatpak-builder
+      - inotify-tools
+      - pam-kwallet
+      - docker
+      - vsftpd
+      - python3-tkinter
+      # for printers.
+      - poppler-glib
+      - systemd-devel
+      - tinyxml
+    remove:
+      - kdeconnectd
+      - kde-connect-libs
+      - kde-connect
+      - input-remapper
+      - kdebugsettings
+
+  - type: default-flatpaks
+    configurations:
+      - notify: false
+        scope: system
+        install: []
+
+  - type: script
+    scripts:
+      - scripts/thinlinc-server.sh
+      - scripts/printers.sh
+      - scripts/systemd-server.sh
+      - scripts/uivision.sh
+      - scripts/gitbutler.sh
+      - ../shared/scripts/konsole.sh
+      - ../shared/scripts/other.sh
+      - scripts/vikunja.sh
+      - scripts/davinci-resolve.sh
+      - scripts/sunshine.sh
+      # - scripts/olive.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - thinlinc-remove-symlink.service
+        - vsmserver.service
+        - vsmagent.service
+        - tlwebaccess.service
+        - tlwebadm.service
+        - sshd.service
+        - vikunja-start.service
+        - flatpak-native-messaging-hosts.service
+        - shared-folder.service
+        - shared-folder.timer
+        - flatpak-force-x11.service
+        - node-server.service
+        - pihole.service
+        - restic-backup.service
+        - restic-backup.timer
+        - vsftpd.service
+        - install-davinci-resolve.service
+        - manage-kargs.service
+        - remote-shutdown.service
+      disabled:
+        - sleep.target
+        - suspend.target
+        - hibernate.target
+        - hybrid-sleep.target
+
+    user:
+      enabled: []
+      disabled: []
+
+  - type: signing
