@@ -7,15 +7,6 @@ base-image: ghcr.io/ublue-os/aurora
 image-version: stable
 
 modules:
-  - type: files
-    files:
-      - source: ../shared/files/system
-        destination: /
-      - source: files/system
-        destination: /
-      - source: files/vsftpd
-        destination: /
-
   - type: rpm-ostree
     repos: []
     install:
@@ -53,7 +44,7 @@ modules:
       - scripts/uivision.sh
       - scripts/gitbutler.sh
       - ../shared/scripts/konsole.sh
-      - ../shared/scripts/other.sh
+      - scripts/other.sh
       - scripts/vikunja.sh
       - scripts/davinci-resolve.sh
       - scripts/sunshine.sh
