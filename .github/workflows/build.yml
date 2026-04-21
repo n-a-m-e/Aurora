@@ -1,12 +1,12 @@
 name: bluebuild
 
 on:
-  #schedule:
-  #  - cron: "00 06 * * *"
   #push:
   #  paths-ignore:
   #    - "**.md"
   #pull_request:
+  #  paths-ignore:
+  #    - "**.md"
   workflow_dispatch:
 
 concurrency:
@@ -14,52 +14,76 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-server-client:
-    name: Build Server and Client Images
+  image-changes:
+    name: Detect image changes
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    outputs:
+      server: ${{ steps.changes.outputs.server }}
+      client: ${{ steps.changes.outputs.client }}
+      thinclient: ${{ steps.changes.outputs.thinclient }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v4
+        id: changes
+        with:
+          filters: |
+            server:
+              - 'build_files/server/**'
+              - 'build_files/shared/**'
+
+            client:
+              - 'build_files/client/**'
+              - 'build_files/shared/**'
+
+            thinclient:
+              - 'build_files/thinclient/**'
+
+  build-server:
+    name: Build Server Image
+    runs-on: ubuntu-latest
+    needs: image-changes
+    if: github.ref == 'refs/heads/main' && needs.image-changes.outputs.server == 'true'
     permissions:
       contents: read
       packages: write
       id-token: write
-    strategy:
-      fail-fast: false
-      matrix:
-        recipe:
-          - recipe-server.yml
-          - recipe-client.yml
     steps:
-      - name: Build Custom Image
+      - name: Build Server Image
         uses: blue-build/github-action@v1.11.1
         with:
-          recipe: ${{ matrix.recipe }}
+          recipe: build_files/server/recipe-server.yml
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
           maximize_build_space: true
 
-  thinclient-changes:
-    name: Detect Thinclient Changes
+  build-client:
+    name: Build Client Image
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    outputs:
-      thinclient: ${{ steps.changes.outputs.thinclient }}
+    needs: image-changes
+    if: github.ref == 'refs/heads/main' && needs.image-changes.outputs.client == 'true'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     steps:
-      - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v4
-        id: changes
+      - name: Build Client Image
+        uses: blue-build/github-action@v1.11.1
         with:
-          filters: |
-            thinclient:
-              - 'recipes/recipe-thinclient.yml'
-              - 'files/scripts/thinclient-setup.sh'
-              - '.github/workflows/build.yml'
+          recipe: build_files/client/recipe-client.yml
+          cosign_private_key: ${{ secrets.SIGNING_SECRET }}
+          registry_token: ${{ github.token }}
+          pr_event_number: ${{ github.event.number }}
+          maximize_build_space: true
 
   build-thinclient:
     name: Build Thinclient Image
     runs-on: ubuntu-latest
-    needs: thinclient-changes
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || needs.thinclient-changes.outputs.thinclient == 'true')
+    needs: image-changes
+    if: github.ref == 'refs/heads/main' && needs.image-changes.outputs.thinclient == 'true'
     permissions:
       contents: read
       packages: write
@@ -68,7 +92,7 @@ jobs:
       - name: Build Thinclient Image
         uses: blue-build/github-action@v1.11.1
         with:
-          recipe: recipe-thinclient.yml
+          recipe: build_files/thinclient/recipe-thinclient.yml
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
@@ -77,8 +101,8 @@ jobs:
   thinclient-raw:
     name: Build Thinclient RAW and publish Release
     runs-on: ubuntu-24.04
-    needs: [thinclient-changes, build-thinclient]
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || needs.thinclient-changes.outputs.thinclient == 'true')
+    needs: [image-changes, build-thinclient]
+    if: github.ref == 'refs/heads/main' && needs.image-changes.outputs.thinclient == 'true'
     permissions:
       contents: write
       packages: read
