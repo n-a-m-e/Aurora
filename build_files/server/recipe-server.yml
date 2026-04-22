@@ -43,7 +43,8 @@ modules:
       - scripts/printers.sh
       - scripts/systemd-server.sh
       - scripts/uivision.sh
-      - scripts/other.sh
+      - scripts/umask.sh
+      - scripts/kde-config.sh
       - scripts/davinci-resolve.sh
       - scripts/sunshine.sh
       # - scripts/olive.sh
