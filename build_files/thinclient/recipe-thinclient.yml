@@ -3,6 +3,7 @@
 name: aurora-thinclient
 description: Minimal Fedora bootc thinclient with ThinLinc, Moonlight, and Terminal
 
+
 base-image: quay.io/fedora/fedora-bootc
 image-version: 43
 
