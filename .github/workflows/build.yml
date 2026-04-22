@@ -1,12 +1,12 @@
 name: bluebuild
 
 on:
-  #push:
-  #  paths-ignore:
-  #    - "**.md"
-  #pull_request:
-  #  paths-ignore:
-  #    - "**.md"
+  push:
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "**.md"
   workflow_dispatch:
 
 concurrency:
@@ -98,8 +98,8 @@ jobs:
           pr_event_number: ${{ github.event.number }}
           maximize_build_space: true
 
-  thinclient-raw:
-    name: Build Thinclient RAW and publish Release
+  thinclient-iso:
+    name: Build Thinclient ISO and publish Release
     runs-on: ubuntu-24.04
     needs: [image-changes, build-thinclient]
     if: github.ref == 'refs/heads/main' && needs.image-changes.outputs.thinclient == 'true'
@@ -109,13 +109,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install shrink tools
-        run: |
-          set -euxo pipefail
-          sudo apt-get update
-          sudo apt-get install -y gdisk e2fsprogs
-
-      - name: Write RAW config
+      - name: Write ISO config
         run: |
           set -euxo pipefail
           cat > image-config.toml <<'EOF'
@@ -124,138 +118,67 @@ jobs:
           echo "=== image-config.toml ==="
           cat image-config.toml
 
-      - name: Build RAW
-        id: raw
+      - name: Build ISO
+        id: iso
         uses: osbuild/bootc-image-builder-action@v0.0.2
         with:
           config-file: ./image-config.toml
           image: ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest
-          types: raw
-          rootfs: ext4
+          types: iso
+          rootfs: xfs
           additional-args: --use-librepo=True
 
-      - name: Rename RAW
+      - name: Rename ISO
         run: |
           set -euxo pipefail
           echo "=== output directory contents before rename ==="
-          sudo find "${{ steps.raw.outputs.output-directory }}" -maxdepth 3 -type f -ls
+          sudo find "${{ steps.iso.outputs.output-directory }}" -maxdepth 3 -type f -ls
 
-          raw=$(sudo find "${{ steps.raw.outputs.output-directory }}" -name '*.raw' | head -n1)
-          echo "RAW found at: $raw"
+          iso=$(sudo find "${{ steps.iso.outputs.output-directory }}" -name '*.iso' | head -n1)
+          echo "ISO found at: $iso"
 
-          sudo cp "$raw" "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
-          sudo chown "$(id -u):$(id -g)" "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
+          sudo cp "$iso" "${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
+          sudo chown "$(id -u):$(id -g)" "${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
 
-          echo "=== raw image size before shrink ==="
-          ls -lh "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
-          stat "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
+          echo "=== iso size before compression ==="
+          ls -lh "${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
+          stat "${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
 
-          echo "=== partition table before shrink ==="
-          sudo fdisk -l "${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw" || true
-
-      - name: Shrink RAW
+      - name: Install zstd
         run: |
           set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y zstd
 
-          RAW="${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
-
-          echo "=== attaching loop device ==="
-          LOOP=$(sudo losetup --find --show --partscan "$RAW")
-          echo "Loop device: $LOOP"
-
-          echo "=== loop partitions before shrink ==="
-          lsblk "$LOOP"
-          sudo fdisk -l "$LOOP" || true
-          sudo sgdisk -p "$LOOP" || true
-
-          echo "=== ext4 filesystem check ==="
-          sudo e2fsck -fy "${LOOP}p4"
-
-          echo "=== ext4 details before resize ==="
-          sudo dumpe2fs -h "${LOOP}p4" 2>/dev/null | egrep 'Block count:|Block size:|Filesystem state:|Free blocks:|Free inodes:' || true
-
-          echo "=== resizing ext4 to minimum ==="
-          sudo resize2fs -M "${LOOP}p4"
-
-          echo "=== ext4 details after resize ==="
-          sudo dumpe2fs -h "${LOOP}p4" 2>/dev/null | egrep 'Block count:|Block size:|Filesystem state:|Free blocks:|Free inodes:' || true
-
-          BLOCK_COUNT=$(sudo dumpe2fs -h "${LOOP}p4" 2>/dev/null | awk -F: '/Block count:/ {gsub(/ /,"",$2); print $2}')
-          BLOCK_SIZE=$(sudo dumpe2fs -h "${LOOP}p4" 2>/dev/null | awk -F: '/Block size:/ {gsub(/ /,"",$2); print $2}')
-          START=$(sudo sgdisk -i 4 "$LOOP" | awk -F: '/First sector:/ {print $2}' | awk '{print $1}')
-
-          FS_SECTORS=$(( BLOCK_COUNT * BLOCK_SIZE / 512 ))
-          NEW_END=$(( START + FS_SECTORS - 1 ))
-
-          echo "=== calculated shrink values ==="
-          echo "BLOCK_COUNT=$BLOCK_COUNT"
-          echo "BLOCK_SIZE=$BLOCK_SIZE"
-          echo "START=$START"
-          echo "FS_SECTORS=$FS_SECTORS"
-          echo "NEW_END=$NEW_END"
-
-          echo "=== detaching loop before GPT rewrite ==="
-          sudo losetup -d "$LOOP"
-
-          echo "=== GPT before delete/recreate partition 4 ==="
-          sudo sgdisk -p "$RAW" || true
-
-          echo "=== recreating partition 4 to exact filesystem size ==="
-          sudo sgdisk -d 4 -n 4:${START}:${NEW_END} -t 4:8300 "$RAW"
-
-          echo "=== GPT after recreate before truncate ==="
-          sudo sgdisk -p "$RAW" || true
-
-          GPT_SLACK_SECTORS=4096
-          NEW_LAST_SECTOR=$(( NEW_END + GPT_SLACK_SECTORS ))
-          NEW_SIZE=$(( (NEW_LAST_SECTOR + 1) * 512 ))
-
-          echo "GPT_SLACK_SECTORS=$GPT_SLACK_SECTORS"
-          echo "NEW_LAST_SECTOR=$NEW_LAST_SECTOR"
-          echo "NEW_SIZE=$NEW_SIZE"
-
-          echo "=== truncating raw file ==="
-          truncate -s "$NEW_SIZE" "$RAW"
-
-          echo "=== fixing GPT backup header ==="
-          sudo sgdisk -e "$RAW"
-
-          echo "=== validating GPT ==="
-          sudo sgdisk -v "$RAW" || true
-          sudo sgdisk -p "$RAW" || true
-          sudo fdisk -l "$RAW" || true
-
-          echo "=== raw image size after shrink ==="
-          ls -lh "$RAW"
-          stat "$RAW"
-
-      - name: Compress RAW
+      - name: Compress ISO with zstd
         run: |
           set -euxo pipefail
-          RAW="${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw"
+          ISO="${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
 
           echo "=== before compression ==="
-          ls -lh "$RAW"
-          stat "$RAW"
+          ls -lh "$ISO"
+          stat "$ISO"
 
-          sudo xz -T0 -z "$RAW"
-          sudo chown "$(id -u):$(id -g)" "${RAW}.xz"
+          sudo zstd -T0 -19 --rm "$ISO"
+          sudo chown "$(id -u):$(id -g)" "${ISO}.zst"
 
           echo "=== after compression ==="
-          ls -lh "${RAW}.xz"
-          xz --robot -l "${RAW}.xz"
+          ls -lh "${ISO}.zst"
+          stat "${ISO}.zst"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: thinclient-raw-latest
-          name: Aurora Thinclient RAW
+          tag_name: thinclient-iso-latest
+          name: Aurora Thinclient ISO
           prerelease: true
-          files: ${{ steps.raw.outputs.output-directory }}/aurora-thinclient-latest.raw.xz
+          files: ${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso.zst
           overwrite_files: true
           fail_on_unmatched_files: true
           body: |
-            Latest compressed RAW disk image for Aurora Thinclient.
+            Latest compressed ISO image for Aurora Thinclient.
 
-            Write to USB with:
-            xz -dc aurora-thinclient-latest.raw.xz | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
+            Decompress with:
+            zstd -d aurora-thinclient-latest.iso.zst
+
+            Then write or open the ISO as needed.
