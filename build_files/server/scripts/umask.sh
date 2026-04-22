@@ -5,9 +5,6 @@
 # builds actually ran successfully without any errors!
 set -oue pipefail
 
-#Enable Zed to work without GPU
-echo "ZED_ALLOW_EMULATED_GPU=1" >> /usr/etc/environment
-
 #Change Umask to make shared folders possible
 sed -i 's/UMASK		022/UMASK		002/g' /etc/login.defs
 sed -i 's/HOME_MODE	0700/HOME_MODE	0770/g' /etc/login.defs
