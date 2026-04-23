@@ -26,6 +26,10 @@
   ```
   sudo systemctl reboot
   ```
+- Download ISO image for Aurora Thinclient
+  ```
+  base=https://github.com/n-a-m-e/Aurora/releases/download/thinclient-iso-latest/aurora-thinclient-latest.iso.part- && wget "$base"{00,01} && cat aurora-thinclient-latest.iso.part-* > aurora-thinclient-latest.iso
+  ```
 
 # Aurora &nbsp; [![bluebuild build badge](https://github.com/n-a-m-e/aurora/actions/workflows/build.yml/badge.svg)](https://github.com/n-a-m-e/aurora/actions/workflows/build.yml)
 
