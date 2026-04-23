@@ -1,12 +1,12 @@
 name: bluebuild
 
 on:
-  push:
-    paths-ignore:
-      - "**.md"
-  pull_request:
-    paths-ignore:
-      - "**.md"
+  #push:
+  #  paths-ignore:
+  #    - "**.md"
+  #pull_request:
+  #  paths-ignore:
+  #    - "**.md"
   workflow_dispatch:
   schedule:
     - cron: '20 6 * * *'   # server + client + thinclient image builds
