@@ -3,6 +3,7 @@ set -Eeuo pipefail
 source /usr/lib/bluebuild-debug.sh
 
 mkdir /tmp/thinlinc
+trap 'rm -rf /tmp/thinlinc' EXIT
 #wget -O /tmp/thinlinc/tl-4.17.0-server.zip https://www.cendio.com/downloads/server/tl-4.17.0-server.zip
 wget -O /tmp/thinlinc/tl-4.17.0-server.zip https://github.com/n-a-m-e/Aurora-Files/releases/download/tl-4.17.0-server/tl-4.17.0-server.zip
 cd /tmp/thinlinc
