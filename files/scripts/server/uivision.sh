@@ -3,6 +3,7 @@ set -Eeuo pipefail
 source /usr/lib/bluebuild-debug.sh
 
 mkdir /tmp/uivision
+trap 'rm -rf /tmp/uivision' EXIT
 #wget -O /tmp/uivision/uivision-xmodules-linux-v2.AppImage https://download.ui.vision/x/uivision-xmodules-linux-v2.AppImage
 wget -O /tmp/uivision/uivision-xmodules-linux-v2.AppImage https://github.com/n-a-m-e/Aurora-Files/releases/download/uivision-xmodules-linux-v2/uivision-xmodules-linux-v2.AppImage
 cd /tmp/uivision
