@@ -24,10 +24,10 @@ modules:
 
   - type: script
     scripts:
-      - scripts/thinlinc-client.sh
-      - scripts/systemd-client.sh
-      - scripts/fingerprint.sh
-      - ../shared/scripts/konsole.sh
+      - shared/konsole.sh
+      - client/thinlinc-client.sh
+      - client/systemd-client.sh
+      - client/fingerprint.sh
 
   - type: systemd
     system:
