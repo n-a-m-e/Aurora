@@ -3,6 +3,7 @@ set -Eeuo pipefail
 source /usr/lib/bluebuild-debug.sh
 
 mkdir /tmp/thinlinc
+trap 'rm -rf /tmp/thinlinc' EXIT
 #wget -O /tmp/thinlinc/thinlinc-client-4.18.0-3768.x86_64.rpm https://www.cendio.com/downloads/clients/thinlinc-client-4.18.0-3768.x86_64.rpm
 wget -O /tmp/thinlinc/thinlinc-client-4.18.0-3768.x86_64.rpm https://github.com/n-a-m-e/Aurora-Files/releases/download/thinlinc-client-4.18.0-3768/thinlinc-client-4.18.0-3768.x86_64.rpm
 cd /tmp/thinlinc
