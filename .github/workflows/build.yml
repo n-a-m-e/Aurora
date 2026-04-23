@@ -33,13 +33,19 @@ jobs:
             server:
               - 'build_files/server/**'
               - 'build_files/shared/**'
+              - 'recipes/recipe-server.yml'
+              - '.github/workflows/build.yml'
 
             client:
               - 'build_files/client/**'
               - 'build_files/shared/**'
+              - 'recipes/recipe-client.yml'
+              - '.github/workflows/build.yml'
 
             thinclient:
               - 'build_files/thinclient/**'
+              - 'recipes/recipe-thinclient.yml'
+              - '.github/workflows/build.yml'
 
   build-server:
     name: Build Server Image
@@ -54,7 +60,7 @@ jobs:
       - name: Build Server Image
         uses: blue-build/github-action@v1.11.1
         with:
-          recipe: build_files/server/recipe-server.yml
+          recipe: recipe-server.yml
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
@@ -73,7 +79,7 @@ jobs:
       - name: Build Client Image
         uses: blue-build/github-action@v1.11.1
         with:
-          recipe: build_files/client/recipe-client.yml
+          recipe: recipe-client.yml
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
@@ -92,7 +98,7 @@ jobs:
       - name: Build Thinclient Image
         uses: blue-build/github-action@v1.11.1
         with:
-          recipe: build_files/thinclient/recipe-thinclient.yml
+          recipe: recipe-thinclient.yml
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
