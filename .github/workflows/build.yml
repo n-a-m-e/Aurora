@@ -146,31 +146,20 @@ jobs:
           sudo cp "$iso" "${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
           sudo chown "$(id -u):$(id -g)" "${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
 
-          echo "=== iso size before compression ==="
+          echo "=== iso size ==="
           ls -lh "${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
           stat "${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
 
-      - name: Install zstd
-        run: |
-          set -euxo pipefail
-          sudo apt-get update
-          sudo apt-get install -y zstd
-
-      - name: Compress ISO with zstd
+      - name: Split ISO
         run: |
           set -euxo pipefail
           ISO="${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso"
 
-          echo "=== before compression ==="
-          ls -lh "$ISO"
-          stat "$ISO"
+          split -b 1900M -d -a 2 "$ISO" "${ISO}.part-"
+          sha256sum "${ISO}".part-* > "${ISO}.parts.sha256"
 
-          sudo zstd -T0 -19 --rm "$ISO"
-          sudo chown "$(id -u):$(id -g)" "${ISO}.zst"
-
-          echo "=== after compression ==="
-          ls -lh "${ISO}.zst"
-          stat "${ISO}.zst"
+          echo "=== split files ==="
+          ls -lh "${ISO}".part-* "${ISO}.parts.sha256"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
@@ -178,13 +167,13 @@ jobs:
           tag_name: thinclient-iso-latest
           name: Aurora Thinclient ISO
           prerelease: true
-          files: ${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso.zst
+          files: |
+            ${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso.part-*
+            ${{ steps.iso.outputs.output-directory }}/aurora-thinclient-latest.iso.parts.sha256
           overwrite_files: true
           fail_on_unmatched_files: true
           body: |
-            Latest compressed ISO image for Aurora Thinclient.
+            Latest ISO image for Aurora Thinclient.
 
-            Decompress with:
-            zstd -d aurora-thinclient-latest.iso.zst
-
-            Then write or open the ISO as needed.
+            Download and combine:
+            base=https://github.com/n-a-m-e/Aurora/releases/download/thinclient-iso-latest/aurora-thinclient-latest.iso.part- && wget "$base"{00,01} && cat aurora-thinclient-latest.iso.part-* > aurora-thinclient-latest.iso
