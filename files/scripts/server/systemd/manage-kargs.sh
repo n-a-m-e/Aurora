@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_VERSION="manage-kargs debug v2"
+SCRIPT_VERSION="manage-kargs debug v3"
 
 CHANGED=0
 CURRENT_KARGS="$(rpm-ostree kargs | tr ' ' '\n')"
@@ -39,7 +39,7 @@ MODERN_REMOVE_KARGS=(
 )
 
 log() {
-  echo "[$(date '+%F %T')] $*"
+  echo "[$(date '+%F %T')] $*" >&2
 }
 
 dump_kargs() {
@@ -112,9 +112,9 @@ get_amd_gpu() {
   for dev in /sys/bus/pci/devices/*; do
     [[ -r "$dev/vendor" && -r "$dev/device" && -r "$dev/class" ]] || continue
 
-    vendor="$(<"$dev/vendor" 2>/dev/null || true)"
-    device="$(<"$dev/device" 2>/dev/null || true)"
-    class="$(<"$dev/class" 2>/dev/null || true)"
+    vendor="$(<"$dev/vendor")"
+    device="$(<"$dev/device")"
+    class="$(<"$dev/class")"
     pci="$(basename "$dev")"
 
     log "PCI candidate: pci=$pci vendor=$vendor device=$device class=$class"
@@ -132,7 +132,9 @@ get_amd_gpu() {
 }
 
 classify_amd_gpu() {
-  case "${1#0x}" in
+  local device_id
+  device_id="$(tr '[:lower:]' '[:upper:]' <<< "${1#0x}")"
+  case "$device_id" in
     $LEGACY_IDS) echo "LEGACY" ;;
     *)           echo "MODERN" ;;
   esac
@@ -144,6 +146,7 @@ gpu_has_connected_display() {
 
   log "Checking DRM connector state for PCI device $target_pci ..."
   for card in /sys/class/drm/card[0-9]*; do
+    [[ "$(basename "$card")" =~ ^card[0-9]+$ ]] || continue
     [[ -e "$card/device" ]] || continue
     [[ "$(basename "$(readlink -f "$card/device")")" == "$target_pci" ]] || continue
     found_card=1
@@ -151,8 +154,8 @@ gpu_has_connected_display() {
 
     for status in "$card"-*/status; do
       [[ -e "$status" ]] || continue
-      log "Connector status $(basename "$(dirname "$status")"): $(<"$status" 2>/dev/null || true)"
-      [[ "$(<"$status" 2>/dev/null || true)" == "connected" ]] && return 0
+      log "Connector status $(basename "$(dirname "$status")"): $(<"$status")"
+      [[ "$(<"$status")" == "connected" ]] && return 0
     done
   done
 
@@ -290,6 +293,7 @@ main() {
   sync_kargs ensure "" "selinux=0"
 
   if gpu_info="$(get_amd_gpu)"; then
+    log "Raw gpu_info: $gpu_info"
     read -r vendor device pci <<< "$gpu_info"
     gpu_class="$(classify_amd_gpu "$device")"
     log "Detected AMD GPU: vendor=$vendor device=$device pci=$pci class=$gpu_class"
