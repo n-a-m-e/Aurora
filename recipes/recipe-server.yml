@@ -38,16 +38,15 @@ modules:
 
   - type: script
     scripts:
-      - ../shared/scripts/konsole.sh
-      - scripts/thinlinc-server.sh
-      - scripts/printers.sh
-      - scripts/systemd-server.sh
-      - scripts/uivision.sh
-      - scripts/umask.sh
-      - scripts/kde-config.sh
-      - scripts/davinci-resolve.sh
-      - scripts/sunshine.sh
-      # - scripts/olive.sh
+      - shared/konsole.sh
+      - server/thinlinc-server.sh
+      - server/printers.sh
+      - server/systemd-server.sh
+      - server/uivision.sh
+      - server/umask.sh
+      - server/kde-config.sh
+      - server/davinci-resolve.sh
+      - server/sunshine.sh
 
   - type: systemd
     system:
