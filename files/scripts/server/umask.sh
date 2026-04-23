@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-
-# Tell this script to exit if there are any errors.
-# You should have this in every custom script, to ensure that your completed
-# builds actually ran successfully without any errors!
-set -oue pipefail
+set -Eeuo pipefail
+source /usr/lib/bluebuild-debug.sh
 
 #Change Umask to make shared folders possible
 sed -i 's/UMASK		022/UMASK		002/g' /etc/login.defs
