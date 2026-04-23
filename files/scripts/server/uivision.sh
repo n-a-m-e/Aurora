@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-
-# Tell this script to exit if there are any errors.
-# You should have this in every custom script, to ensure that your completed
-# builds actually ran successfully without any errors!
-set -oue pipefail
+set -Eeuo pipefail
+source /usr/lib/bluebuild-debug.sh
 
 mkdir /tmp/uivision
 #wget -O /tmp/uivision/uivision-xmodules-linux-v2.AppImage https://download.ui.vision/x/uivision-xmodules-linux-v2.AppImage
