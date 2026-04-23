@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-
-# Tell this script to exit if there are any errors.
-# You should have this in every custom script, to ensure that your completed
-# builds actually ran successfully without any errors!
-set -oue pipefail
+set -Eeuo pipefail
+source /usr/lib/bluebuild-debug.sh
 
 mkdir /tmp/thinlinc
 #wget -O /tmp/thinlinc/thinlinc-client-4.18.0-3768.x86_64.rpm https://www.cendio.com/downloads/clients/thinlinc-client-4.18.0-3768.x86_64.rpm
