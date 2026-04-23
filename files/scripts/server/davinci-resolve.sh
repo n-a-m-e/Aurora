@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-set -oue pipefail
+set -Eeuo pipefail
+source /usr/lib/bluebuild-debug.sh
 
 rpm-ostree install apr apr-util libxcrypt-compat mesa-libGLU rocminfo rocm-opencl rocm-clinfo rocm-hip unzip
 
