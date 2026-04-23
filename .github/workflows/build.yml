@@ -1,12 +1,12 @@
 name: bluebuild
 
 on:
-  #push:
-  #  paths-ignore:
-  #    - "**.md"
-  #pull_request:
-  #  paths-ignore:
-  #    - "**.md"
+  push:
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "**.md"
   workflow_dispatch:
   schedule:
     - cron: '20 6 * * *'   # server + client + thinclient image builds
@@ -147,7 +147,8 @@ jobs:
         run: |
           set -euxo pipefail
           cat > image-config.toml <<'EOF'
-          [customizations]
+          [customizations.kernel]
+          append = "nomodeset plymouth.enable=0 ignore_loglevel rd.systemd.show_status=1 systemd.show_status=1 systemd.log_level=debug rd.udev.log_level=debug"
           EOF
           echo "=== image-config.toml ==="
           cat image-config.toml
