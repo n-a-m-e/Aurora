@@ -29,8 +29,14 @@ modules:
   - type: script
     scripts:
       - shared/konsole.sh
+  - type: script
+    scripts:
       - client/thinlinc-client.sh
+  - type: script
+    scripts:
       - client/systemd-client.sh
+  - type: script
+    scripts:
       - client/fingerprint.sh
 
   - type: systemd
