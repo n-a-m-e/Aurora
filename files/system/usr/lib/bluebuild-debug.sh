@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -Eeuo pipefail
 
 # Avoid double-loading
 [[ "${BLUEBUILD_DEBUG_LOADED:-}" == "1" ]] && return 0
