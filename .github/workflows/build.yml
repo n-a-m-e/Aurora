@@ -1,12 +1,12 @@
 name: bluebuild
 
 on:
-  #push:
-  #  paths-ignore:
-  #    - "**.md"
-  #pull_request:
-  #  paths-ignore:
-  #    - "**.md"
+  push:
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "**.md"
   workflow_dispatch:
 
 concurrency:
@@ -31,19 +31,19 @@ jobs:
         with:
           filters: |
             server:
-              - 'build_files/server/**'
-              - 'build_files/shared/**'
+              - 'files/scripts/server/**'
+              - 'files/scripts/shared/**'
               - 'recipes/recipe-server.yml'
               - '.github/workflows/build.yml'
 
             client:
-              - 'build_files/client/**'
-              - 'build_files/shared/**'
+              - 'files/scripts/client/**'
+              - 'files/scripts/shared/**'
               - 'recipes/recipe-client.yml'
               - '.github/workflows/build.yml'
 
             thinclient:
-              - 'build_files/thinclient/**'
+              - 'files/scripts/thinclient/**'
               - 'recipes/recipe-thinclient.yml'
               - '.github/workflows/build.yml'
 
