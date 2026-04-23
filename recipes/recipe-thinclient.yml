@@ -31,7 +31,7 @@ modules:
 
   - type: script
     scripts:
-      - scripts/thinclient-setup.sh
+      - thinclient/thinclient-setup.sh
 
   - type: systemd
     system:
