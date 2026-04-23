@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-set -oue pipefail
+set -Eeuo pipefail
+source /usr/lib/bluebuild-debug.sh
 
 dnf -y copr enable lizardbyte/beta
 rpm-ostree install Sunshine libcap
