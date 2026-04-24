@@ -19,6 +19,11 @@ BB_DEBUG_TREE_MAX_DEPTH="${BB_DEBUG_TREE_MAX_DEPTH:-5}"
 BB_DEBUG_NEW_PATH_LIMIT="${BB_DEBUG_NEW_PATH_LIMIT:-1500}"
 BB_DEBUG_TOP_RPM_LIMIT="${BB_DEBUG_TOP_RPM_LIMIT:-80}"
 
+# Auto-clean temp dirs after reporting.
+# Set BB_DEBUG_AUTO_CLEAN_TMP=0 to disable.
+BB_DEBUG_AUTO_CLEAN_TMP="${BB_DEBUG_AUTO_CLEAN_TMP:-1}"
+BB_DEBUG_CLEAN_TMP_ROOTS="${BB_DEBUG_CLEAN_TMP_ROOTS:-/tmp /var/tmp}"
+
 _BB_BEFORE_FILES="$(mktemp)"
 _BB_AFTER_FILES="$(mktemp)"
 _BB_BEFORE_SIZES="$(mktemp)"
@@ -185,6 +190,26 @@ bb_debug_new_paths_by_area() {
   rm -f "$new_paths"
 }
 
+bb_debug_cleanup_tmp() {
+  [[ "$BB_DEBUG_AUTO_CLEAN_TMP" == "1" ]] || return 0
+
+  echo "===== AUTO CLEANING TEMP DIRECTORIES ====="
+
+  for tmp_root in $BB_DEBUG_CLEAN_TMP_ROOTS; do
+    [[ -d "$tmp_root" ]] || continue
+
+    echo "--- Before cleanup: $tmp_root ---"
+    du -xsh "$tmp_root" 2>/dev/null || true
+
+    find "$tmp_root" -mindepth 1 -xdev \
+      -exec rm -rf -- {} + 2>/dev/null || true
+
+    echo "--- After cleanup: $tmp_root ---"
+    du -xsh "$tmp_root" 2>/dev/null || true
+    echo
+  done
+}
+
 bb_debug_summary_hint() {
   cat <<'EOF'
 How to read this log:
@@ -195,10 +220,10 @@ How to read this log:
 - If /tmp or /var/tmp grows, you probably left build artifacts behind.
 - If /usr grows, the size is usually installed RPM payload, not temporary files.
 - If /opt grows, it is usually vendor software or manually unpacked applications.
+- Temp cleanup runs after all reports, so the log still shows what was present before deletion.
 EOF
 }
 
-# Send all script output to both console and per-script log.
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 if [[ "$BB_DEBUG_XTRACE" == "1" ]]; then
@@ -221,6 +246,8 @@ echo "BB_DEBUG_TREE_MIN_MB=$BB_DEBUG_TREE_MIN_MB"
 echo "BB_DEBUG_TREE_MAX_DEPTH=$BB_DEBUG_TREE_MAX_DEPTH"
 echo "BB_DEBUG_NEW_PATH_LIMIT=$BB_DEBUG_NEW_PATH_LIMIT"
 echo "BB_DEBUG_TOP_RPM_LIMIT=$BB_DEBUG_TOP_RPM_LIMIT"
+echo "BB_DEBUG_AUTO_CLEAN_TMP=$BB_DEBUG_AUTO_CLEAN_TMP"
+echo "BB_DEBUG_CLEAN_TMP_ROOTS=$BB_DEBUG_CLEAN_TMP_ROOTS"
 echo
 
 echo "===== BEFORE TOP-LEVEL SIZES ====="
@@ -301,6 +328,8 @@ bb_debug_finish() {
     echo "===== NEW PATHS CREATED BY AREA ====="
     bb_debug_new_paths_by_area || true
     echo
+
+    bb_debug_cleanup_tmp || true
   } || true
 
   rm -f \
