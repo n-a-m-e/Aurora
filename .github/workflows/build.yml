@@ -12,7 +12,6 @@ on:
     - cron: '20 6 * * *'   # server + client + thinclient image builds
     - cron: '50 7 * * 0'   # thinclient ISO build + release
 
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
