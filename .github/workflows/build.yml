@@ -149,7 +149,7 @@ jobs:
           set -euxo pipefail
           cat > image-config.toml <<'EOF'
           [customizations.kernel]
-          append = "nomodeset plymouth.enable=0 ignore_loglevel rd.systemd.show_status=1 systemd.show_status=1 systemd.log_level=debug rd.udev.log_level=debug"
+          append = "radeon.cik_support=1 amdgpu.cik_support=0 plymouth.enable=0 rd.systemd.show_status=1 systemd.show_status=1"
           EOF
           echo "=== image-config.toml ==="
           cat image-config.toml
