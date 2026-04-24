@@ -27,10 +27,15 @@ email-address=root@localhost
 tlwebadm-password=$6$e07548c54799799b$Wz7FQKAXvYe5agpnyZVnQ3/kETCjMNnABR4GBWx3nwrQEyemjFNS0YPjP.56IRzi41eHVlE.EfFk0QlbK/A0R/
 setup-thinlocal=no
 setup-nearest=no
-setup-firewall=yes
 setup-selinux=yes
 setup-apparmor=no
-missing-answer=ask
+agent-hostname-choice=ip
+setup-firewall-ssh=yes
+setup-firewall-tlwebaccess=yes
+setup-firewall-tlwebadm=yes
+setup-firewall-tlmaster=yes
+setup-firewall-tlagent=yes
+missing-answer=abort
 EOF
 
 sed -i 's|LOGFILE = "/var/log/tlsetup.log"|LOGFILE = "/tmp/thinlinc/tlsetup.log"|g' /opt/thinlinc/modules/thinlinc/tlsetup/__init__.py
