@@ -2,7 +2,8 @@
 set -Eeuo pipefail
 source /usr/lib/bluebuild-debug.sh
 
-rpm-ostree install apr apr-util libxcrypt-compat mesa-libGLU rocminfo rocm-opencl rocm-clinfo rocm-hip unzip
+#rpm-ostree install apr apr-util libxcrypt-compat mesa-libGLU rocminfo rocm-opencl rocm-clinfo rocm-hip unzip
+rpm-ostree install apr apr-util libxcrypt-compat mesa-libGLU rocm-opencl rocm-clinfo unzip
 
 cat <<'EOF' > /usr/lib/tmpfiles.d/davinci-resolve.conf
 d /var/opt/resolve 0755 root root -
