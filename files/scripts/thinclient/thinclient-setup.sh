@@ -35,7 +35,7 @@ vt = 1
 
 [default_session]
 command = "tuigreet --time --remember --cmd 'sh -lc \"/usr/libexec/thinclient-menu & exec labwc -s /opt/thinlinc/bin/tlclient\"'"
-user = "greeter"
+user = "${THINCLIENT_USER}"
 
 [initial_session]
 command = "sh -lc '/usr/libexec/thinclient-menu & exec labwc -s /opt/thinlinc/bin/tlclient'"
