@@ -3,9 +3,8 @@ set -Eeuo pipefail
 source /usr/lib/bluebuild-debug.sh
 
 mkdir /tmp/thinlinc
-trap 'rm -rf /tmp/thinlinc' EXIT
 #wget -O /tmp/thinlinc/tl-4.17.0-server.zip https://www.cendio.com/downloads/server/tl-4.17.0-server.zip
-wget -O /tmp/thinlinc/tl-4.17.0-server.zip https://github.com/n-a-m-e/Aurora-Files/releases/download/tl-4.17.0-server/tl-4.17.0-server.zip
+wget -O /tmp/thinlinc/tl-4.20.1-server.zip https://github.com/n-a-m-e/Aurora-Files/releases/download/tl-4.20.1-server/tl-4.20.1-server.zip
 cd /tmp/thinlinc
 unzip tl-*server.zip
 rpm-ostree install VirtualGL plasma-workspace-x11 sendmail /tmp/thinlinc/tl-*-server/packages/thinlinc-server-*.rpm
@@ -54,24 +53,21 @@ sed -i 's|show_intro=.*|show_intro=false|g' /opt/thinlinc/etc/conf.d/profiles.hc
 #mv /opt/thinlinc /usr/lib/opt/thinlinc
 
 #create required directories and symlinks at boot
-cat <<'EOF' > /usr/lib/tmpfiles.d/thinlinc.conf
-d /var/lib/vsm 755 root root -
-d /var/opt/thinlinc 755 root root -
-d /var/opt/thinlinc/sessions 755 root root -
-d /var/opt/thinlinc/utils 755 root root -
-d /var/opt/thinlinc/utils/tl-printer 755 root root -
-d /var/opt/thinlinc/utils/tl-ldap-certalias 755 root root -
-d /var/opt/thinlinc/statistics 755 root root -
-L+ /var/opt/thinlinc/desktops - - - - /usr/lib/opt/thinlinc/desktops
-L+ /var/opt/thinlinc/modules - - - - /usr/lib/opt/thinlinc/modules
-L+ /var/opt/thinlinc/lib - - - - /usr/lib/opt/thinlinc/lib
-L+ /var/opt/thinlinc/lib64 - - - - /usr/lib/opt/thinlinc/lib64
-L+ /var/opt/thinlinc/sbin - - - - /usr/lib/opt/thinlinc/sbin
-L+ /var/opt/thinlinc/share - - - - /usr/lib/opt/thinlinc/share
-L+ /var/opt/thinlinc/etc - - - - /usr/lib/opt/thinlinc/etc
-L+ /var/opt/thinlinc/bin - - - - /usr/lib/opt/thinlinc/bin
-L+ /var/opt/thinlinc/libexec - - - - /usr/lib/opt/thinlinc/libexec
-EOF
+emit_tmpfiles_entries() {
+  local op="$1" rel="$2" attrs="$3" prefix
+  shift 3
+  [[ -d "/opt/thinlinc/${rel}" ]] || return 0
+  [[ "${rel}" == "." ]] && prefix="/var/opt/thinlinc" || prefix="/var/opt/thinlinc/${rel}"
+  find "/opt/thinlinc/${rel}" -mindepth 1 -maxdepth 1 "$@" -printf "${op} ${prefix}/%f ${attrs} - %p\n" | sort
+}
+{
+  printf 'd %s 755 root root -\n' /var/lib/vsm /var/opt/thinlinc /var/opt/thinlinc/{sessions,utils,statistics,etc} /var/opt/thinlinc/utils/{tl-printer,tl-ldap-certalias} /var/opt/thinlinc/etc/{licenses,conf.d}
+  emit_tmpfiles_entries C  "etc/conf.d" "644 root root" -type f
+  emit_tmpfiles_entries L+ "etc/conf.d" "- - -" -type d
+  emit_tmpfiles_entries L+ "."     "- - -" ! -name sessions ! -name utils ! -name statistics ! -name etc
+  emit_tmpfiles_entries L+ "etc"   "- - -" ! -name licenses ! -name conf.d
+  emit_tmpfiles_entries L+ "utils" "- - -" ! -name tl-printer ! -name tl-ldap-certalias
+} > /usr/lib/tmpfiles.d/thinlinc.conf
 
 #Remove Polkit authentication dialogs during login
 cat <<'EOF' > /etc/polkit-1/rules.d/40-thinlinc-no-auth-dialogs.rules
