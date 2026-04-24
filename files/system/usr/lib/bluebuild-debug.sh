@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# Avoid double-loading when sourced more than once.
 [[ "${BLUEBUILD_DEBUG_LOADED:-}" == "1" ]] && return 0
 export BLUEBUILD_DEBUG_LOADED=1
 
@@ -11,18 +10,15 @@ LOG_FILE="$LOG_DIR/${SCRIPT_NAME}.log"
 
 mkdir -p "$LOG_DIR"
 
-# Tunables
-BB_DEBUG_XTRACE="${BB_DEBUG_XTRACE:-1}"
+BB_DEBUG_XTRACE="${BB_DEBUG_XTRACE:-0}"
 BB_DEBUG_LARGE_FILE_MB="${BB_DEBUG_LARGE_FILE_MB:-50}"
 BB_DEBUG_TREE_MIN_MB="${BB_DEBUG_TREE_MIN_MB:-50}"
 BB_DEBUG_TREE_MAX_DEPTH="${BB_DEBUG_TREE_MAX_DEPTH:-5}"
 BB_DEBUG_NEW_PATH_LIMIT="${BB_DEBUG_NEW_PATH_LIMIT:-1500}"
 BB_DEBUG_TOP_RPM_LIMIT="${BB_DEBUG_TOP_RPM_LIMIT:-80}"
 
-# Auto-clean temp dirs after reporting.
-# Set BB_DEBUG_AUTO_CLEAN_TMP=0 to disable.
-BB_DEBUG_AUTO_CLEAN_TMP="${BB_DEBUG_AUTO_CLEAN_TMP:-1}"
-BB_DEBUG_CLEAN_TMP_ROOTS="${BB_DEBUG_CLEAN_TMP_ROOTS:-/tmp /var/tmp}"
+BB_DEBUG_AUTO_CLEAN_TMP="${BB_DEBUG_AUTO_CLEAN_TMP:-0}"
+BB_DEBUG_CLEAN_TMP_ROOTS="${BB_DEBUG_CLEAN_TMP_ROOTS:-}"
 
 _BB_BEFORE_FILES="$(mktemp)"
 _BB_AFTER_FILES="$(mktemp)"
@@ -35,8 +31,7 @@ _BB_AFTER_RPM_SIZES="$(mktemp)"
 
 bb_debug_snapshot_files() {
   find /tmp /var/tmp /opt /usr /var /etc /root \
-    -xdev \
-    \( -type f -o -type d -o -type l \) \
+    -xdev \( -type f -o -type d -o -type l \) \
     2>/dev/null | sort
 }
 
@@ -61,7 +56,6 @@ bb_debug_top_rpms() {
 
 bb_debug_new_rpms_with_sizes() {
   command -v rpm >/dev/null 2>&1 || return 0
-
   comm -13 "$_BB_BEFORE_RPM_NAMES" "$_BB_AFTER_RPM_NAMES" | while read -r pkg; do
     rpm -q --qf '%{SIZE}\t%{NAME}\n' "$pkg" 2>/dev/null || true
   done | sort -n
@@ -75,7 +69,6 @@ bb_debug_large_files() {
 
 bb_debug_new_large_files() {
   local min_bytes=$((BB_DEBUG_LARGE_FILE_MB * 1024 * 1024))
-
   comm -13 "$_BB_BEFORE_FILES" "$_BB_AFTER_FILES" | while read -r path; do
     [[ -f "$path" ]] || continue
     size="$(stat -c '%s' "$path" 2>/dev/null || echo 0)"
@@ -87,23 +80,10 @@ bb_debug_new_large_files() {
 bb_debug_suspicious_files() {
   find /tmp /var/tmp /opt /usr /var /etc /root \
     -xdev -type f \
-    \( \
-      -iname '*.zip' -o \
-      -iname '*.tar' -o \
-      -iname '*.tar.gz' -o \
-      -iname '*.tgz' -o \
-      -iname '*.tar.xz' -o \
-      -iname '*.txz' -o \
-      -iname '*.rpm' -o \
-      -iname '*.deb' -o \
-      -iname '*.AppImage' -o \
-      -iname '*.run' -o \
-      -iname '*.iso' -o \
-      -iname '*.7z' -o \
-      -iname '*.rar' -o \
-      -iname '*.xz' -o \
-      -iname '*.zst' \
-    \) \
+    \( -iname '*.zip' -o -iname '*.tar' -o -iname '*.tar.gz' -o -iname '*.tgz' \
+    -o -iname '*.tar.xz' -o -iname '*.txz' -o -iname '*.rpm' -o -iname '*.deb' \
+    -o -iname '*.AppImage' -o -iname '*.run' -o -iname '*.iso' -o -iname '*.7z' \
+    -o -iname '*.rar' -o -iname '*.xz' -o -iname '*.zst' \) \
     -printf '%s\t%p\n' 2>/dev/null | sort -n
 }
 
@@ -120,17 +100,8 @@ bb_debug_new_suspicious_files() {
 }
 
 bb_debug_cache_dirs() {
-  du -xsh \
-    /tmp \
-    /var/tmp \
-    /var/cache \
-    /var/lib/dnf \
-    /var/lib/rpm-ostree \
-    /var/lib/containers \
-    /var/log \
-    /root/.cache \
-    /root/.local \
-    /usr/tmp \
+  du -xsh /tmp /var/tmp /var/cache /var/lib/dnf /var/lib/rpm-ostree \
+    /var/lib/containers /var/log /root/.cache /root/.local /usr/tmp \
     2>/dev/null | sort -h || true
 }
 
@@ -178,7 +149,6 @@ bb_debug_large_directory_tree() {
 bb_debug_new_paths_by_area() {
   local new_paths
   new_paths="$(mktemp)"
-
   comm -13 "$_BB_BEFORE_FILES" "$_BB_AFTER_FILES" > "$new_paths" || true
 
   for area in /tmp /var/tmp /opt /usr /var /etc /root; do
@@ -192,6 +162,7 @@ bb_debug_new_paths_by_area() {
 
 bb_debug_cleanup_tmp() {
   [[ "$BB_DEBUG_AUTO_CLEAN_TMP" == "1" ]] || return 0
+  [[ -n "$BB_DEBUG_CLEAN_TMP_ROOTS" ]] || return 0
 
   echo "===== AUTO CLEANING TEMP DIRECTORIES ====="
 
@@ -220,7 +191,7 @@ How to read this log:
 - If /tmp or /var/tmp grows, you probably left build artifacts behind.
 - If /usr grows, the size is usually installed RPM payload, not temporary files.
 - If /opt grows, it is usually vendor software or manually unpacked applications.
-- Temp cleanup runs after all reports, so the log still shows what was present before deletion.
+- Global /tmp cleanup is disabled by default because BlueBuild uses /tmp internally.
 EOF
 }
 
