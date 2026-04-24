@@ -67,6 +67,9 @@ modules:
   - type: script
     scripts:
       - server/sunshine.sh
+  - type: script
+    scripts:
+      - shared/bluebuild-cleanup.sh
 
   - type: systemd
     system:
