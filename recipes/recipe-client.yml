@@ -38,6 +38,9 @@ modules:
   - type: script
     scripts:
       - client/fingerprint.sh
+  - type: script
+    scripts:
+      - shared/bluebuild-cleanup.sh
 
   - type: systemd
     system:
