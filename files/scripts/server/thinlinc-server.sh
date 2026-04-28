@@ -139,13 +139,14 @@ polkit.addRule(function(action, subject) {
                 }
                 if (exe == "/usr/libexec/org_kde_powerdevil") {
                     polkit.log("Denied remote login1 power action from Powerdevil: pid=" + pid + " action=" + action.id);
+					return polkit.Result.NO;
                 } else {
                     polkit.spawn(["/usr/sbin/remote-shutdown.py", "request", subject.user || "", subject.session || "", action.id]);
                 }
             } catch (e) {
                 polkit.log("remote-shutdown handling failed, blocking action: " + e);
             }
-            return polkit.Result.NO;
+            return polkit.Result.AUTH_ADMIN;
         }
     }
 });
