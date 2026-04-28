@@ -59,15 +59,30 @@ sed -i 's|show_intro=.*|show_intro=false|g' /opt/thinlinc/etc/conf.d/profiles.hc
 #mv /opt/thinlinc /usr/lib/opt/thinlinc
 
 #create required directories and symlinks at boot
+# Create required directories and symlinks at boot
+thinlinc_scan="/opt/thinlinc"
+thinlinc_src="/usr/lib/opt/thinlinc"
+thinlinc_dst="/var/opt/thinlinc"
+
 emit_tmpfiles_entries() {
-  local op="$1" rel="$2" attrs="$3" prefix
+  local op="$1" rel="$2" attrs="$3" scan_dir dst_dir src_prefix
   shift 3
-  [[ -d "/opt/thinlinc/${rel}" ]] || return 0
-  [[ "${rel}" == "." ]] && prefix="/var/opt/thinlinc" || prefix="/var/opt/thinlinc/${rel}"
-  find "/opt/thinlinc/${rel}" -mindepth 1 -maxdepth 1 "$@" -printf "${op} ${prefix}/%f ${attrs} - %p\n" | sort
+
+  if [[ "${rel}" == "." ]]; then
+    scan_dir="${thinlinc_scan}"
+    dst_dir="${thinlinc_dst}"
+    src_prefix="${thinlinc_src}"
+  else
+    scan_dir="${thinlinc_scan}/${rel}"
+    dst_dir="${thinlinc_dst}/${rel}"
+    src_prefix="${thinlinc_src}/${rel}"
+  fi
+
+  [[ -d "${scan_dir}" ]] || return 0
+  find "${scan_dir}" -mindepth 1 -maxdepth 1 "$@" -printf "${op} ${dst_dir}/%f ${attrs} - ${src_prefix}/%f\n" | sort
 }
 {
-  printf 'd %s 755 root root -\n' /var/lib/vsm /var/opt/thinlinc /var/opt/thinlinc/{sessions,utils,statistics,etc} /var/opt/thinlinc/utils/{tl-printer,tl-ldap-certalias} /var/opt/thinlinc/etc/{licenses,conf.d}
+  printf 'd %s 755 root root -\n' /var/lib/vsm "${thinlinc_dst}" "${thinlinc_dst}"/{sessions,utils,statistics,etc} "${thinlinc_dst}"/utils/{tl-printer,tl-ldap-certalias} "${thinlinc_dst}"/etc/{licenses,conf.d}
   emit_tmpfiles_entries C  "etc/conf.d" "644 root root" -type f
   emit_tmpfiles_entries L+ "etc/conf.d" "- - -" -type d
   emit_tmpfiles_entries L+ "."     "- - -" ! -name sessions ! -name utils ! -name statistics ! -name etc
