@@ -145,6 +145,8 @@ polkit.addRule(function(action, subject) {
         action.id == "org.freedesktop.login1.halt" ||
         action.id == "org.freedesktop.login1.halt-multiple-sessions" ||
         action.id == "org.freedesktop.login1.halt-ignore-inhibit") {
+		
+		polkit.log("DEBUG saw action=" + action.id + " user=" + subject.user + " local=" + subject.local + " session=" + subject.session + " pid=" + subject.pid);
         if (!subject.local) {
             try {
                 var pid = String(subject.pid || "");
