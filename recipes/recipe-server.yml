@@ -74,7 +74,7 @@ modules:
   - type: systemd
     system:
       enabled:
-        #- thinlinc-remove-symlink.service
+        - thinlinc-remove-symlink.service
         - vsmserver.service
         - vsmagent.service
         - tlwebaccess.service
