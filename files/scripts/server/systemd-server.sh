@@ -5,7 +5,7 @@ source /usr/lib/bluebuild-debug.sh
 sed -i 's|SocketGroup=docker|SocketGroup=users|' /usr/lib/systemd/system/docker.socket
 
 cd "$(dirname "$0")"
-cp systemd/thinlinc-remove-symlink.service /usr/lib/systemd/system/thinlinc-remove-symlink.service
+#cp systemd/thinlinc-remove-symlink.service /usr/lib/systemd/system/thinlinc-remove-symlink.service
 cp systemd/flatpak-force-x11.service /usr/lib/systemd/system/flatpak-force-x11.service
 
 cp systemd/remote-shutdown.service /usr/lib/systemd/system/remote-shutdown.service
