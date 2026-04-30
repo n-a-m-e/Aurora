@@ -9,4 +9,7 @@ setfacl -b -R /home/Node
 chown -R root:users /home/Node
 chmod -R 2775 /home/Node
 
-docker run --rm -p 8000:8000 -v "/home/Node:/home/Node" -v "/home/Shared:/home/Shared" -w "/home/Node" node:lts-slim bash -c "cd ..; node Node/server.js"
+# Install packages from /home/Node/package.json inside the same Node image.
+docker run --rm -v "/home/Node:/home/Node" -w "/home/Node" node:lts-slim npm install
+  
+docker run --rm --network=host -v "/home/Node:/home/Node" -v "/home/Shared:/home/Shared" -w "/home/Node" node:lts-slim bash -c "cd ..; node Node/server.js"
