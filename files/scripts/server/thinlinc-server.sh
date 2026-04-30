@@ -91,6 +91,11 @@ emit_tmpfiles_entries() {
   emit_tmpfiles_entries L+ "utils" "- - -" ! -name tl-printer ! -name tl-ldap-certalias
 } > /usr/lib/tmpfiles.d/thinlinc.conf
 
+cat <<'EOF' > /usr/lib/tmpfiles.d/sendmail-spool.conf
+d /var/spool/clientmqueue 0770 smmsp smmsp -
+d /var/spool/mqueue       0700 root  mail  -
+EOF
+
 #Remove Polkit authentication dialogs during login
 cat <<'EOF' > /etc/polkit-1/rules.d/40-thinlinc-no-auth-dialogs.rules
 polkit.addRule(function(action, subject) {
@@ -137,35 +142,57 @@ polkit.addRule(function(action, subject) {
 });
 
 polkit.addRule(function(action, subject) {
-    if (action.id == "org.freedesktop.login1.power-off" ||
-        action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
-        action.id == "org.freedesktop.login1.power-off-ignore-inhibit" ||
-        action.id == "org.freedesktop.login1.reboot" ||
-        action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
-        action.id == "org.freedesktop.login1.reboot-ignore-inhibit" ||
-        action.id == "org.freedesktop.login1.halt" ||
-        action.id == "org.freedesktop.login1.halt-multiple-sessions" ||
-        action.id == "org.freedesktop.login1.halt-ignore-inhibit") {
-		
-		polkit.log("DEBUG saw action=" + action.id + " user=" + subject.user + " local=" + subject.local + " session=" + subject.session + " pid=" + subject.pid);
-        if (!subject.local) {
-            try {
-                var pid = String(subject.pid || "");
-                var exe = "";
-                if (pid !== "") {
-                    exe = polkit.spawn(["/usr/bin/readlink", "-f", "/proc/" + pid + "/exe"]).trim();
-                }
-                if (exe == "/usr/libexec/org_kde_powerdevil") {
-                    polkit.log("Denied remote login1 power action from Powerdevil: pid=" + pid + " action=" + action.id);
-					return polkit.Result.NO;
-                } else {
-                    polkit.spawn(["/usr/sbin/remote-shutdown.py", "request", subject.user || "", subject.session || "", action.id]);
-                }
-            } catch (e) {
-                polkit.log("remote-shutdown handling failed, blocking action: " + e);
-            }
-            return polkit.Result.AUTH_ADMIN;
+    var powerActions = {
+        "org.freedesktop.login1.power-off": true,
+        "org.freedesktop.login1.power-off-multiple-sessions": true,
+        "org.freedesktop.login1.power-off-ignore-inhibit": true,
+        "org.freedesktop.login1.reboot": true,
+        "org.freedesktop.login1.reboot-multiple-sessions": true,
+        "org.freedesktop.login1.reboot-ignore-inhibit": true,
+        "org.freedesktop.login1.halt": true,
+        "org.freedesktop.login1.halt-multiple-sessions": true,
+        "org.freedesktop.login1.halt-ignore-inhibit": true
+    };
+
+    if (!powerActions[action.id] || subject.local) {
+        return;
+    }
+
+    try {
+        var pid = String(subject.pid || "");
+        var exe = pid ? polkit.spawn(["/usr/bin/readlink", "-f", "/proc/" + pid + "/exe"]).trim() : "";
+        if (exe == "/usr/libexec/org_kde_powerdevil") {
+            polkit.log("Denied remote login1 power action from Powerdevil: pid=" + pid + " action=" + action.id);
+            return polkit.Result.NO;
         }
+        var now = new Date();
+        var day = now.getDay();
+        var mins = now.getHours() * 60 + now.getMinutes();
+        var businessHours = day >= 1 && day <= 5 && mins >= 510 && mins < 1050;
+        if (!businessHours) {
+            return polkit.Result.YES;
+        }
+        var requester = subject.user || "";
+        var session = subject.session || "";
+        var sessions = polkit.spawn(["/usr/bin/loginctl", "list-sessions", "--no-legend"]).trim();
+        if (sessions !== "") {
+            var lines = sessions.split("\n");
+            for (var i = 0; i < lines.length; i++) {
+                var sid = lines[i].trim().split(/\s+/)[0];
+                var vals = polkit.spawn(["/usr/bin/loginctl", "show-session", sid, "-p", "Service", "-p", "Type", "-p", "Class", "-p", "Name", "--value"]).trim().split("\n");
+                if (vals[0] == "thinlinc" && vals[1] == "x11" && vals[2] == "user" && vals[3] && vals[3] != requester) {
+                    polkit.log("remote-shutdown: other user active; logging out " + requester + " instead of shutdown");
+                    if (session) {
+                        polkit.spawn(["/usr/bin/loginctl", "terminate-session", session]);
+                    }
+                    return polkit.Result.AUTH_ADMIN;
+                }
+            }
+        }
+        return polkit.Result.YES;
+    } catch (e) {
+        polkit.log("remote-shutdown: failed: " + e);
+        return polkit.Result.AUTH_ADMIN;
     }
 });
 EOF
@@ -175,8 +202,8 @@ mkdir -p /usr/etc
 cat <<'EOF' >> /usr/etc/hosts
 
 # Loopback entries; do not change.
-127.0.0.1   aurora
-::1         aurora
+127.0.0.1   aurora.home.arpa aurora
+::1         aurora.home.arpa aurora
 
 # Loopback entries; do not change.
 # For historical reasons, localhost precedes localhost.localdomain:
