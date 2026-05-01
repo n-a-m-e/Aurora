@@ -23,7 +23,6 @@ modules:
       - docker
       - vsftpd
       - python3-tkinter
-      - firefox-geckodriver
       # for printers.
       - poppler-glib
       - systemd-devel
