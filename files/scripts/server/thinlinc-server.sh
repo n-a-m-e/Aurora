@@ -154,6 +154,18 @@ polkit.addRule(function(action, subject) {
         "org.freedesktop.login1.halt-ignore-inhibit": true
     };
 
+    polkit.log("debug-power-rule: " +
+               "action.id=" + action.id +
+               " action.lookup.owner=" + action.lookup("owner") +
+               " subject.user=" + subject.user +
+               " subject.local=" + subject.local +
+               " subject.active=" + subject.active +
+               " subject.pid=" + subject.pid +
+               " subject.session=" + subject.session +
+               " subject.seat=" + subject.seat +
+               " subject.system_unit=" + subject.system_unit +
+               " subject.no_new_privileges=" + subject.no_new_privileges);
+
     if (!powerActions[action.id] || subject.local) {
         return;
     }
