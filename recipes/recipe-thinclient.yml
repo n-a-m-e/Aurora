@@ -32,11 +32,16 @@ modules:
   - type: script
     scripts:
       - thinclient/thinclient-setup.sh
+  - type: script
+    scripts:
+      - thinclient/systemd-thinclient.sh
 
   - type: systemd
     system:
       enabled:
         - greetd.service
         - NetworkManager.service
+        - thinclient-reset-home.service
+        - thinclient-firstboot-admin.service
 
   - type: signing
