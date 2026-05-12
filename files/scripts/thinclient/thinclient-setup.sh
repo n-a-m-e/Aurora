@@ -1,17 +1,12 @@
 #!/usr/bin/env bash
 set -oue pipefail
 
-THINCLIENT_USER="thinclient"
-THINCLIENT_HOME="/var/home/${THINCLIENT_USER}"
+install -d -m 0755 /usr/lib/sysusers.d
 
-# Ensure thinclient user exists
-if ! getent passwd "${THINCLIENT_USER}" >/dev/null 2>&1; then
-  useradd \
-    --create-home \
-    --home-dir "${THINCLIENT_HOME}" \
-    --shell /bin/bash \
-    "${THINCLIENT_USER}"
-fi
+cat <<'EOF' > /usr/lib/sysusers.d/thinclient.conf
+u thinclient 1001 "Thin Client Session User" /var/home/thinclient /bin/bash
+u greeter 1002 "Greetd Greeter User" /var/lib/greeter /sbin/nologin
+EOF
 
 # ThinLinc defaults
 if [ -f /opt/thinlinc/etc/tlclient.conf ]; then
@@ -34,40 +29,12 @@ cat >/usr/etc/greetd/config.toml <<EOF
 vt = 1
 
 [default_session]
-command = "tuigreet --time --remember --cmd 'sh -lc \"/usr/libexec/thinclient-menu & exec labwc -s /opt/thinlinc/bin/tlclient\"'"
-user = "${THINCLIENT_USER}"
+command = "tuigreet --time --remember --cmd 'sh -lc \"/usr/sbin/thinclient-menu.sh & exec labwc -s /opt/thinlinc/bin/tlclient\"'"
+user = "greeter"
 
 [initial_session]
-command = "sh -lc '/usr/libexec/thinclient-menu & exec labwc -s /opt/thinlinc/bin/tlclient'"
-user = "${THINCLIENT_USER}"
-EOF
-
-# tiny launcher menu
-mkdir -p /usr/libexec
-cat >/usr/libexec/thinclient-menu <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-while true; do
-  choice="$(
-    printf "ThinLinc\nMoonlight\nTerminal\n" |
-      fuzzel --dmenu --prompt "Session " --lines 3 --width 24 2>/dev/null || true
-  )"
-
-  case "${choice:-}" in
-    ThinLinc)
-      /opt/thinlinc/bin/tlclient &
-      ;;
-    Moonlight)
-      moonlight-qt &
-      ;;
-    Terminal)
-      foot &
-      ;;
-  esac
-
-  sleep 1
-done
+command = "sh -lc '/usr/sbin/thinclient-menu.sh & exec labwc -s /opt/thinlinc/bin/tlclient'"
+user = "thinclient"
 EOF
 
 chmod 0755 /usr/libexec/thinclient-menu
