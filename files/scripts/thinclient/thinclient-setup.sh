@@ -36,5 +36,3 @@ user = "greeter"
 command = "sh -lc '/usr/sbin/thinclient-menu.sh & exec labwc -s /opt/thinlinc/bin/tlclient'"
 user = "thinclient"
 EOF
-
-chmod 0755 /usr/libexec/thinclient-menu
