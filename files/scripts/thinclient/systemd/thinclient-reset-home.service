@@ -1,0 +1,12 @@
+[Unit]
+Description=Reset thinclient home
+Before=greetd.service
+After=systemd-sysusers.service systemd-tmpfiles-setup.service
+Wants=systemd-sysusers.service systemd-tmpfiles-setup.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/thinclient-reset-home.sh
+
+[Install]
+WantedBy=multi-user.target
