@@ -22,6 +22,11 @@ L+ /var/opt/thinlinc/etc - - - - /usr/lib/opt/thinlinc/etc
 L+ /var/opt/thinlinc/bin - - - - /usr/lib/opt/thinlinc/bin
 EOF
 
+cat >/usr/lib/tmpfiles.d/thinclient.conf <<'EOF'
+d /var/lib/greeter 0750 greeter greeter -
+d /var/home/thinclient 0750 thinclient thinclient -
+EOF
+
 # greetd config
 mkdir -p /usr/etc/greetd
 cat >/usr/etc/greetd/config.toml <<EOF
