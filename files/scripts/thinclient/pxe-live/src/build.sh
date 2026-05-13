@@ -1,43 +1,49 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-set -exo pipefail
-
-# Create the directory that /root is symlinked to
-mkdir -p "$(realpath /root)"
-
-# Install dracut-live and regenerate the initramfs
 dnf install -y \
   dracut-live \
   dracut-network \
-  livesys-scripts \
   grub2-efi-x64-cdboot \
   xorriso \
   isomd5sum \
   squashfs-tools \
   jq
-kernel=$(kernel-install list --json pretty | jq -r '.[] | select(.has_kernel == true) | .version')
-DRACUT_NO_XATTR=1 dracut -v --force --zstd --reproducible --no-hostonly \
-    --add "dmsquash-live dmsquash-live-autooverlay livenet network-manager" \
-    "/usr/lib/modules/${kernel}/initramfs.img" "${kernel}"
 
-# Install livesys-scripts and configure them
-dnf install -y livesys-scripts
-sed -i "s/^livesys_session=.*/livesys_session=gnome/" /etc/sysconfig/livesys
-systemctl enable livesys.service livesys-late.service
+kernel="$(
+  kernel-install list --json pretty |
+    jq -r '.[] | select(.has_kernel == true) | .version' |
+    head -n1
+)"
 
-# image-builder needs gcdx64.efi
-dnf install -y grub2-efi-x64-cdboot
+if [ -z "$kernel" ]; then
+  echo "No installed kernel found"
+  exit 1
+fi
 
-# image-builder expects the EFI directory to be in /boot/efi
+DRACUT_NO_XATTR=1 dracut \
+  --force \
+  --verbose \
+  --zstd \
+  --reproducible \
+  --no-hostonly \
+  --add "dmsquash-live dmsquash-live-autooverlay livenet network-manager" \
+  "/usr/lib/modules/${kernel}/initramfs.img" \
+  "${kernel}"
+
 mkdir -p /boot/efi
 cp -av /usr/lib/efi/*/*/EFI /boot/efi/
 
-# needed for image-builder's buildroot
-dnf install -y xorriso isomd5sum squashfs-tools
+systemctl disable bootloader-update.service || true
 
-# Copy in the iso config for image-builder
+systemctl enable NetworkManager.service || true
+systemctl enable greetd.service || true
+systemctl enable thinclient-reset-home.service || true
+
+# Diskless PXE would ask for admin setup every boot.
+systemctl disable thinclient-firstboot-admin.service || true
+
 mkdir -p /usr/lib/bootc-image-builder
 cp /src/iso.yaml /usr/lib/bootc-image-builder/iso.yaml
 
-# Clean up dnf cache to save space
 dnf clean all
