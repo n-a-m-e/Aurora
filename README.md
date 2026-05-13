@@ -28,7 +28,7 @@
   ```
 - Download ISO image for Aurora Thinclient
   ```
-  base="https://github.com/n-a-m-e/Aurora/releases/download/thinclient-iso-latest/aurora-thinclient-latest.iso"; rm -f aurora-thinclient-latest.iso aurora-thinclient-latest.iso.parts.sha256; [ -f aurora-thinclient-latest.iso.part-00 ] || wget "${base}.part-00"; [ -f aurora-thinclient-latest.iso.part-01 ] || wget "${base}.part-01"; wget "${base}.parts.sha256"; sed -i 's#\./release/##g' aurora-thinclient-latest.iso.parts.sha256; sha256sum -c aurora-thinclient-latest.iso.parts.sha256 && cat aurora-thinclient-latest.iso.part-* > aurora-thinclient-latest.iso && ls -lh aurora-thinclient-latest.iso && file aurora-thinclient-latest.iso
+  base="https://github.com/${{ github.repository }}/releases/download/${{ env.ISO_RELEASE_TAG }}/aurora-thinclient-latest.iso"; rm -f aurora-thinclient-latest.iso aurora-thinclient-latest.iso.parts.sha256; [ -f aurora-thinclient-latest.iso.part-00 ] || wget "${base}.part-00"; [ -f aurora-thinclient-latest.iso.part-01 ] || wget "${base}.part-01"; wget "${base}.parts.sha256"; sha256sum -c aurora-thinclient-latest.iso.parts.sha256 && cat aurora-thinclient-latest.iso.part-* > aurora-thinclient-latest.iso && ls -lh aurora-thinclient-latest.iso && file aurora-thinclient-latest.iso
   ```
 
 # Aurora &nbsp; [![bluebuild build badge](https://github.com/n-a-m-e/aurora/actions/workflows/build.yml/badge.svg)](https://github.com/n-a-m-e/aurora/actions/workflows/build.yml)
