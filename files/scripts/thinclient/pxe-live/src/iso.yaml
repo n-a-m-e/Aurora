@@ -1,7 +1,8 @@
-label: "Thinclient-Live"
+label: "Aurora-Thinclient-Live"
+
 grub2:
-  timeout: 10
+  timeout: 5
   entries:
-    - name: "Thinclient Live ISO"
-      linux: "/images/pxeboot/vmlinuz quiet rhgb root=live:CDLABEL=Thinclient-Live enforcing=0 rd.live.image"
+    - name: "Aurora Thinclient Live"
+      linux: "/images/pxeboot/vmlinuz root=live:CDLABEL=Aurora-Thinclient-Live rd.live.image rd.neednet=1 ip=dhcp plymouth.enable=0 rd.systemd.show_status=1 systemd.show_status=1"
       initrd: "/images/pxeboot/initrd.img"
