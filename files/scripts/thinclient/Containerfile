@@ -1,0 +1,3 @@
+FROM ghcr.io/n-a-m-e/aurora-thinclient:latest
+
+RUN --mount=type=bind,source=src,target=/src /src/build.sh
