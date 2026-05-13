@@ -242,15 +242,6 @@ jobs:
             -u "${{ github.actor }}" \
             --password-stdin
 
-      - name: Prepare PXE Containerfile
-        run: |
-          set -euxo pipefail
-          sed -i "s#ghcr.io/n-a-m-e/aurora-thinclient:latest#ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest#g" \
-            files/scripts/thinclient/Containerfile
-
-          echo "=== PXE Containerfile ==="
-          cat files/scripts/thinclient/Containerfile
-
       - name: Build image-builder with bootc-generic-iso support
         run: |
           set -euxo pipefail
@@ -270,8 +261,9 @@ jobs:
           sudo podman build \
             --cap-add SYS_ADMIN \
             --security-opt label=disable \
+            --build-arg BASE_IMAGE="ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest" \
             -t aurora-thinclient-live \
-            files/scripts/thinclient
+            files/scripts/thinclient/pxe-live
 
       - name: Build live ISO from thinclient image
         run: |
