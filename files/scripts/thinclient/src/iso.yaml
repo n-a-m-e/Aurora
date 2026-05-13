@@ -1,6 +1,7 @@
-label: "Fedora-bootc-Installer"
+label: "Thinclient-Live"
 grub2:
+  timeout: 10
   entries:
-    - name: "Install Fedora (bootc)"
-      linux: "/images/pxeboot/vmlinuz inst.stage2=hd:LABEL=Fedora-bootc-Installer console=tty0 inst.text selinux=0"
+    - name: "Thinclient Live ISO"
+      linux: "/images/pxeboot/vmlinuz quiet rhgb root=live:CDLABEL=Thinclient-Live enforcing=0 rd.live.image"
       initrd: "/images/pxeboot/initrd.img"
