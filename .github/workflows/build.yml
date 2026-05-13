@@ -207,3 +207,165 @@ jobs:
 
             Download and combine:
             base=https://github.com/n-a-m-e/Aurora/releases/download/thinclient-iso-latest/aurora-thinclient-latest.iso.part- && wget "$base"{00,01} && cat aurora-thinclient-latest.iso.part-* > aurora-thinclient-latest.iso
+
+  thinclient-pxe-live:
+    name: Build Thinclient Diskless PXE and publish Release
+    runs-on: ubuntu-24.04
+    needs: [image-changes, build-thinclient]
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      (
+        github.event.schedule == '50 7 * * 0' ||
+        needs.image-changes.outputs.thinclient == 'true'
+      ) &&
+      (
+        github.event.schedule == '50 7 * * 0' ||
+        needs.build-thinclient.result == 'success'
+      )
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install host tools
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y podman skopeo golang-go rsync xorriso
+          sudo apt-get clean
+
+      - name: Log in to GHCR
+        run: |
+          echo "${{ github.token }}" | sudo podman login ghcr.io \
+            -u "${{ github.actor }}" \
+            --password-stdin
+
+      - name: Prepare PXE Containerfile
+        run: |
+          set -euxo pipefail
+          sed -i "s#ghcr.io/n-a-m-e/aurora-thinclient:latest#ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest#g" \
+            files/scripts/thinclient/Containerfile
+
+          echo "=== PXE Containerfile ==="
+          cat files/scripts/thinclient/Containerfile
+
+      - name: Build image-builder with bootc-generic-iso support
+        run: |
+          set -euxo pipefail
+
+          git clone https://github.com/osbuild/image-builder-cli.git
+          cd image-builder-cli
+
+          go mod edit -replace github.com/osbuild/images=github.com/ondrejbudai/images@bootc-generic-iso-dev
+          GOPROXY=direct go mod tidy
+
+          sudo podman build -t image-builder-dev .
+
+      - name: Build Aurora thinclient live container
+        run: |
+          set -euxo pipefail
+
+          sudo podman build \
+            --cap-add SYS_ADMIN \
+            --security-opt label=disable \
+            -t aurora-thinclient-live \
+            files/scripts/thinclient
+
+      - name: Build live ISO from thinclient image
+        run: |
+          set -euxo pipefail
+
+          mkdir -p output
+
+          sudo podman run --rm --privileged \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
+            -v "$PWD/output:/output:Z" \
+            image-builder-dev \
+            build \
+            --output-dir /output \
+            --bootc-ref localhost/aurora-thinclient-live \
+            --bootc-default-fs ext4 \
+            bootc-generic-iso
+
+          sudo chown -R "$(id -u):$(id -g)" output
+
+          echo "=== output files ==="
+          find output -maxdepth 3 -type f -ls
+
+      - name: Extract PXE bundle
+        run: |
+          set -euxo pipefail
+
+          ISO="$(find output -name '*.iso' | head -n1)"
+          test -n "$ISO"
+
+          mkdir -p release/pxe mnt iso-root
+
+          sudo mount -o loop "$ISO" mnt
+          rsync -a mnt/ iso-root/
+          sudo umount mnt
+
+          cp iso-root/images/pxeboot/vmlinuz release/pxe/vmlinuz
+          cp iso-root/images/pxeboot/initrd.img release/pxe/initrd.img
+          cp iso-root/LiveOS/squashfs.img release/pxe/squashfs.img
+
+          cat > release/pxe/aurora-thinclient-live.ipxe <<'EOF'
+          #!ipxe
+
+          set base http://192.168.1.5/aurora-thinclient-live
+
+          kernel ${base}/vmlinuz \
+            initrd=initrd.img \
+            root=live:${base}/squashfs.img \
+            rd.live.image \
+            rd.neednet=1 \
+            ip=dhcp \
+            radeon.cik_support=1 \
+            amdgpu.cik_support=0 \
+            plymouth.enable=0 \
+            rd.systemd.show_status=1 \
+            systemd.show_status=1
+
+          initrd ${base}/initrd.img
+          boot
+          EOF
+
+          sha256sum \
+            release/pxe/vmlinuz \
+            release/pxe/initrd.img \
+            release/pxe/squashfs.img \
+            release/pxe/aurora-thinclient-live.ipxe \
+            > release/aurora-thinclient-pxe.sha256
+
+          echo "=== PXE release files ==="
+          ls -lh release/pxe release/
+
+      - name: Publish PXE Live Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: thinclient-pxe-live-latest
+          name: Aurora Thinclient Diskless PXE Live
+          prerelease: true
+          files: |
+            ./release/pxe/vmlinuz
+            ./release/pxe/initrd.img
+            ./release/pxe/squashfs.img
+            ./release/pxe/aurora-thinclient-live.ipxe
+            ./release/aurora-thinclient-pxe.sha256
+          overwrite_files: true
+          fail_on_unmatched_files: true
+          body: |
+            Diskless PXE live image for Aurora Thinclient.
+
+            Serve these files from an HTTP server:
+              vmlinuz
+              initrd.img
+              squashfs.img
+              aurora-thinclient-live.ipxe
+
+            Edit aurora-thinclient-live.ipxe and replace:
+              http://192.168.1.5/aurora-thinclient-live
+
+            with your PXE HTTP server URL.
