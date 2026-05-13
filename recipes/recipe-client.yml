@@ -22,9 +22,9 @@ modules:
       - kde-connect
       - input-remapper
       - kdebugsettings
-      - plasma-discover-flatpak
-      - plasma-discover-notifier
-      - plasma-discover
+      #- plasma-discover-flatpak
+      #- plasma-discover-notifier
+      #- plasma-discover
 
   - type: script
     scripts:
