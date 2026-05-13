@@ -1,3 +1,5 @@
-FROM ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
 
-RUN --mount=type=bind,source=src,target=/src /src/build.sh
+COPY src /src
+RUN chmod +x /src/build.sh && /src/build.sh
