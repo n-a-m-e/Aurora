@@ -201,37 +201,10 @@ jobs:
           git clone https://github.com/osbuild/image-builder-cli.git
           cd image-builder-cli
 
-          FOUND_COMMIT=""
+          git checkout 3fbf0900cf16e324f01987dc439bd156afadde73
 
-          for cutoff in \
-            "2026-01-20" \
-            "2026-01-10" \
-            "2025-12-15" \
-            "2025-11-15" \
-            "2025-10-15" \
-            "2025-09-15"
-          do
-            echo "=== Trying image-builder-cli before ${cutoff} ==="
-
-            git fetch origin main
-            git reset --hard origin/main
-
-            commit="$(git rev-list -n 1 --before="${cutoff}" origin/main)"
-            git checkout "${commit}"
-
-            go mod edit -replace github.com/osbuild/images=github.com/ondrejbudai/images@bootc-generic-iso-dev
-
-            if GOPROXY=direct go mod tidy; then
-              FOUND_COMMIT="${commit}"
-              echo "Compatible image-builder-cli commit found: ${FOUND_COMMIT}"
-              break
-            fi
-          done
-
-          if [ -z "${FOUND_COMMIT}" ]; then
-            echo "No compatible image-builder-cli commit found"
-            exit 1
-          fi
+          go mod edit -replace github.com/osbuild/images=github.com/ondrejbudai/images@bootc-generic-iso-dev
+          GOPROXY=direct go mod tidy
 
           sudo podman build -t image-builder-dev .
 
@@ -269,15 +242,16 @@ jobs:
           ISO="$(find output -name '*.iso' | head -n1)"
           test -n "$ISO"
 
-          mkdir -p release/pxe mnt iso-root
+          mkdir -p release/pxe mnt
 
-          sudo mount -o loop "$ISO" mnt
-          rsync -a mnt/ iso-root/
+          sudo mount -o loop,ro "$ISO" mnt
+
+          sudo cp mnt/images/pxeboot/vmlinuz release/pxe/vmlinuz
+          sudo cp mnt/images/pxeboot/initrd.img release/pxe/initrd.img
+          sudo cp mnt/LiveOS/squashfs.img release/pxe/squashfs.img
+
           sudo umount mnt
-
-          cp iso-root/images/pxeboot/vmlinuz release/pxe/vmlinuz
-          cp iso-root/images/pxeboot/initrd.img release/pxe/initrd.img
-          cp iso-root/LiveOS/squashfs.img release/pxe/squashfs.img
+          sudo chown -R "$(id -u):$(id -g)" release
 
           cat > release/pxe/aurora-thinclient-live.ipxe <<'EOF'
           #!ipxe
