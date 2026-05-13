@@ -9,12 +9,17 @@ on:
       - "**.md"
   workflow_dispatch:
   schedule:
-    - cron: '20 6 * * *'   # server + client + thinclient image builds
-    - cron: '50 7 * * 0'   # thinclient ISO build + release
+    - cron: '20 6 * * *'   # image builds
+    - cron: '50 7 * * 0'   # thinclient ISO + PXE live release
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
+
+env:
+  THINCLIENT_IMAGE: ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest
+  ISO_RELEASE_TAG: thinclient-iso-latest
+  PXE_RELEASE_TAG: thinclient-pxe-live-latest
 
 jobs:
   image-changes:
@@ -38,13 +43,11 @@ jobs:
               - 'files/scripts/shared/**'
               - 'recipes/recipe-server.yml'
               - '.github/workflows/build.yml'
-
             client:
               - 'files/scripts/client/**'
               - 'files/scripts/shared/**'
               - 'recipes/recipe-client.yml'
               - '.github/workflows/build.yml'
-
             thinclient:
               - 'files/scripts/thinclient/**'
               - 'recipes/recipe-thinclient.yml'
@@ -54,19 +57,13 @@ jobs:
     name: Build Server Image
     runs-on: ubuntu-latest
     needs: image-changes
-    if: |
-      github.ref == 'refs/heads/main' &&
-      (
-        github.event.schedule == '20 6 * * *' ||
-        needs.image-changes.outputs.server == 'true'
-      )
+    if: github.ref == 'refs/heads/main' && (github.event.schedule == '20 6 * * *' || needs.image-changes.outputs.server == 'true')
     permissions:
       contents: read
       packages: write
       id-token: write
     steps:
-      - name: Build Server Image
-        uses: blue-build/github-action@v1.11.1
+      - uses: blue-build/github-action@v1.11.1
         with:
           recipe: recipe-server.yml
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
@@ -78,19 +75,13 @@ jobs:
     name: Build Client Image
     runs-on: ubuntu-latest
     needs: image-changes
-    if: |
-      github.ref == 'refs/heads/main' &&
-      (
-        github.event.schedule == '20 6 * * *' ||
-        needs.image-changes.outputs.client == 'true'
-      )
+    if: github.ref == 'refs/heads/main' && (github.event.schedule == '20 6 * * *' || needs.image-changes.outputs.client == 'true')
     permissions:
       contents: read
       packages: write
       id-token: write
     steps:
-      - name: Build Client Image
-        uses: blue-build/github-action@v1.11.1
+      - uses: blue-build/github-action@v1.11.1
         with:
           recipe: recipe-client.yml
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
@@ -102,19 +93,13 @@ jobs:
     name: Build Thinclient Image
     runs-on: ubuntu-latest
     needs: image-changes
-    if: |
-      github.ref == 'refs/heads/main' &&
-      (
-        github.event.schedule == '20 6 * * *' ||
-        needs.image-changes.outputs.thinclient == 'true'
-      )
+    if: github.ref == 'refs/heads/main' && (github.event.schedule == '20 6 * * *' || needs.image-changes.outputs.thinclient == 'true')
     permissions:
       contents: read
       packages: write
       id-token: write
     steps:
-      - name: Build Thinclient Image
-        uses: blue-build/github-action@v1.11.1
+      - uses: blue-build/github-action@v1.11.1
         with:
           recipe: recipe-thinclient.yml
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
@@ -123,20 +108,10 @@ jobs:
           maximize_build_space: true
 
   thinclient-iso:
-    name: Build Thinclient ISO and publish Release
+    name: Build Thinclient ISO
     runs-on: ubuntu-24.04
     needs: [image-changes, build-thinclient]
-    if: |
-      always() &&
-      github.ref == 'refs/heads/main' &&
-      (
-        github.event.schedule == '50 7 * * 0' ||
-        needs.image-changes.outputs.thinclient == 'true'
-      ) &&
-      (
-        github.event.schedule == '50 7 * * 0' ||
-        needs.build-thinclient.result == 'success'
-      )
+    if: always() && github.ref == 'refs/heads/main' && (github.event.schedule == '50 7 * * 0' || needs.image-changes.outputs.thinclient == 'true') && (github.event.schedule == '50 7 * * 0' || needs.build-thinclient.result == 'success')
     permissions:
       contents: write
       packages: read
@@ -145,12 +120,10 @@ jobs:
 
       - name: Write ISO config
         run: |
-          set -euxo pipefail
           cat > image-config.toml <<'EOF'
           [customizations.kernel]
-          append = "radeon.cik_support=1 amdgpu.cik_support=0 plymouth.enable=0 rd.systemd.show_status=1 systemd.show_status=1"
+          append = "plymouth.enable=0 rd.systemd.show_status=1 systemd.show_status=1"
           EOF
-          echo "=== image-config.toml ==="
           cat image-config.toml
 
       - name: Build ISO
@@ -158,43 +131,27 @@ jobs:
         uses: osbuild/bootc-image-builder-action@v0.0.2
         with:
           config-file: ./image-config.toml
-          image: ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest
+          image: ${{ env.THINCLIENT_IMAGE }}
           types: iso
           rootfs: xfs
           additional-args: --use-librepo=True
 
-      - name: Prepare ISO for release
-        run: |
-          set -euxo pipefail
-          echo "=== output directory contents before copy ==="
-          sudo find "${{ steps.iso.outputs.output-directory }}" -maxdepth 3 -type f -ls
-
-          iso=$(sudo find "${{ steps.iso.outputs.output-directory }}" -name '*.iso' | head -n1)
-          echo "ISO found at: $iso"
-
-          mkdir -p release
-          sudo cp "$iso" ./release/aurora-thinclient-latest.iso
-          sudo chown "$(id -u):$(id -g)" ./release/aurora-thinclient-latest.iso
-
-          echo "=== iso size ==="
-          ls -lh ./release/aurora-thinclient-latest.iso
-          stat ./release/aurora-thinclient-latest.iso
-
       - name: Split ISO
         run: |
           set -euxo pipefail
-          ISO=./release/aurora-thinclient-latest.iso
+          mkdir -p release
+          iso="$(sudo find '${{ steps.iso.outputs.output-directory }}' -name '*.iso' | head -n1)"
+          sudo cp "$iso" release/aurora-thinclient-latest.iso
+          sudo chown "$(id -u):$(id -g)" release/aurora-thinclient-latest.iso
 
-          split -b 1900M -d -a 2 "$ISO" "${ISO}.part-"
-          sha256sum "${ISO}".part-* > "${ISO}.parts.sha256"
+          split -b 1900M -d -a 2 release/aurora-thinclient-latest.iso release/aurora-thinclient-latest.iso.part-
+          sha256sum release/aurora-thinclient-latest.iso.part-* > release/aurora-thinclient-latest.iso.parts.sha256
+          ls -lh release/
 
-          echo "=== split files ==="
-          ls -lh "${ISO}".part-* "${ISO}.parts.sha256"
-
-      - name: Publish GitHub Release
+      - name: Publish ISO Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: thinclient-iso-latest
+          tag_name: ${{ env.ISO_RELEASE_TAG }}
           name: Aurora Thinclient ISO
           prerelease: true
           files: |
@@ -205,72 +162,52 @@ jobs:
           body: |
             Latest ISO image for Aurora Thinclient.
 
-            Download and combine:
-            base=https://github.com/n-a-m-e/Aurora/releases/download/thinclient-iso-latest/aurora-thinclient-latest.iso.part- && wget "$base"{00,01} && cat aurora-thinclient-latest.iso.part-* > aurora-thinclient-latest.iso
+            Download, verify, and combine:
+            base="https://github.com/n-a-m-e/Aurora/releases/download/thinclient-iso-latest/aurora-thinclient-latest.iso"; [ -f aurora-thinclient-latest.iso.part-00 ] || wget "${base}.part-00"; [ -f aurora-thinclient-latest.iso.part-01 ] || wget "${base}.part-01"; wget -O aurora-thinclient-latest.iso.parts.sha256 "${base}.parts.sha256"; sed -i 's#\./release/##g' aurora-thinclient-latest.iso.parts.sha256; sha256sum -c aurora-thinclient-latest.iso.parts.sha256 && cat aurora-thinclient-latest.iso.part-* > aurora-thinclient-latest.iso
 
   thinclient-pxe-live:
-    name: Build Thinclient Diskless PXE and publish Release
+    name: Build Thinclient Diskless PXE
     runs-on: ubuntu-24.04
     needs: [image-changes, build-thinclient]
-    if: |
-      always() &&
-      github.ref == 'refs/heads/main' &&
-      (
-        github.event.schedule == '50 7 * * 0' ||
-        needs.image-changes.outputs.thinclient == 'true'
-      ) &&
-      (
-        github.event.schedule == '50 7 * * 0' ||
-        needs.build-thinclient.result == 'success'
-      )
+    if: always() && github.ref == 'refs/heads/main' && (github.event.schedule == '50 7 * * 0' || needs.image-changes.outputs.thinclient == 'true') && (github.event.schedule == '50 7 * * 0' || needs.build-thinclient.result == 'success')
     permissions:
       contents: write
       packages: read
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install host tools
+      - name: Install tools
         run: |
-          set -euxo pipefail
           sudo apt-get update
-          sudo apt-get install -y podman skopeo golang-go rsync xorriso
+          sudo apt-get install -y podman golang-go rsync
           sudo apt-get clean
 
       - name: Log in to GHCR
         run: |
-          echo "${{ github.token }}" | sudo podman login ghcr.io \
-            -u "${{ github.actor }}" \
-            --password-stdin
+          echo "${{ github.token }}" | sudo podman login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Build image-builder with bootc-generic-iso support
+      - name: Build image-builder
         run: |
           set -euxo pipefail
-
           git clone https://github.com/osbuild/image-builder-cli.git
           cd image-builder-cli
-
           go mod edit -replace github.com/osbuild/images=github.com/ondrejbudai/images@bootc-generic-iso-dev
           GOPROXY=direct go mod tidy
-
           sudo podman build -t image-builder-dev .
 
-      - name: Build Aurora thinclient live container
+      - name: Build live container
         run: |
-          set -euxo pipefail
-
           sudo podman build \
             --cap-add SYS_ADMIN \
             --security-opt label=disable \
-            --build-arg BASE_IMAGE="ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest" \
+            --build-arg BASE_IMAGE="${{ env.THINCLIENT_IMAGE }}" \
             -t aurora-thinclient-live \
             files/scripts/thinclient/pxe-live
 
-      - name: Build live ISO from thinclient image
+      - name: Build live ISO
         run: |
           set -euxo pipefail
-
           mkdir -p output
-
           sudo podman run --rm --privileged \
             -v /var/lib/containers/storage:/var/lib/containers/storage \
             -v "$PWD/output:/output:Z" \
@@ -280,19 +217,13 @@ jobs:
             --bootc-ref localhost/aurora-thinclient-live \
             --bootc-default-fs ext4 \
             bootc-generic-iso
-
           sudo chown -R "$(id -u):$(id -g)" output
-
-          echo "=== output files ==="
           find output -maxdepth 3 -type f -ls
 
-      - name: Extract PXE bundle
+      - name: Extract PXE files
         run: |
           set -euxo pipefail
-
           ISO="$(find output -name '*.iso' | head -n1)"
-          test -n "$ISO"
-
           mkdir -p release/pxe mnt iso-root
 
           sudo mount -o loop "$ISO" mnt
@@ -305,39 +236,19 @@ jobs:
 
           cat > release/pxe/aurora-thinclient-live.ipxe <<'EOF'
           #!ipxe
-
           set base http://192.168.1.5/aurora-thinclient-live
-
-          kernel ${base}/vmlinuz \
-            initrd=initrd.img \
-            root=live:${base}/squashfs.img \
-            rd.live.image \
-            rd.neednet=1 \
-            ip=dhcp \
-            radeon.cik_support=1 \
-            amdgpu.cik_support=0 \
-            plymouth.enable=0 \
-            rd.systemd.show_status=1 \
-            systemd.show_status=1
-
+          kernel ${base}/vmlinuz initrd=initrd.img root=live:${base}/squashfs.img rd.live.image rd.neednet=1 ip=dhcp plymouth.enable=0 rd.systemd.show_status=1 systemd.show_status=1
           initrd ${base}/initrd.img
           boot
           EOF
 
-          sha256sum \
-            release/pxe/vmlinuz \
-            release/pxe/initrd.img \
-            release/pxe/squashfs.img \
-            release/pxe/aurora-thinclient-live.ipxe \
-            > release/aurora-thinclient-pxe.sha256
-
-          echo "=== PXE release files ==="
+          sha256sum release/pxe/* > release/aurora-thinclient-pxe.sha256
           ls -lh release/pxe release/
 
-      - name: Publish PXE Live Release
+      - name: Publish PXE Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: thinclient-pxe-live-latest
+          tag_name: ${{ env.PXE_RELEASE_TAG }}
           name: Aurora Thinclient Diskless PXE Live
           prerelease: true
           files: |
