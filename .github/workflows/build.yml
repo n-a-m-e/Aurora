@@ -145,7 +145,10 @@ jobs:
           sudo chown "$(id -u):$(id -g)" release/aurora-thinclient-latest.iso
 
           split -b 1900M -d -a 2 release/aurora-thinclient-latest.iso release/aurora-thinclient-latest.iso.part-
-          sha256sum release/aurora-thinclient-latest.iso.part-* > release/aurora-thinclient-latest.iso.parts.sha256
+          (
+            cd release
+            sha256sum aurora-thinclient-latest.iso.part-*
+          ) > release/aurora-thinclient-latest.iso.parts.sha256
           ls -lh release/
 
       - name: Publish ISO Release
@@ -163,8 +166,8 @@ jobs:
             Latest ISO image for Aurora Thinclient.
 
             Download, verify, and combine:
-            base="https://github.com/n-a-m-e/Aurora/releases/download/thinclient-iso-latest/aurora-thinclient-latest.iso"; [ -f aurora-thinclient-latest.iso.part-00 ] || wget "${base}.part-00"; [ -f aurora-thinclient-latest.iso.part-01 ] || wget "${base}.part-01"; wget -O aurora-thinclient-latest.iso.parts.sha256 "${base}.parts.sha256"; sed -i 's#\./release/##g' aurora-thinclient-latest.iso.parts.sha256; sha256sum -c aurora-thinclient-latest.iso.parts.sha256 && cat aurora-thinclient-latest.iso.part-* > aurora-thinclient-latest.iso
-
+            base="https://github.com/${{ github.repository }}/releases/download/${{ env.ISO_RELEASE_TAG }}/aurora-thinclient-latest.iso"; rm -f aurora-thinclient-latest.iso aurora-thinclient-latest.iso.parts.sha256; [ -f aurora-thinclient-latest.iso.part-00 ] || wget "${base}.part-00"; [ -f aurora-thinclient-latest.iso.part-01 ] || wget "${base}.part-01"; wget "${base}.parts.sha256"; sha256sum -c aurora-thinclient-latest.iso.parts.sha256 && cat aurora-thinclient-latest.iso.part-* > aurora-thinclient-latest.iso && ls -lh aurora-thinclient-latest.iso && file aurora-thinclient-latest.iso
+            
   thinclient-pxe-live:
     name: Build Thinclient Diskless PXE
     runs-on: ubuntu-24.04
@@ -186,14 +189,12 @@ jobs:
         run: |
           echo "${{ github.token }}" | sudo podman login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Build image-builder
+      - name: Build bootc-isos image-builder
         run: |
           set -euxo pipefail
-          git clone https://github.com/osbuild/image-builder-cli.git
-          cd image-builder-cli
-          go mod edit -replace github.com/osbuild/images=github.com/ondrejbudai/images@bootc-generic-iso-dev
-          GOPROXY=direct go mod tidy
-          sudo podman build -t image-builder-dev .
+          git clone https://github.com/ondrejbudai/bootc-isos.git
+          cd bootc-isos
+          sudo podman build -t image-builder-dev -f image-builder/Containerfile .
 
       - name: Build live container
         run: |
@@ -242,7 +243,10 @@ jobs:
           boot
           EOF
 
-          sha256sum release/pxe/* > release/aurora-thinclient-pxe.sha256
+          (
+            cd release/pxe
+            sha256sum vmlinuz initrd.img squashfs.img aurora-thinclient-live.ipxe
+          ) > release/aurora-thinclient-pxe.sha256
           ls -lh release/pxe release/
 
       - name: Publish PXE Release
