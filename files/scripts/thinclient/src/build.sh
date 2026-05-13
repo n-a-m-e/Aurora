@@ -6,10 +6,18 @@ set -exo pipefail
 mkdir -p "$(realpath /root)"
 
 # Install dracut-live and regenerate the initramfs
-dnf install -y dracut-live
+dnf install -y \
+  dracut-live \
+  dracut-network \
+  livesys-scripts \
+  grub2-efi-x64-cdboot \
+  xorriso \
+  isomd5sum \
+  squashfs-tools \
+  jq
 kernel=$(kernel-install list --json pretty | jq -r '.[] | select(.has_kernel == true) | .version')
 DRACUT_NO_XATTR=1 dracut -v --force --zstd --reproducible --no-hostonly \
-    --add "dmsquash-live dmsquash-live-autooverlay" \
+    --add "dmsquash-live dmsquash-live-autooverlay livenet network-manager" \
     "/usr/lib/modules/${kernel}/initramfs.img" "${kernel}"
 
 # Install livesys-scripts and configure them
