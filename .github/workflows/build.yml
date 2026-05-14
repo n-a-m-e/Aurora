@@ -122,7 +122,7 @@ jobs:
         run: |
           cat > image-config.toml <<'EOF'
           [customizations.kernel]
-          append = "plymouth.enable=0 rd.systemd.show_status=1 systemd.show_status=1"
+          append = "quiet"
           EOF
           cat image-config.toml
 
