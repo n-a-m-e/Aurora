@@ -29,10 +29,12 @@ install -d -m 0700 -o "$USER_NAME" -g "$USER_NAME" "$HOME_DIR/.config"
 install -d -m 0700 -o "$USER_NAME" -g "$USER_NAME" "$HOME_DIR/.cache"
 
 # Restore saved files.
-[ -f "$TMP_DIR/known_hosts" ] &&
-  install -m 0644 -o "$USER_NAME" -g "$USER_NAME" \
+if [ -f "$TMP_DIR/known_hosts" ]; then
+  install -D -m 0600 -o "$USER_NAME" -g "$USER_NAME" \
     "$TMP_DIR/known_hosts" "$HOME_DIR/.ssh/known_hosts"
+fi
 
-[ -f "$TMP_DIR/tlclient.conf" ] &&
-  install -m 0644 -o "$USER_NAME" -g "$USER_NAME" \
+if [ -f "$TMP_DIR/tlclient.conf" ]; then
+  install -D -m 0600 -o "$USER_NAME" -g "$USER_NAME" \
     "$TMP_DIR/tlclient.conf" "$HOME_DIR/.thinlinc/tlclient.conf"
+fi
