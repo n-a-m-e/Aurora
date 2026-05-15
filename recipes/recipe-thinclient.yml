@@ -1,8 +1,6 @@
----
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 name: aurora-thinclient
 description: Minimal Fedora bootc thinclient with ThinLinc, Moonlight, and Terminal
-
 
 base-image: quay.io/fedora/fedora-bootc
 image-version: 43
@@ -24,6 +22,7 @@ modules:
         - NetworkManager
         - xdg-desktop-portal
         - xdg-desktop-portal-wlr
+        - xorg-x11-server-Xwayland
         - wget
         - ca-certificates
         - moonlight-qt
@@ -32,6 +31,7 @@ modules:
   - type: script
     scripts:
       - thinclient/thinclient-setup.sh
+
   - type: script
     scripts:
       - thinclient/systemd-thinclient.sh
@@ -40,6 +40,7 @@ modules:
     system:
       enabled:
         - greetd.service
+        - seatd.service
         - NetworkManager.service
         - thinclient-reset-home.service
         - thinclient-firstboot-admin.service
