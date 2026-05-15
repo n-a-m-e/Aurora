@@ -6,6 +6,14 @@ install -d -m 0755 /usr/lib/sysusers.d
 cat <<'EOF' > /usr/lib/sysusers.d/thinclient.conf
 u thinclient 1001 "Thin Client Session User" /var/home/thinclient /bin/bash
 u greeter 1002 "Greetd Greeter User" /var/lib/greeter /sbin/nologin
+
+# Local override because Fedora/systemd-userdb may expose video dynamically
+# without a writable /etc/group entry. labwc needs this for /dev/dri/card0.
+g video 39
+m thinclient video
+
+# seatd access
+m thinclient seat
 EOF
 
 # ThinLinc defaults
@@ -29,15 +37,15 @@ EOF
 
 # greetd config
 mkdir -p /usr/etc/greetd
-cat >/usr/etc/greetd/config.toml <<EOF
+cat >/usr/etc/greetd/config.toml <<'EOF'
 [terminal]
 vt = 1
 
 [default_session]
-command = "tuigreet --time --remember --cmd 'sh -lc \"/usr/sbin/thinclient-menu.sh & exec labwc -s /opt/thinlinc/bin/tlclient\"'"
+command = "tuigreet --time --remember --cmd 'sh -lc \"export XDG_RUNTIME_DIR=/run/user/$(id -u); exec labwc -s /usr/sbin/thinclient-menu.sh\"'"
 user = "greeter"
 
 [initial_session]
-command = "sh -lc '/usr/sbin/thinclient-menu.sh & exec labwc -s /opt/thinlinc/bin/tlclient'"
+command = "sh -lc 'export XDG_RUNTIME_DIR=/run/user/$(id -u); exec labwc -s /usr/sbin/thinclient-menu.sh'"
 user = "thinclient"
 EOF
