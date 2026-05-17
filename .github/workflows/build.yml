@@ -203,8 +203,19 @@ jobs:
 
           git checkout 3fbf0900cf16e324f01987dc439bd156afadde73
 
+          export GOPROXY="https://proxy.golang.org,direct"
+          export GOSUMDB="sum.golang.org"
+          export GOPATH="${RUNNER_TEMP}/go"
+          export GOMODCACHE="${RUNNER_TEMP}/go/pkg/mod"
+          export GOCACHE="${RUNNER_TEMP}/go-build"
+
           go mod edit -replace github.com/osbuild/images=github.com/ondrejbudai/images@bootc-generic-iso-dev
-          GOPROXY=direct go mod tidy
+
+          go clean -modcache || true
+          go mod tidy || {
+            rm -rf "${GOMODCACHE}/cache/vcs"
+            go mod tidy
+          }
 
           sudo podman build -t image-builder-dev .
 
