@@ -7,7 +7,7 @@ RequiresMountsFor=/var
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/bash -c 'while read -r type path _; do [[ $type == \#* || -z ${path:-} ]] && continue; case $type in d|C) [[ -L $path || ( $type == d && -e $path && ! -d $path ) ]] && rm -rf -- "$path" || true ;; L|L+) [[ -e $path && ! -L $path ]] && rm -rf -- "$path" || true ;; esac; done < /usr/lib/tmpfiles.d/thinlinc.conf; exit 0'
+ExecStart=/usr/bin/bash -c 'skip=; while read -r type path _; do [[ -z "$type" || "$type" == \#* ]] && continue; [[ -n "$skip" && "$path" == "$skip"/* ]] && continue; case "$type" in d) [[ -L "$path" || -e "$path" && ! -d "$path" ]] || continue ;; C) [[ -L "$path" || -e "$path" && ! -f "$path" ]] || continue ;; L|L+) [[ -e "$path" && ! -L "$path" ]] || continue ;; *) continue ;; esac; echo "Fixing $type path: $path"; rm -rf -- "$path"; skip="$path"; done < /usr/lib/tmpfiles.d/thinlinc.conf; exit 0'
 ExecStartPost=/usr/bin/systemd-tmpfiles --create /usr/lib/tmpfiles.d/thinlinc.conf
 RemainAfterExit=yes
 
