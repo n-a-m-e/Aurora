@@ -2,7 +2,7 @@
 name: aurora-thinclient
 description: Minimal Fedora bootc thinclient using Xorg, IceWM minimal session, xterm, ThinLinc, and Moonlight
 
-base-image: quay.io/fedora/fedora-bootc-minimal
+base-image: quay.io/fedora/fedora-bootc
 image-version: 43
 
 modules:
