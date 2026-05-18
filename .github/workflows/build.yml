@@ -136,6 +136,37 @@ jobs:
           rootfs: xfs
           additional-args: --use-librepo=True
 
+      - name: Make installer ISO safer
+        run: |
+          set -euxo pipefail
+
+          iso="$(sudo find '${{ steps.iso.outputs.output-directory }}' -name '*.iso' | head -n1)"
+          test -n "$iso"
+
+          sudo cp "$iso" ./original.iso
+          sudo chown "$(id -u):$(id -g)" ./original.iso
+
+          sudo podman run --rm --privileged \
+            -v "$PWD:/work:Z" \
+            quay.io/centos/centos:stream9 \
+            bash -euxo pipefail -c '
+              dnf install -y lorax
+
+              mkksiso \
+                --cmdline "nomodeset" \
+                --replace "set timeout=60" "set timeout=-1" \
+                --replace "set timeout=10" "set timeout=-1" \
+                --replace "set timeout=5" "set timeout=-1" \
+                --replace "set default=\"0\"" "set default=\"2\"" \
+                --replace "set default=0" "set default=2" \
+                --replace "set default=\"1\"" "set default=\"2\"" \
+                --replace "set default=1" "set default=2" \
+                /work/original.iso \
+                /work/safe.iso
+            '
+
+          sudo cp ./safe.iso "$iso"
+
       - name: Split ISO
         run: |
           set -euxo pipefail
