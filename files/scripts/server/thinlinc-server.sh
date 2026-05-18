@@ -91,6 +91,10 @@ emit_tmpfiles_entries() {
   emit_tmpfiles_entries L+ "utils" "- - -" ! -name tl-printer ! -name tl-ldap-certalias
 } > /usr/lib/tmpfiles.d/thinlinc.conf
 
+# disable thinlinc optfix
+mkdir -p /etc/tmpfiles.d
+ln -sfn /dev/null /etc/tmpfiles.d/99-bluebuild-optfix-thinlinc.conf
+
 cat <<'EOF' > /usr/lib/tmpfiles.d/sendmail-spool.conf
 d /var/spool/clientmqueue 0770 smmsp smmsp -
 d /var/spool/mqueue       0700 root  mail  -
