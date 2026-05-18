@@ -2,8 +2,8 @@
 set -Eeuo pipefail
 
 cd "$(dirname "$0")"
-cp thinclient-menu.sh /usr/sbin/thinclient-menu.sh
-chmod a+x "/usr/sbin/thinclient-menu.sh"
+cp thinclient-menu.sh /usr/sbin/thinclient-session.sh
+chmod a+x "/usr/sbin/thinclient-session.sh"
 
 cp systemd/thinclient-reset-home.service /usr/lib/systemd/system/thinclient-reset-home.service
 cp systemd/thinclient-reset-home.sh /usr/sbin/thinclient-reset-home.sh
