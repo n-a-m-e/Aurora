@@ -10,7 +10,7 @@ TS_INTEGRATION="$ROOT/files/scripts/thinstation"
 PXE_DIR="$RELEASE_DIR/pxe"
 mkdir -p "$PXE_DIR"
 
-BOOT_DIR="$TS_SRC/ts/build/boot-images/grub"
+BOOT_DIR="$TS_SRC/ts/build/boot-images/initrd"
 
 if [ ! -d "$BOOT_DIR" ]; then
   echo "Expected ThinStation boot output directory not found:"
