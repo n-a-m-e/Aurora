@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '20 6 * * *'   # image builds
-    - cron: '50 7 * * 0'   # thinclient ISO + PXE live release
+    - cron: '50 7 * * 0'   # thinclient ISO + ThinStation PXE release
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -19,7 +19,6 @@ concurrency:
 env:
   THINCLIENT_IMAGE: ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest
   ISO_RELEASE_TAG: thinclient-iso-latest
-  PXE_RELEASE_TAG: thinclient-pxe-live-latest
   CHROOT_RELEASE_TAG: thinstation-chroot-latest
   THINSTATION_PXE_RELEASE_TAG: thinstation-pxe-latest
 
@@ -143,7 +142,7 @@ jobs:
             -e AURORA_ROOT=/workspace \
             fedora:42 \
             bash -euxo pipefail -c '
-              dnf install -y git sudo tar zstd xz rsync findutils which util-linux
+              dnf install -y git sudo tar zstd xz rsync findutils which util-linux procps-ng dbus-tools
 
               chmod +x files/scripts/thinstation/*.sh
 
@@ -157,7 +156,7 @@ jobs:
           name: ThinStation Chroot Cache
           prerelease: true
           files: |
-            ./release/thinstation-chroot/thinstation-chroot.tar.zst
+            ./release/thinstation-chroot/thinstation-chroot.tar.zst.part-*
             ./release/thinstation-chroot/thinstation-chroot.sha256
             ./release/thinstation-chroot/THINSTATION_REF
           overwrite_files: true
@@ -195,7 +194,7 @@ jobs:
           mkdir -p release/thinstation-chroot
 
           gh release download "${{ env.CHROOT_RELEASE_TAG }}" \
-            --pattern 'thinstation-chroot.tar.zst' \
+            --pattern 'thinstation-chroot.tar.zst.part-*' \
             --pattern 'thinstation-chroot.sha256' \
             --pattern 'THINSTATION_REF' \
             --dir release/thinstation-chroot \
@@ -204,6 +203,7 @@ jobs:
           (
             cd release/thinstation-chroot
             sha256sum -c thinstation-chroot.sha256
+            cat thinstation-chroot.tar.zst.part-* > thinstation-chroot.tar.zst
           )
 
           mkdir -p .build/thinstation
@@ -226,7 +226,7 @@ jobs:
             -e AURORA_ROOT=/workspace \
             fedora:42 \
             bash -euxo pipefail -c '
-              dnf install -y git sudo tar zstd xz rsync findutils which util-linux
+              dnf install -y git sudo tar zstd xz rsync findutils which util-linux procps-ng dbus-tools
 
               chmod +x files/scripts/thinstation/*.sh
 
@@ -352,142 +352,3 @@ jobs:
 
             Download, verify, and combine:
             base="https://github.com/${{ github.repository }}/releases/download/${{ env.ISO_RELEASE_TAG }}/aurora-thinclient-latest.iso"; rm -f aurora-thinclient-latest.iso aurora-thinclient-latest.iso.parts.sha256; [ -f aurora-thinclient-latest.iso.part-00 ] || wget "${base}.part-00"; [ -f aurora-thinclient-latest.iso.part-01 ] || wget "${base}.part-01"; wget "${base}.parts.sha256"; sha256sum -c aurora-thinclient-latest.iso.parts.sha256 && cat aurora-thinclient-latest.iso.part-* > aurora-thinclient-latest.iso && ls -lh aurora-thinclient-latest.iso && file aurora-thinclient-latest.iso
-            
-  thinclient-pxe-live:
-    name: Build Thinclient Diskless PXE
-    runs-on: ubuntu-24.04
-    needs: [image-changes, build-thinclient]
-    if: always() && github.ref == 'refs/heads/main' && (github.event.schedule == '50 7 * * 0' || needs.image-changes.outputs.thinclient == 'true') && (github.event.schedule == '50 7 * * 0' || needs.build-thinclient.result == 'success')
-    permissions:
-      contents: write
-      packages: read
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-
-      - name: Install tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y podman golang-go rsync jq
-          sudo apt-get clean
-
-      - name: Log in to GHCR
-        run: |
-          echo "${{ github.token }}" | sudo podman login ghcr.io -u "${{ github.actor }}" --password-stdin
-
-      - name: Build image-builder with bootc-generic-iso support
-        run: |
-          set -euxo pipefail
-
-          git clone https://github.com/osbuild/image-builder-cli.git
-          cd image-builder-cli
-
-          git checkout 3fbf0900cf16e324f01987dc439bd156afadde73
-
-          export GOPROXY="https://proxy.golang.org,direct"
-          export GOSUMDB="sum.golang.org"
-          export GOPATH="${RUNNER_TEMP}/go"
-          export GOMODCACHE="${RUNNER_TEMP}/go/pkg/mod"
-          export GOCACHE="${RUNNER_TEMP}/go-build"
-
-          go mod edit -replace github.com/osbuild/images=github.com/ondrejbudai/images@bootc-generic-iso-dev
-
-          go clean -modcache || true
-          go mod tidy || {
-            rm -rf "${GOMODCACHE}/cache/vcs"
-            go mod tidy
-          }
-
-          sudo podman build -t image-builder-dev .
-
-      - name: Build live container
-        run: |
-          sudo podman build \
-            --cap-add SYS_ADMIN \
-            --security-opt label=disable \
-            --build-arg BASE_IMAGE="${{ env.THINCLIENT_IMAGE }}" \
-            -t aurora-thinclient-live \
-            files/scripts/thinclient/pxe-live
-
-      - name: Build live ISO
-        run: |
-          set -euxo pipefail
-          mkdir -p output
-
-          sudo podman run --rm --privileged \
-            -v /var/lib/containers/storage:/var/lib/containers/storage \
-            -v "$PWD/output:/output:Z" \
-            image-builder-dev \
-            build \
-            --output-dir /output \
-            --bootc-ref localhost/aurora-thinclient-live \
-            --bootc-default-fs ext4 \
-            bootc-generic-iso
-
-          sudo chown -R "$(id -u):$(id -g)" output
-          find output -maxdepth 3 -type f -ls
-
-      - name: Extract PXE files
-        run: |
-          set -euxo pipefail
-
-          ISO="$(find output -name '*.iso' | head -n1)"
-          test -n "$ISO"
-
-          mkdir -p release/pxe mnt
-
-          sudo mount -o loop,ro "$ISO" mnt
-
-          sudo cp mnt/images/pxeboot/vmlinuz release/pxe/vmlinuz
-          sudo cp mnt/images/pxeboot/initrd.img release/pxe/initrd.img
-          sudo cp mnt/LiveOS/squashfs.img release/pxe/squashfs.img
-
-          sudo umount mnt
-          sudo chown -R "$(id -u):$(id -g)" release
-
-          cat > release/pxe/aurora-thinclient-live.ipxe <<'EOF'
-          #!ipxe
-          set base http://192.168.1.5/aurora-thinclient-live
-          kernel ${base}/vmlinuz initrd=initrd.img root=live:${base}/squashfs.img rd.live.image rd.neednet=1 ip=dhcp plymouth.enable=0 rd.systemd.show_status=1 systemd.show_status=1
-          initrd ${base}/initrd.img
-          boot
-          EOF
-
-          (
-            cd release/pxe
-            sha256sum vmlinuz initrd.img squashfs.img aurora-thinclient-live.ipxe
-          ) > release/aurora-thinclient-pxe.sha256
-
-          ls -lh release/pxe release/
-
-      - name: Publish PXE Release
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ env.PXE_RELEASE_TAG }}
-          name: Aurora Thinclient Diskless PXE Live
-          prerelease: true
-          files: |
-            ./release/pxe/vmlinuz
-            ./release/pxe/initrd.img
-            ./release/pxe/squashfs.img
-            ./release/pxe/aurora-thinclient-live.ipxe
-            ./release/aurora-thinclient-pxe.sha256
-          overwrite_files: true
-          fail_on_unmatched_files: true
-          body: |
-            Diskless PXE live image for Aurora Thinclient.
-
-            Serve these files from an HTTP server:
-              vmlinuz
-              initrd.img
-              squashfs.img
-              aurora-thinclient-live.ipxe
-
-            Edit aurora-thinclient-live.ipxe and replace:
-              http://192.168.1.5/aurora-thinclient-live
-
-            with your PXE HTTP server URL.
