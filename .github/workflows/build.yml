@@ -144,6 +144,11 @@ jobs:
             bash -euxo pipefail -c '
               dnf install -y git sudo tar zstd xz rsync findutils which util-linux procps-ng dbus-tools
 
+              mkdir -p /var/lib/dbus
+              rm -f /etc/machine-id /var/lib/dbus/machine-id
+              dbus-uuidgen --ensure=/etc/machine-id
+              dbus-uuidgen --ensure=/var/lib/dbus/machine-id
+
               chmod +x files/scripts/thinstation/*.sh
 
               files/scripts/thinstation/build-chroot-cache.sh
@@ -227,6 +232,11 @@ jobs:
             fedora:42 \
             bash -euxo pipefail -c '
               dnf install -y git sudo tar zstd xz rsync findutils which util-linux procps-ng dbus-tools
+
+              mkdir -p /var/lib/dbus
+              rm -f /etc/machine-id /var/lib/dbus/machine-id
+              dbus-uuidgen --ensure=/etc/machine-id
+              dbus-uuidgen --ensure=/var/lib/dbus/machine-id
 
               chmod +x files/scripts/thinstation/*.sh
 
