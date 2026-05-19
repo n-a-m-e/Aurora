@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(git rev-parse --show-toplevel)"
+ROOT="${AURORA_ROOT:-${GITHUB_WORKSPACE:-$(pwd)}}"
+ROOT="$(cd "$ROOT" && pwd)"
+
 TS_DIR="$ROOT/files/scripts/thinstation"
 
 REPO="https://github.com/Thinstation/thinstation-ng.git"
