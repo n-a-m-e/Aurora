@@ -4,7 +4,9 @@ set -euo pipefail
 TS_SRC="${1:?Usage: collect-artifacts.sh <thinstation-src> <release-dir>}"
 RELEASE_DIR="${2:?Usage: collect-artifacts.sh <thinstation-src> <release-dir>}"
 
-ROOT="$(git rev-parse --show-toplevel)"
+ROOT="${AURORA_ROOT:-${GITHUB_WORKSPACE:-$(pwd)}}"
+ROOT="$(cd "$ROOT" && pwd)"
+
 TS_INTEGRATION="$ROOT/files/scripts/thinstation"
 
 PXE_DIR="$RELEASE_DIR/pxe"
