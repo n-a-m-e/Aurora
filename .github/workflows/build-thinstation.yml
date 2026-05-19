@@ -1,0 +1,87 @@
+name: thinstation-pxe
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "files/scripts/thinstation/**"
+      - ".github/workflows/build-thinstation.yml"
+  schedule:
+    - cron: "50 7 * * 0"
+
+concurrency:
+  group: thinstation-pxe-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  PXE_RELEASE_TAG: thinstation-pxe-latest
+
+jobs:
+  build-thinstation:
+    name: Build ThinStation PXE
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+
+      - name: Install host tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git rsync podman
+          sudo apt-get clean
+
+      - name: Build ThinStation in Fedora container
+        run: |
+          set -euxo pipefail
+
+          sudo podman run --rm --privileged \
+            -v "$PWD:/workspace:Z" \
+            -w /workspace \
+            fedora:latest \
+            bash -euxo pipefail -c '
+              dnf install -y git rsync dnf chroot sudo findutils which util-linux
+
+              chmod +x files/scripts/thinstation/*.sh
+
+              files/scripts/thinstation/build-thinstation.sh
+            '
+
+      - name: List release files
+        run: |
+          find release/thinstation -type f -ls
+
+      - name: Publish ThinStation PXE Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ env.PXE_RELEASE_TAG }}
+          name: Aurora ThinStation PXE
+          prerelease: true
+          files: |
+            ./release/thinstation/pxe/vmlinuz
+            ./release/thinstation/pxe/initrd
+            ./release/thinstation/pxe/thinstation.conf.network
+            ./release/thinstation/pxe/aurora-thinstation.ipxe
+            ./release/thinstation/aurora-thinstation-pxe.sha256
+          overwrite_files: true
+          fail_on_unmatched_files: true
+          body: |
+            ThinStation-based PXE image for Aurora thin clients.
+
+            Serve these files from your PXE HTTP server:
+              vmlinuz
+              initrd
+              thinstation.conf.network
+              aurora-thinstation.ipxe
+
+            Edit aurora-thinstation.ipxe and replace:
+              http://192.168.1.5/aurora-thinstation
+
+            with your PXE HTTP server URL.
