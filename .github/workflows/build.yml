@@ -21,6 +21,7 @@ env:
   ISO_RELEASE_TAG: thinclient-iso-latest
   PXE_RELEASE_TAG: thinclient-pxe-live-latest
   CHROOT_RELEASE_TAG: thinstation-chroot-latest
+  THINSTATION_PXE_RELEASE_TAG: thinstation-pxe-latest
 
 jobs:
   image-changes:
@@ -165,6 +166,100 @@ jobs:
             Prepared ThinStation source + chroot cache.
 
             Normal ThinStation PXE builds can download this asset and avoid running setup-chroot from scratch.
+
+  thinstation-pxe:
+    name: Build ThinStation PXE
+    runs-on: ubuntu-24.04
+    needs: [image-changes, thinstation-chroot]
+    if: always() && github.ref == 'refs/heads/main' && (github.event.schedule == '50 7 * * 0' || needs.image-changes.outputs.thinstation == 'true') && needs.thinstation-chroot.result == 'success'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+
+      - name: Download prepared ThinStation chroot
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+
+          sudo apt-get update
+          sudo apt-get install -y zstd
+          sudo apt-get clean
+
+          mkdir -p release/thinstation-chroot
+
+          gh release download "${{ env.CHROOT_RELEASE_TAG }}" \
+            --pattern 'thinstation-chroot.tar.zst' \
+            --pattern 'thinstation-chroot.sha256' \
+            --pattern 'THINSTATION_REF' \
+            --dir release/thinstation-chroot \
+            --clobber
+
+          (
+            cd release/thinstation-chroot
+            sha256sum -c thinstation-chroot.sha256
+          )
+
+          mkdir -p .build/thinstation
+
+          sudo tar -I 'zstd -T0' \
+            -xpf release/thinstation-chroot/thinstation-chroot.tar.zst \
+            -C .build/thinstation
+
+      - name: Build ThinStation PXE
+        run: |
+          set -euxo pipefail
+
+          sudo apt-get update
+          sudo apt-get install -y podman
+          sudo apt-get clean
+
+          sudo podman run --rm --privileged \
+            -v "$PWD:/workspace:Z" \
+            -w /workspace \
+            -e AURORA_ROOT=/workspace \
+            fedora:42 \
+            bash -euxo pipefail -c '
+              dnf install -y git sudo tar zstd xz rsync findutils which util-linux
+
+              chmod +x files/scripts/thinstation/*.sh
+
+              files/scripts/thinstation/build-thinstation.sh
+            '
+
+      - name: Publish ThinStation PXE Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ env.THINSTATION_PXE_RELEASE_TAG }}
+          name: Aurora ThinStation PXE
+          prerelease: true
+          files: |
+            ./release/thinstation/pxe/vmlinuz
+            ./release/thinstation/pxe/initrd
+            ./release/thinstation/pxe/thinstation.conf.network
+            ./release/thinstation/pxe/aurora-thinstation.ipxe
+            ./release/thinstation/aurora-thinstation-pxe.sha256
+          overwrite_files: true
+          fail_on_unmatched_files: true
+          body: |
+            ThinStation-based PXE image for Aurora thin clients.
+
+            Serve these files from an HTTP server:
+              vmlinuz
+              initrd
+              thinstation.conf.network
+              aurora-thinstation.ipxe
+
+            Edit aurora-thinstation.ipxe and replace:
+              http://192.168.1.5/aurora-thinstation
+
+            with your PXE HTTP server URL.
 
   thinclient-iso:
     name: Build Thinclient ISO
