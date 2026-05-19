@@ -20,6 +20,7 @@ env:
   THINCLIENT_IMAGE: ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest
   ISO_RELEASE_TAG: thinclient-iso-latest
   PXE_RELEASE_TAG: thinclient-pxe-live-latest
+  CHROOT_RELEASE_TAG: thinstation-chroot-latest
 
 jobs:
   image-changes:
@@ -29,6 +30,7 @@ jobs:
       server: ${{ steps.changes.outputs.server }}
       client: ${{ steps.changes.outputs.client }}
       thinclient: ${{ steps.changes.outputs.thinclient }}
+      thinstation: ${{ steps.changes.outputs.thinstation }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -51,6 +53,9 @@ jobs:
             thinclient:
               - 'files/scripts/thinclient/**'
               - 'recipes/recipe-thinclient.yml'
+              - '.github/workflows/build.yml'
+            thinstation:
+              - 'files/scripts/thinstation/**'
               - '.github/workflows/build.yml'
 
   build-server:
@@ -106,6 +111,60 @@ jobs:
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
           maximize_build_space: true
+
+
+  thinstation-chroot:
+    name: Build ThinStation Chroot Cache
+    runs-on: ubuntu-24.04
+    needs: image-changes
+    if: always() && github.ref == 'refs/heads/main' && (github.event.schedule == '50 7 * * 0' || needs.image-changes.outputs.thinstation == 'true')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+
+      - name: Build ThinStation chroot cache
+        run: |
+          set -euxo pipefail
+
+          sudo apt-get update
+          sudo apt-get install -y podman
+          sudo apt-get clean
+
+          sudo podman run --rm --privileged \
+            -v "$PWD:/workspace:Z" \
+            -w /workspace \
+            -e AURORA_ROOT=/workspace \
+            fedora:42 \
+            bash -euxo pipefail -c '
+              dnf install -y git sudo tar zstd xz rsync findutils which util-linux
+
+              chmod +x files/scripts/thinstation/*.sh
+
+              files/scripts/thinstation/build-chroot-cache.sh
+            '
+
+      - name: Publish ThinStation Chroot Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ env.CHROOT_RELEASE_TAG }}
+          name: ThinStation Chroot Cache
+          prerelease: true
+          files: |
+            ./release/thinstation-chroot/thinstation-chroot.tar.zst
+            ./release/thinstation-chroot/thinstation-chroot.sha256
+            ./release/thinstation-chroot/THINSTATION_REF
+          overwrite_files: true
+          fail_on_unmatched_files: true
+          body: |
+            Prepared ThinStation source + chroot cache.
+
+            Normal ThinStation PXE builds can download this asset and avoid running setup-chroot from scratch.
 
   thinclient-iso:
     name: Build Thinclient ISO
