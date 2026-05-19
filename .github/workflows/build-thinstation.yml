@@ -49,6 +49,8 @@ jobs:
             bash -euxo pipefail -c '
               dnf install -y git rsync dnf chroot sudo findutils which util-linux
 
+              git config --global --add safe.directory /workspace
+
               chmod +x files/scripts/thinstation/*.sh
 
               files/scripts/thinstation/build-thinstation.sh
