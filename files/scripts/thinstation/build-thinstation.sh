@@ -26,6 +26,7 @@ REQUIRED_RPMS=(
   which
   util-linux-core
   gawk
+  tar
 )
 
 REQUIRED_PACKAGES=(
