@@ -49,6 +49,10 @@ PROTECTED_PACKAGES=(
   pip
   dbus-devel
   libcurl-devel
+  kernel-core
+  kernel-modules
+  kernel-modules-core
+  kernel-modules-extra
 )
 
 is_protected_package() {
