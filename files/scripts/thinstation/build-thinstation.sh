@@ -69,6 +69,27 @@ protect_tree() {
   done < "$dep_file"
 }
 
+append_protected_packages_to_system_rpms() {
+  local system_file="$TS_SRC/ts/rpms/system"
+  local pkg
+
+  echo
+  echo "Appending protected packages to ts/rpms/system..."
+
+  touch "$system_file"
+
+  for pkg in "${PROTECTED_PACKAGES[@]}"; do
+    [ -z "$pkg" ] && continue
+
+    if grep -qxF "$pkg" "$system_file"; then
+      echo "  already in system: $pkg"
+    else
+      echo "$pkg" >> "$system_file"
+      echo "  added to system: $pkg"
+    fi
+  done
+}
+
 echo "Root:             $ROOT"
 echo "Workdir:          $WORKDIR"
 echo "ThinStation ref:  $TS_REF"
@@ -110,6 +131,8 @@ done < <(
 echo
 echo "Final protected package list:"
 printf '  %s\n' "${PROTECTED_PACKAGES[@]}" | sort -u
+
+append_protected_packages_to_system_rpms
 
 echo
 echo "Pruning RPM lists: ${PRUNE_RPM_FILES[*]}"
