@@ -13,17 +13,12 @@ TS_SRC="$WORKDIR/thinstation-ng"
 RELEASE_DIR="$ROOT/release/thinstation"
 PXE_DIR="$RELEASE_DIR/pxe"
 
-RPM_FILES=(core grub kernel firmware system ts other)
+RPM_FILES=(firmware system other)
 
 # Always keep packages that provide ThinStation build-system requirements
 # or core runtime/build functionality.
 PROTECTED_PACKAGES=(
-  base
-  basesystem
-  filesystem
   coreutils
-  busybox
-  busybox-shared
   file
   tar
   xorriso
@@ -37,22 +32,6 @@ PROTECTED_PACKAGES=(
   which
   util-linux
   util-linux-core
-  dbus
-  dnf
-  dnf-plugins-core
-  rpmdevtools
-  fedpkg
-  gcc
-  cmake
-  glib2-devel
-  python-devel
-  pip
-  dbus-devel
-  libcurl-devel
-  kernel-core
-  kernel-modules
-  kernel-modules-core
-  kernel-modules-extra
 )
 
 is_protected_package() {
