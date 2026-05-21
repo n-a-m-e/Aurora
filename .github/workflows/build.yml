@@ -19,7 +19,6 @@ concurrency:
 env:
   THINCLIENT_IMAGE: ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest
   ISO_RELEASE_TAG: thinclient-iso-latest
-  CHROOT_RELEASE_TAG: thinstation-chroot-latest
   THINSTATION_PXE_RELEASE_TAG: thinstation-pxe-latest
 
 jobs:
@@ -113,69 +112,11 @@ jobs:
           maximize_build_space: true
 
 
-  thinstation-chroot:
-    name: Build ThinStation Chroot Cache
-    runs-on: ubuntu-24.04
-    needs: image-changes
-    if: always() && github.ref == 'refs/heads/main' && (github.event.schedule == '50 7 * * 0' || needs.image-changes.outputs.thinstation == 'true')
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-
-      - name: Build ThinStation chroot cache
-        run: |
-          set -euxo pipefail
-
-          sudo apt-get update
-          sudo apt-get install -y podman
-          sudo apt-get clean
-
-          sudo podman run --rm --privileged \
-            -v "$PWD:/workspace:Z" \
-            -w /workspace \
-            -e AURORA_ROOT=/workspace \
-            fedora:42 \
-            bash -euxo pipefail -c '
-              dnf install -y git sudo tar zstd xz rsync findutils which util-linux procps-ng dbus-tools
-
-              mkdir -p /var/lib/dbus
-              rm -f /etc/machine-id /var/lib/dbus/machine-id
-              dbus-uuidgen --ensure=/etc/machine-id
-              dbus-uuidgen --ensure=/var/lib/dbus/machine-id
-
-              chmod +x files/scripts/thinstation/*.sh
-
-              files/scripts/thinstation/build-chroot-cache.sh
-            '
-
-      - name: Publish ThinStation Chroot Release
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ env.CHROOT_RELEASE_TAG }}
-          name: ThinStation Chroot Cache
-          prerelease: true
-          files: |
-            ./release/thinstation-chroot/thinstation-chroot.tar.zst.part-*
-            ./release/thinstation-chroot/thinstation-chroot.sha256
-            ./release/thinstation-chroot/THINSTATION_REF
-          overwrite_files: true
-          fail_on_unmatched_files: true
-          body: |
-            Prepared ThinStation source + chroot cache.
-
-            Normal ThinStation PXE builds can download this asset and avoid running setup-chroot from scratch.
-
   thinstation-pxe:
     name: Build ThinStation PXE
     runs-on: ubuntu-24.04
-    needs: [image-changes, thinstation-chroot]
-    if: always() && github.ref == 'refs/heads/main' && (github.event.schedule == '50 7 * * 0' || needs.image-changes.outputs.thinstation == 'true') && needs.thinstation-chroot.result == 'success'
+    needs: image-changes
+    if: github.ref == 'refs/heads/main' && (github.event.schedule == '50 7 * * 0' || needs.image-changes.outputs.thinstation == 'true')
     permissions:
       contents: write
     steps:
@@ -185,37 +126,6 @@ jobs:
         uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: true
-
-      - name: Download prepared ThinStation chroot
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euxo pipefail
-
-          sudo apt-get update
-          sudo apt-get install -y zstd
-          sudo apt-get clean
-
-          mkdir -p release/thinstation-chroot
-
-          gh release download "${{ env.CHROOT_RELEASE_TAG }}" \
-            --pattern 'thinstation-chroot.tar.zst.part-*' \
-            --pattern 'thinstation-chroot.sha256' \
-            --pattern 'THINSTATION_REF' \
-            --dir release/thinstation-chroot \
-            --clobber
-
-          (
-            cd release/thinstation-chroot
-            sha256sum -c thinstation-chroot.sha256
-            cat thinstation-chroot.tar.zst.part-* > thinstation-chroot.tar.zst
-          )
-
-          mkdir -p .build/thinstation
-
-          sudo tar -I 'zstd -T0' \
-            -xpf release/thinstation-chroot/thinstation-chroot.tar.zst \
-            -C .build/thinstation
 
       - name: Build ThinStation PXE
         run: |
