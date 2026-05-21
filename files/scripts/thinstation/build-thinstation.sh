@@ -13,32 +13,44 @@ TS_REF="$(cat "$TS_INTEGRATION/THINSTATION_REF")"
 RELEASE_DIR="$ROOT/release/thinstation"
 PXE_DIR="$RELEASE_DIR/pxe"
 
-PROTECT_RPM_FILES=(core grub kernel ts)
 PRUNE_RPM_FILES=(firmware system other)
 
-PROTECTED_PACKAGES=(
-  coreutils
-  file
-  tar
+REQUIRED_RPMS=(
   xorriso
   squashfs-tools
-  glib2
   glib2-devel
   librsvg2-tools
   ImageMagick
   tigervnc-server-minimal
   samba-common-tools
   which
-  util-linux
   util-linux-core
   gawk
 )
+
+REQUIRED_PACKAGES=(
+  coreutils
+  file
+  tar
+  glib2
+  util-linux
+)
+
+PROTECTED_PACKAGES=()
 
 clean() {
   sed -E 's/#.*$//; s/^[[:space:]]+//; s/[[:space:]]+$//'
 }
 
-is_protected() {
+is_required_rpm() {
+  local rpm="$1" item
+  for item in "${REQUIRED_RPMS[@]}"; do
+    [ "$rpm" = "$item" ] && return 0
+  done
+  return 1
+}
+
+is_protected_package() {
   local pkg="$1" item
   for item in "${PROTECTED_PACKAGES[@]}"; do
     [ "$pkg" = "$item" ] && return 0
@@ -46,46 +58,48 @@ is_protected() {
   return 1
 }
 
-protect() {
+protect_package() {
   local pkg="$1"
   [ -z "$pkg" ] && return 0
-  is_protected "$pkg" || PROTECTED_PACKAGES+=("$pkg")
+
+  if ! is_protected_package "$pkg"; then
+    PROTECTED_PACKAGES+=("$pkg")
+    echo "  protected package: $pkg"
+  fi
 }
 
-protect_tree() {
+protect_package_tree() {
   local pkg="$1" dep dep_file
   [ -z "$pkg" ] && return 0
-  is_protected "$pkg" && return 0
+  is_protected_package "$pkg" && return 0
 
-  PROTECTED_PACKAGES+=("$pkg")
-  echo "  protected: $pkg"
+  protect_package "$pkg"
 
   dep_file="$TS_SRC/ts/build/packages/$pkg/dependencies"
   [ -f "$dep_file" ] || return 0
 
   while read -r dep || [ -n "$dep" ]; do
     dep="$(printf '%s\n' "$dep" | clean)"
-    protect_tree "$dep"
+    [ -z "$dep" ] && continue
+    protect_package_tree "$dep"
   done < "$dep_file"
 }
 
-append_protected_packages_to_system_rpms() {
+append_required_rpms_to_system() {
   local system_file="$TS_SRC/ts/rpms/system"
-  local pkg
+  local rpm
 
   echo
-  echo "Appending protected packages to ts/rpms/system..."
+  echo "Appending REQUIRED_RPMS to ts/rpms/system..."
 
   touch "$system_file"
 
-  for pkg in "${PROTECTED_PACKAGES[@]}"; do
-    [ -z "$pkg" ] && continue
-
-    if grep -qxF "$pkg" "$system_file"; then
-      echo "  already in system: $pkg"
+  for rpm in "${REQUIRED_RPMS[@]}"; do
+    if grep -qxF "$rpm" "$system_file"; then
+      echo "  already in system: $rpm"
     else
-      echo "$pkg" >> "$system_file"
-      echo "  added to system: $pkg"
+      echo "$rpm" >> "$system_file"
+      echo "  added to system: $rpm"
     fi
   done
 }
@@ -107,35 +121,28 @@ git fetch --all --tags --prune
 git checkout "$TS_REF"
 git reset --hard "$TS_REF"
 
-echo "Protecting packages from RPM lists: ${PROTECT_RPM_FILES[*]}"
-for name in "${PROTECT_RPM_FILES[@]}"; do
-  file="$TS_SRC/ts/rpms/$name"
-  [ -f "$file" ] || continue
-
-  while read -r pkg || [ -n "$pkg" ]; do
-    pkg="$(printf '%s\n' "$pkg" | clean)"
-    [ -z "$pkg" ] && continue
-    protect "$pkg"
-  done < "$file"
+echo "Protecting REQUIRED_PACKAGES..."
+for pkg in "${REQUIRED_PACKAGES[@]}"; do
+  protect_package "$pkg"
 done
 
 echo "Protecting packages from build.conf and dependencies..."
 while read -r pkg || [ -n "$pkg" ]; do
   [ -z "$pkg" ] && continue
-  protect_tree "$pkg"
+  protect_package_tree "$pkg"
 done < <(
   sed 's/#.*$//' "$TS_INTEGRATION/config/build.conf" \
     | awk '$1 == "package" || $1 == "pkg" { print $2 }'
 )
 
 echo
-echo "Final protected package list:"
+echo "Final protected ThinStation package list:"
 printf '  %s\n' "${PROTECTED_PACKAGES[@]}" | sort -u
 
-append_protected_packages_to_system_rpms
+append_required_rpms_to_system
 
 echo
-echo "Pruning RPM lists: ${PRUNE_RPM_FILES[*]}"
+echo "Pruning RPM lists to REQUIRED_RPMS only: ${PRUNE_RPM_FILES[*]}"
 for name in "${PRUNE_RPM_FILES[@]}"; do
   file="$TS_SRC/ts/rpms/$name"
   [ -f "$file" ] || continue
@@ -149,7 +156,7 @@ for name in "${PRUNE_RPM_FILES[@]}"; do
 
     if [ -z "$line" ]; then
       echo "$line" >> "$tmp"
-    elif is_protected "$line"; then
+    elif is_required_rpm "$line"; then
       echo "$line" >> "$tmp"
       kept=$((kept + 1))
     else
@@ -171,7 +178,7 @@ removed=0
 while read -r dir; do
   pkg="$(basename "$dir")"
 
-  if is_protected "$pkg"; then
+  if is_protected_package "$pkg"; then
     kept=$((kept + 1))
   else
     rm -rf "$dir"
