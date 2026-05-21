@@ -38,6 +38,17 @@ PROTECTED_PACKAGES=(
   util-linux
   util-linux-core
   dbus
+  dnf
+  dnf-plugins-core
+  rpmdevtools
+  fedpkg
+  gcc
+  cmake
+  glib2-devel
+  python-devel
+  pip
+  dbus-devel
+  libcurl-devel
 )
 
 is_protected_package() {
