@@ -58,7 +58,7 @@ if [ -f "$REMOVE_LIST" ]; then
 
       if grep -qxF "$pkg" < <(sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' "$file"); then
         sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' "$file" \
-          | grep -vxF "$pkg" > "$file.tmp"
+          | grep -vxF "$pkg" > "$file.tmp" || true
 
         mv "$file.tmp" "$file"
 
