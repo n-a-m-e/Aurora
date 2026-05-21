@@ -52,6 +52,53 @@ is_protected_package() {
   return 1
 }
 
+protect_package_tree() {
+  local pkg="$1"
+  local dep_file
+  local dep
+  local protected
+
+  [ -z "$pkg" ] && return 0
+
+  for protected in "${PROTECTED_PACKAGES[@]}"; do
+    if [ "$pkg" = "$protected" ]; then
+      return 0
+    fi
+  done
+
+  PROTECTED_PACKAGES+=("$pkg")
+  echo "  protected: $pkg"
+
+  dep_file="$TS_SRC/ts/build/packages/$pkg/dependencies"
+
+  if [ -f "$dep_file" ]; then
+    while read -r dep; do
+      dep="$(echo "$dep" | sed -E 's/#.*$//; s/^[[:space:]]+//; s/[[:space:]]+$//')"
+      [ -z "$dep" ] && continue
+      protect_package_tree "$dep"
+    done < "$dep_file"
+  fi
+}
+
+extend_protected_packages_from_build_conf() {
+  local build_conf="$1"
+  local selected_pkg
+
+  if [ ! -f "$build_conf" ]; then
+    echo "Build config not found for protected-package scan: $build_conf"
+    return 0
+  fi
+
+  echo "Protecting packages selected in build.conf and dependency tree:"
+
+  while read -r selected_pkg; do
+    [ -z "$selected_pkg" ] && continue
+    protect_package_tree "$selected_pkg"
+  done < <(
+    sed 's/#.*$//' "$build_conf" \
+      | awk '$1 == "package" || $1 == "pkg" { print $2 }'
+  )
+}
 
 echo "Root:             $ROOT"
 echo "Workdir:          $WORKDIR"
@@ -73,6 +120,7 @@ git reset --hard "$TS_REF"
 
 echo "Pruning ThinStation package inputs..."
 
+extend_protected_packages_from_build_conf "$TS_INTEGRATION/config/build.conf"
 if [ -f "$REMOVE_LIST" ]; then
   echo "Using remove list: $REMOVE_LIST"
   echo
@@ -146,7 +194,7 @@ echo "Preparing ThinStation chroot..."
 sudo ./setup-chroot -i
 
 echo "Building ThinStation PXE artifacts..."
-sudo ./setup-chroot -b -o --license ACCEPT
+sudo ./setup-chroot -a -b -o --license ACCEPT
 
 echo "Collecting PXE artifacts..."
 
