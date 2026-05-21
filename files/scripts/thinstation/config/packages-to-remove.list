@@ -37,7 +37,7 @@
 #kernel-modules-core
 #kernel-modules-extra
 python3-pyside6
-ImageMagick
+#ImageMagick
 #cmake
 cups-devel
 #dbus-devel
@@ -48,7 +48,7 @@ dropbear
 #fedpkg
 #gcc
 #glib2-devel
-#glibc-locale-source
+glibc-locale-source
 #glx-utils
 heimdal-libs
 inotify-tools
@@ -57,7 +57,7 @@ iw
 #libcurl-devel
 libcxx
 libcxxabi
-librsvg2-tools
+#librsvg2-tools
 llvm-libunwind
 #mesa-demos
 most
@@ -74,7 +74,7 @@ qemu
 rng-tools
 #rpmdevtools
 rubygem-ronn-ng
-samba-common-tools
+#samba-common-tools
 setserial
 #setxkbmap
 socat
@@ -173,7 +173,7 @@ galculator
 geany
 ghostscript
 #git
-#glib
+glib
 #glib2
 #glx-utils
 gnome-core
