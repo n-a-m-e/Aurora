@@ -36,6 +36,7 @@ PROTECTED_PACKAGES=(
   which
   util-linux
   util-linux-core
+  dbus
 )
 
 is_protected_package() {
