@@ -28,6 +28,8 @@ REQUIRED_RPMS=(
   gawk
   tar
   iso-codes
+  wget
+  binutils
 )
 
 REQUIRED_PACKAGES=(
