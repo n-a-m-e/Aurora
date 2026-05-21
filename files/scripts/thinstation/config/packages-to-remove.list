@@ -214,7 +214,7 @@ json-glib
 libavc1394
 libavdevice-free
 libblockdev
-libbpf
+#libbpf
 libcaca
 libcurl
 libdc1394
@@ -306,7 +306,7 @@ selinux
 sg3_utils
 speech-dispatcher
 speexdsp
-spice-vdagent
+#spice-vdagent
 spice
 sqlite
 #ssh
