@@ -122,11 +122,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-
       - name: Build ThinStation PXE
         run: |
           set -euxo pipefail
