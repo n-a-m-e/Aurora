@@ -16,6 +16,42 @@ REMOVE_LIST="$TS_INTEGRATION/config/packages-to-remove.list"
 
 RPM_FILES=(core grub kernel firmware system ts other)
 
+PROTECTED_PACKAGES=(
+  base
+  basesystem
+  filesystem
+  coreutils
+  busybox
+  busybox-shared
+  file
+  tar
+  xorriso
+  squashfs-tools
+  glib2
+  glib2-devel
+  librsvg2-tools
+  ImageMagick
+  tigervnc-server-minimal
+  samba-common-tools
+  which
+  util-linux
+  util-linux-core
+)
+
+is_protected_package() {
+  local pkg="$1"
+  local protected
+
+  for protected in "${PROTECTED_PACKAGES[@]}"; do
+    if [ "$pkg" = "$protected" ]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+
 echo "Root:             $ROOT"
 echo "Workdir:          $WORKDIR"
 echo "ThinStation ref:  $TS_REF"
@@ -49,6 +85,12 @@ if [ -f "$REMOVE_LIST" ]; then
 
     found=false
     echo "Package: $pkg"
+
+    if is_protected_package "$pkg"; then
+      echo "  protected build requirement; not pruning"
+      echo
+      continue
+    fi
 
     # Remove from ts/rpms/* files.
     # Fixed-string matching keeps names with dots, hyphens, underscores, and plus signs literal.
