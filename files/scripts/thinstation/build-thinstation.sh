@@ -12,10 +12,11 @@ TS_REF="$(cat "$TS_INTEGRATION/THINSTATION_REF")"
 TS_SRC="$WORKDIR/thinstation-ng"
 RELEASE_DIR="$ROOT/release/thinstation"
 PXE_DIR="$RELEASE_DIR/pxe"
-REMOVE_LIST="$TS_INTEGRATION/config/packages-to-remove.list"
 
 RPM_FILES=(core grub kernel firmware system ts other)
 
+# Always keep packages that provide ThinStation build-system requirements
+# or core runtime/build functionality.
 PROTECTED_PACKAGES=(
   base
   basesystem
@@ -56,15 +57,12 @@ protect_package_tree() {
   local pkg="$1"
   local dep_file
   local dep
-  local protected
 
   [ -z "$pkg" ] && return 0
 
-  for protected in "${PROTECTED_PACKAGES[@]}"; do
-    if [ "$pkg" = "$protected" ]; then
-      return 0
-    fi
-  done
+  if is_protected_package "$pkg"; then
+    return 0
+  fi
 
   PROTECTED_PACKAGES+=("$pkg")
   echo "  protected: $pkg"
@@ -100,6 +98,123 @@ extend_protected_packages_from_build_conf() {
   )
 }
 
+trim_file_in_place() {
+  local file="$1"
+  local tmp
+
+  tmp="$(mktemp)"
+  sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' "$file" > "$tmp"
+  mv "$tmp" "$file"
+}
+
+prune_unprotected_rpm_lists() {
+  local name
+  local file
+  local tmp
+  local line
+  local kept
+  local removed
+
+  echo
+  echo "Pruning RPM lists to protected packages only..."
+
+  for name in "${RPM_FILES[@]}"; do
+    file="$TS_SRC/ts/rpms/$name"
+    [ -f "$file" ] || continue
+
+    trim_file_in_place "$file"
+
+    tmp="$(mktemp)"
+    kept=0
+    removed=0
+
+    while IFS= read -r line || [ -n "$line" ]; do
+      # Keep comments and blanks.
+      if [ -z "$line" ] || [[ "$line" =~ ^# ]]; then
+        echo "$line" >> "$tmp"
+        continue
+      fi
+
+      if is_protected_package "$line"; then
+        echo "$line" >> "$tmp"
+        kept=$((kept + 1))
+      else
+        echo "  removed from $name: $line"
+        removed=$((removed + 1))
+      fi
+    done < "$file"
+
+    mv "$tmp" "$file"
+    echo "  $name: kept $kept, removed $removed"
+  done
+}
+
+prune_unprotected_package_dirs() {
+  local package_root
+  local dir
+  local pkg
+  local kept=0
+  local removed=0
+
+  package_root="$TS_SRC/ts/build/packages"
+
+  echo
+  echo "Pruning ThinStation package directories to protected packages only..."
+
+  if [ ! -d "$package_root" ]; then
+    echo "Package directory not found: $package_root"
+    exit 1
+  fi
+
+  while IFS= read -r dir; do
+    pkg="$(basename "$dir")"
+
+    if is_protected_package "$pkg"; then
+      kept=$((kept + 1))
+    else
+      rm -rf "$dir"
+      echo "  removed from packages: $pkg"
+      removed=$((removed + 1))
+    fi
+  done < <(find "$package_root" -mindepth 1 -maxdepth 1 -type d | sort)
+
+  echo "  packages: kept $kept, removed $removed"
+}
+
+print_protected_packages() {
+  echo
+  echo "Final protected package list:"
+  printf '  %s\n' "${PROTECTED_PACKAGES[@]}" | sort -u
+}
+
+validate_selected_packages_exist() {
+  local build_conf="$1"
+  local selected_pkg
+  local missing_packages=()
+
+  echo
+  echo "Validating selected build.conf packages after pruning..."
+
+  while read -r selected_pkg; do
+    [ -z "$selected_pkg" ] && continue
+
+    if [ ! -d "$TS_SRC/ts/build/packages/$selected_pkg" ]; then
+      missing_packages+=("$selected_pkg")
+    fi
+  done < <(
+    sed 's/#.*$//' "$build_conf" \
+      | awk '$1 == "package" || $1 == "pkg" { print $2 }'
+  )
+
+  if [ "${#missing_packages[@]}" -gt 0 ]; then
+    echo "The following selected packages are missing after pruning:"
+    printf '  %s\n' "${missing_packages[@]}"
+    exit 1
+  fi
+
+  echo "All selected build.conf packages are present."
+}
+
 echo "Root:             $ROOT"
 echo "Workdir:          $WORKDIR"
 echo "ThinStation ref:  $TS_REF"
@@ -118,65 +233,13 @@ git fetch --all --tags --prune
 git checkout "$TS_REF"
 git reset --hard "$TS_REF"
 
-echo "Pruning ThinStation package inputs..."
-
+echo "Preparing protected package list..."
 extend_protected_packages_from_build_conf "$TS_INTEGRATION/config/build.conf"
-if [ -f "$REMOVE_LIST" ]; then
-  echo "Using remove list: $REMOVE_LIST"
-  echo
+print_protected_packages
 
-  while read -r pkg || [ -n "$pkg" ]; do
-    # Trim whitespace.
-    pkg="$(echo "$pkg" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
-
-    # Skip comments and blank lines.
-    [[ -z "$pkg" || "$pkg" =~ ^# ]] && continue
-
-    found=false
-    echo "Package: $pkg"
-
-    if is_protected_package "$pkg"; then
-      echo "  protected build requirement; not pruning"
-      echo
-      continue
-    fi
-
-    # Remove from ts/rpms/* files.
-    # Fixed-string matching keeps names with dots, hyphens, underscores, and plus signs literal.
-    for name in "${RPM_FILES[@]}"; do
-      file="$TS_SRC/ts/rpms/$name"
-      [ -f "$file" ] || continue
-
-      if grep -qxF "$pkg" < <(sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' "$file"); then
-        sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' "$file" \
-          | grep -vxF "$pkg" > "$file.tmp" || true
-
-        mv "$file.tmp" "$file"
-
-        echo "  removed from $name"
-        found=true
-      fi
-    done
-
-    # Remove from ts/build/packages/<pkg>.
-    dir="$TS_SRC/ts/build/packages/$pkg"
-    if [ -d "$dir" ]; then
-      rm -rf "$dir"
-      echo "  removed from packages"
-      found=true
-    fi
-
-    if [ "$found" = false ]; then
-      echo "  package not found anywhere"
-    fi
-
-    echo
-  done < "$REMOVE_LIST"
-
-  echo "Prune complete."
-else
-  echo "No packages-to-remove.list found; skipping prune."
-fi
+echo "Pruning ThinStation package inputs..."
+prune_unprotected_rpm_lists
+prune_unprotected_package_dirs
 
 echo "Copying Aurora ThinStation config..."
 cp "$TS_INTEGRATION/config/build.conf" \
@@ -189,6 +252,8 @@ if [ -f "$TS_INTEGRATION/config/thinstation.conf.network" ]; then
   cp "$TS_INTEGRATION/config/thinstation.conf.network" \
      "$TS_SRC/ts/build/thinstation.conf.network"
 fi
+
+validate_selected_packages_exist "$TS_SRC/ts/build/build.conf"
 
 echo "Preparing ThinStation chroot..."
 sudo ./setup-chroot -i
