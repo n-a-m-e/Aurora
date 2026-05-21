@@ -13,7 +13,8 @@ TS_SRC="$WORKDIR/thinstation-ng"
 RELEASE_DIR="$ROOT/release/thinstation"
 PXE_DIR="$RELEASE_DIR/pxe"
 
-RPM_FILES=(firmware system other)
+PRUNE_RPM_FILES=(firmware system other)
+PROTECT_RPM_FILES=(core grub kernel ts)
 
 # Always keep packages that provide ThinStation build-system requirements
 # or core runtime/build functionality.
@@ -72,6 +73,27 @@ protect_package_tree() {
   fi
 }
 
+extend_protected_packages_from_rpm_files() {
+  local name
+  local file
+  local pkg
+
+  echo "Protecting packages from RPM files: ${PROTECT_RPM_FILES[*]}"
+
+  for name in "${PROTECT_RPM_FILES[@]}"; do
+    file="$TS_SRC/ts/rpms/$name"
+    [ -f "$file" ] || continue
+
+    while read -r pkg || [ -n "$pkg" ]; do
+      pkg="$(echo "$pkg" | sed -E 's/#.*$//; s/^[[:space:]]+//; s/[[:space:]]+$//')"
+      [ -z "$pkg" ] && continue
+
+      PROTECTED_PACKAGES+=("$pkg")
+      echo "  protected from $name: $pkg"
+    done < "$file"
+  done
+}
+
 extend_protected_packages_from_build_conf() {
   local build_conf="$1"
   local selected_pkg
@@ -110,9 +132,15 @@ prune_unprotected_rpm_lists() {
   local removed
 
   echo
-  echo "Pruning RPM lists to protected packages only..."
+  echo "Protected RPM lists, left unchanged:"
+  printf '  %s\n' "${PROTECT_RPM_FILES[@]}"
 
-  for name in "${RPM_FILES[@]}"; do
+  echo
+  echo "Pruning RPM lists to protected packages only:"
+  printf '  %s\n' "${PRUNE_RPM_FILES[@]}"
+  echo
+
+  for name in "${PRUNE_RPM_FILES[@]}"; do
     file="$TS_SRC/ts/rpms/$name"
     [ -f "$file" ] || continue
 
@@ -228,6 +256,7 @@ git checkout "$TS_REF"
 git reset --hard "$TS_REF"
 
 echo "Preparing protected package list..."
+extend_protected_packages_from_rpm_files
 extend_protected_packages_from_build_conf "$TS_INTEGRATION/config/build.conf"
 print_protected_packages
 
