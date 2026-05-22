@@ -307,10 +307,13 @@ protect_package_rpms() {
   while read -r rpm; do
     [ -n "$rpm" ] && add RPMS "$rpm" rpm
   done < <(
-    grep -E '^[[:space:]]*(export[[:space:]]+)?PORTS=' "$file" \
+    grep -E '^[[:space:]]*(export[[:space:]]+)?PORTS=' "$file" 2>/dev/null \
       | sed -E 's/.*PORTS="//; s/".*//' \
-      | tr ' ' '\n'
+      | tr ' ' '\n' \
+      || true
   )
+
+  return 0
 }
 
 protect_package() {
@@ -323,16 +326,22 @@ protect_package() {
   protect_package_rpms "$pkg"
 
   file="$TS_SRC/ts/build/packages/$pkg/dependencies"
-  [ -f "$file" ] && while read -r dep || [ -n "$dep" ]; do
-    dep="$(printf '%s\n' "$dep" | clean)"
-    [ -n "$dep" ] && protect_package "$dep"
-  done < "$file"
+  if [ -f "$file" ]; then
+    while read -r dep || [ -n "$dep" ]; do
+      dep="$(printf '%s\n' "$dep" | clean)"
+      [ -n "$dep" ] && protect_package "$dep"
+    done < "$file"
+  fi
 
   file="$TS_SRC/ts/build/kernel/dependencies_package/$pkg"
-  [ -f "$file" ] && while read -r dep || [ -n "$dep" ]; do
-    dep="$(printf '%s\n' "$dep" | clean)"
-    [ -n "$dep" ] && protect_module "$dep"
-  done < "$file"
+  if [ -f "$file" ]; then
+    while read -r dep || [ -n "$dep" ]; do
+      dep="$(printf '%s\n' "$dep" | clean)"
+      [ -n "$dep" ] && protect_module "$dep"
+    done < "$file"
+  fi
+
+  return 0
 }
 
 parse_mode_file() {
