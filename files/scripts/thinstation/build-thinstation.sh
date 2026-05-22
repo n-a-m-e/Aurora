@@ -60,7 +60,12 @@ add() {
   has "$value" "${arr[@]}" && return 0
 
   arr+=("$value")
-  [ "$LOG_PROTECTED" = "1" ] && echo "  protected $label: $value"
+
+  if [ "${LOG_PROTECTED:-0}" = "1" ]; then
+    echo "  protected $label: $value"
+  fi
+
+  return 0
 }
 
 read_file() {
