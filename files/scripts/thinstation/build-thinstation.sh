@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set +x 2>/dev/null || true
 set -euo pipefail
 
 ROOT="${AURORA_ROOT:-${GITHUB_WORKSPACE:-$(pwd)}}"
@@ -37,6 +38,7 @@ MODULE_CACHE=""
 FIRMWARE_CACHE=""
 FW_OWNER_CACHE=""
 ALLFIRMWARE=false
+LOG_PROTECTED="${LOG_PROTECTED:-0}"
 
 SUDO=""
 [ "${EUID:-$(id -u)}" -eq 0 ] || SUDO="sudo"
@@ -58,7 +60,7 @@ add() {
   has "$value" "${arr[@]}" && return 0
 
   arr+=("$value")
-  echo "  protected $label: $value"
+  [ "$LOG_PROTECTED" = "1" ] && echo "  protected $label: $value"
 }
 
 read_file() {
@@ -81,7 +83,7 @@ bootstrap() {
   echo
   echo "Installing ThinStation build prerequisites..."
 
-  dnf install -y \
+  dnf -q install -y \
     git sudo tar zstd xz rsync findutils which util-linux procps-ng \
     dbus-tools kmod rpm cpio
 
@@ -102,7 +104,7 @@ install_rpms() {
 
   mkdir -p "$DISCOVERY_ROOT"
 
-  $SUDO dnf install \
+  $SUDO dnf -q install \
     --installroot "$DISCOVERY_ROOT" \
     --use-host-config \
     --releasever "$THINSTATION_FEDORA" \
@@ -259,18 +261,41 @@ protect_module() {
 }
 
 protect_package_rpms() {
-  local pkg="$1" file="$TS_SRC/ts/build/packages/$pkg/build/install" rpm
+  local pkg="$1"
+  local file="$TS_SRC/ts/build/packages/$pkg/build/install"
+  local rpm
 
   [ -f "$file" ] || return 0
 
   while read -r rpm; do
     [ -n "$rpm" ] && add RPMS "$rpm" rpm
   done < <(
-    grep -E '^[[:space:]]*(export[[:space:]]+)?PORTS=' "$file" 2>/dev/null \
-      | sed -E 's/.*PORTS="//; s/".*//' \
-      | tr ' ' '\n' \
-      || true
+    awk '
+      /^[[:space:]]*#/ { next }
+
+      /(^|[[:space:]])(export[[:space:]]+)?PORTS=/ {
+        line = $0
+
+        sub(/^[[:space:]]*export[[:space:]]+/, "", line)
+        sub(/^[[:space:]]*PORTS=/, "", line)
+
+        gsub(/["'\''\\]/, " ", line)
+
+        n = split(line, parts, /[[:space:]]+/)
+        for (i = 1; i <= n; i++) {
+          token = parts[i]
+
+          # Keep only literal RPM-looking names.
+          # Ignore shell variables such as $PACKAGE and bad fragments.
+          if (token ~ /^[A-Za-z0-9._+-]+$/) {
+            print token
+          }
+        }
+      }
+    ' "$file" | sort -u
   )
+
+  return 0
 }
 
 protect_package() {
@@ -351,6 +376,7 @@ parse_build_conf() {
 
 append_protected_rpms() {
   local rpm file="$TS_SRC/ts/rpms/core"
+  local added=0 skipped=0 existing=0
 
   echo
   echo "Appending protected RPMs to ts/rpms/core..."
@@ -358,11 +384,24 @@ append_protected_rpms() {
   touch "$file"
 
   for rpm in "${PROTECTED_RPMS[@]}"; do
-    grep -qxF "$rpm" "$file" || {
+    case "$rpm" in
+      ""|*'$'*|*'\'*|export|PORTS=*|*=*)
+        skipped=$((skipped + 1))
+        [ "$LOG_PROTECTED" = "1" ] && echo "  skipped invalid rpm token: $rpm"
+        continue
+        ;;
+    esac
+
+    if grep -qxF "$rpm" "$file"; then
+      existing=$((existing + 1))
+    else
       echo "$rpm" >> "$file"
-      echo "  added to core: $rpm"
-    }
+      added=$((added + 1))
+      [ "$LOG_PROTECTED" = "1" ] && echo "  added to core: $rpm"
+    fi
   done
+
+  echo "  core: added $added, already present $existing, skipped invalid $skipped"
 }
 
 prune_rpms() {
@@ -477,6 +516,15 @@ collect_artifacts() {
 }
 
 print_final_lists() {
+  echo
+  echo "Protected summary:"
+  echo "  rpms:       ${#PROTECTED_RPMS[@]}"
+  echo "  packages:   ${#PROTECTED_PACKAGES[@]}"
+  echo "  modules:    ${#PROTECTED_MODULES[@]}"
+  echo "  firmware:   ${#PROTECTED_FIRMWARE[@]}"
+
+  [ "$LOG_PROTECTED" = "1" ] || return 0
+
   echo
   echo "Final protected RPMs:"
   printf '  %s\n' "${PROTECTED_RPMS[@]}" | sort -u
