@@ -127,7 +127,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .cache/thinstation
-          key: thinstation-fw-map-fedora-${{ env.THINSTATION_FEDORA }}-${{ runner.arch }}-${{ hashFiles('files/scripts/thinstation/THINSTATION_REF') }}
+          key: thinstation-fw-map-fedora-${{ env.THINSTATION_FEDORA }}-${{ runner.arch }}-${{ env.THINSTATION_RELEASE }}
           restore-keys: |
             thinstation-fw-map-fedora-${{ env.THINSTATION_FEDORA }}-${{ runner.arch }}-
 
