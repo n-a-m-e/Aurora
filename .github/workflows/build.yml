@@ -20,6 +20,8 @@ env:
   THINCLIENT_IMAGE: ghcr.io/${{ github.repository_owner }}/aurora-thinclient:latest
   ISO_RELEASE_TAG: thinclient-iso-latest
   THINSTATION_PXE_RELEASE_TAG: thinstation-pxe-latest
+  THINSTATION_RELEASE: 7.2.0
+  THINSTATION_FEDORA: 42
 
 jobs:
   image-changes:
@@ -111,16 +113,23 @@ jobs:
           pr_event_number: ${{ github.event.number }}
           maximize_build_space: true
 
-
   thinstation-pxe:
     name: Build ThinStation PXE
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     needs: image-changes
     if: github.ref == 'refs/heads/main' && (github.event.schedule == '50 7 * * 0' || needs.image-changes.outputs.thinstation == 'true')
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v6
+
+      - name: Cache ThinStation firmware maps
+        uses: actions/cache@v4
+        with:
+          path: .cache/thinstation
+          key: thinstation-fw-map-fedora-${{ env.THINSTATION_FEDORA }}-${{ runner.arch }}-${{ hashFiles('files/scripts/thinstation/THINSTATION_REF') }}
+          restore-keys: |
+            thinstation-fw-map-fedora-${{ env.THINSTATION_FEDORA }}-${{ runner.arch }}-
 
       - name: Build ThinStation PXE
         run: |
@@ -134,19 +143,10 @@ jobs:
             -v "$PWD:/workspace:Z" \
             -w /workspace \
             -e AURORA_ROOT=/workspace \
-            fedora:42 \
-            bash -euxo pipefail -c '
-              dnf install -y git sudo tar zstd xz rsync findutils which util-linux procps-ng dbus-tools
-
-              mkdir -p /var/lib/dbus
-              rm -f /etc/machine-id /var/lib/dbus/machine-id
-              dbus-uuidgen --ensure=/etc/machine-id
-              dbus-uuidgen --ensure=/var/lib/dbus/machine-id
-
-              chmod +x files/scripts/thinstation/*.sh
-
-              files/scripts/thinstation/build-thinstation.sh
-            '
+            -e THINSTATION_RELEASE="${THINSTATION_RELEASE}" \
+            -e THINSTATION_FEDORA="${THINSTATION_FEDORA}" \
+            "fedora:${THINSTATION_FEDORA}" \
+            bash -euxo pipefail files/scripts/thinstation/build-thinstation.sh
 
       - name: Publish ThinStation PXE Release
         uses: softprops/action-gh-release@v3
@@ -178,7 +178,7 @@ jobs:
 
   thinclient-iso:
     name: Build Thinclient ISO
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     needs: [image-changes, build-thinclient]
     if: always() && github.ref == 'refs/heads/main' && (github.event.schedule == '50 7 * * 0' || needs.image-changes.outputs.thinclient == 'true') && (github.event.schedule == '50 7 * * 0' || needs.build-thinclient.result == 'success')
     permissions:
