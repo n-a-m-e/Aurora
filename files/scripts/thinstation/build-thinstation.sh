@@ -276,25 +276,45 @@ protect_package_rpms() {
     [ -n "$rpm" ] && add RPMS "$rpm" rpm
   done < <(
     awk '
-      /^[[:space:]]*#/ { next }
+      function emit_tokens(s, parts, n, i, token) {
+        gsub(/["'\''\\]/, " ", s)
+        n = split(s, parts, /[[:space:]]+/)
 
-      /(^|[[:space:]])(export[[:space:]]+)?PORTS=/ {
-        line = $0
-
-        sub(/^[[:space:]]*export[[:space:]]+/, "", line)
-        sub(/^[[:space:]]*PORTS=/, "", line)
-
-        gsub(/["'\''\\]/, " ", line)
-
-        n = split(line, parts, /[[:space:]]+/)
         for (i = 1; i <= n; i++) {
           token = parts[i]
 
           # Keep only literal RPM-looking names.
-          # Ignore shell variables such as $PACKAGE and bad fragments.
-          if (token ~ /^[A-Za-z0-9._+-]+$/) {
+          # Ignore shell variables, assignments, and shell keywords.
+          if (token ~ /^[A-Za-z0-9._+-]+$/ && token != "export") {
             print token
           }
+        }
+      }
+
+      /^[[:space:]]*#/ { next }
+
+      in_ports {
+        raw = $0
+        quotes = gsub(/"/, "\"", raw)
+        emit_tokens($0)
+
+        if (quotes > 0) {
+          in_ports = 0
+        }
+
+        next
+      }
+
+      /(^|[[:space:]])(export[[:space:]]+)?PORTS=/ {
+        raw = $0
+        sub(/^.*PORTS=/, "", raw)
+
+        quotes = gsub(/"/, "\"", raw)
+        emit_tokens(raw)
+
+        # Multiline PORTS starts with one quote and closes on a later line.
+        if (quotes == 1) {
+          in_ports = 1
         }
       }
     ' "$file" | sort -u
@@ -609,7 +629,7 @@ sudo ./setup-chroot -i
 
 echo
 echo "Building ThinStation PXE artifacts..."
-sudo ./setup-chroot -a -b -o --license ACCEPT
+sudo AUTODL=true ./setup-chroot -a -b -o --autodl --license ACCEPT
 
 collect_artifacts
 
