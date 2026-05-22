@@ -18,13 +18,14 @@ PXE_DIR="$RELEASE_DIR/pxe"
 DISCOVERY_ROOT="$WORKDIR/discovery-chroot"
 CACHE_DIR="${CACHE_DIR:-$ROOT/.cache/thinstation}"
 
-PRUNE_RPM_FILES=(firmware system other)
-PROTECT_RPM_FILES=(core grub kernel ts)
+PRUNE_RPM_FILES=(firmware system other kernel)
+PROTECT_RPM_FILES=(core grub ts)
 
 REQUIRED_RPMS=(
   xorriso squashfs-tools glib2-devel librsvg2-tools ImageMagick
   tigervnc-server-minimal samba-common-tools which util-linux-core
   gawk tar iso-codes wget binutils
+  kernel-core kernel-modules-core
 )
 
 REQUIRED_PACKAGES=(coreutils file tar glib2 util-linux)
@@ -37,6 +38,7 @@ PROTECTED_FIRMWARE=()
 MODULE_CACHE=""
 FIRMWARE_CACHE=""
 FW_OWNER_CACHE=""
+MODULE_OWNER_CACHE=""
 ALLFIRMWARE=false
 LOG_PROTECTED="${LOG_PROTECTED:-0}"
 
@@ -133,13 +135,14 @@ set_cache_paths() {
   MODULE_CACHE="$CACHE_DIR/${key}-modules.txt"
   FIRMWARE_CACHE="$CACHE_DIR/${key}-firmware.txt"
   FW_OWNER_CACHE="$CACHE_DIR/${key}-firmware-owners.txt"
+  MODULE_OWNER_CACHE="$CACHE_DIR/${key}-module-owners.txt"
 
   echo "Kernel version: $kv"
   echo "Cache key:      $key"
 }
 
 create_caches() {
-  local kv="$1" ko mod deps fw file rel owner
+  local kv="$1" ko relko mod deps fw file rel owner
 
   echo
   echo "Creating module, firmware, and owner caches..."
@@ -147,12 +150,20 @@ create_caches() {
   : > "$MODULE_CACHE"
   : > "$FIRMWARE_CACHE"
   : > "$FW_OWNER_CACHE"
+  : > "$MODULE_OWNER_CACHE"
 
   while read -r ko; do
     mod="$(basename "$ko")"
     mod="${mod%%.ko*}"
     deps="$(modinfo -F depends "$ko" 2>/dev/null | tr ',' ' ' | xargs || true)"
     printf '%s|%s|%s\n' "$mod" "$ko" "$deps" >> "$MODULE_CACHE"
+
+    relko="${ko#"$DISCOVERY_ROOT"}"
+    owner="$(
+      rpm --root "$DISCOVERY_ROOT" -q --whatprovides "$relko" \
+        --queryformat '%{NAME}\n' 2>/dev/null || true
+    )"
+    [ -n "$owner" ] && printf '%s|%s\n' "$mod" "$owner" >> "$MODULE_OWNER_CACHE"
 
     while read -r fw || [ -n "$fw" ]; do
       [ -n "$fw" ] && printf '%s|%s\n' "$mod" "$fw" >> "$FIRMWARE_CACHE"
@@ -177,12 +188,11 @@ create_caches() {
   sort -u "$MODULE_CACHE" -o "$MODULE_CACHE"
   sort -u "$FIRMWARE_CACHE" -o "$FIRMWARE_CACHE"
   sort -u "$FW_OWNER_CACHE" -o "$FW_OWNER_CACHE"
+  sort -u "$MODULE_OWNER_CACHE" -o "$MODULE_OWNER_CACHE"
 }
 
 prepare_cache() {
-  local kv rpm
-
-  while read -r rpm; do add RPMS "$rpm" rpm; done < <(read_file "$TS_SRC/ts/rpms/kernel" list)
+  local kv
 
   install_rpms "$TS_SRC/ts/rpms/kernel" kernel
 
@@ -195,7 +205,7 @@ prepare_cache() {
   mkdir -p "$CACHE_DIR"
   set_cache_paths "$kv"
 
-  if [ -f "$MODULE_CACHE" ] && [ -f "$FIRMWARE_CACHE" ] && [ -f "$FW_OWNER_CACHE" ]; then
+  if [ -f "$MODULE_CACHE" ] && [ -f "$FIRMWARE_CACHE" ] && [ -f "$FW_OWNER_CACHE" ] && [ -f "$MODULE_OWNER_CACHE" ]; then
     echo "Discovery caches already exist."
     return 0
   fi
@@ -220,6 +230,14 @@ protect_firmware() {
 module_line() {
   local mod="$1" alt="${1//-/_}"
   awk -F'|' -v m="$mod" -v a="$alt" '$1 == m || $1 == a { print; exit }' "$MODULE_CACHE"
+}
+
+protect_module_owner() {
+  local mod="$1" alt="${1//-/_}" rpm
+
+  while read -r rpm; do
+    [ -n "$rpm" ] && add RPMS "$rpm" rpm
+  done < <(awk -F'|' -v m="$mod" -v a="$alt" '$1 == m || $1 == a { print $2 }' "$MODULE_OWNER_CACHE" | sort -u)
 }
 
 handle_conf_item() {
@@ -247,7 +265,7 @@ protect_module() {
 
   add MODULES "$mod" module
 
-  while read -r rpm; do add RPMS "$rpm" rpm; done < <(read_file "$TS_SRC/ts/rpms/kernel" list)
+  protect_module_owner "$mod"
 
   line="$(module_line "$mod" || true)"
   deps="$(awk -F'|' '{print $3}' <<< "$line")"
