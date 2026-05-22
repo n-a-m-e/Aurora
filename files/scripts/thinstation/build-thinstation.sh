@@ -4,44 +4,29 @@ set -euo pipefail
 ROOT="${AURORA_ROOT:-${GITHUB_WORKSPACE:-$(pwd)}}"
 ROOT="$(cd "$ROOT" && pwd)"
 
+THINSTATION_RELEASE="${THINSTATION_RELEASE:?THINSTATION_RELEASE must be set}"
+THINSTATION_FEDORA="${THINSTATION_FEDORA:?THINSTATION_FEDORA must be set}"
+
 TS_INTEGRATION="$ROOT/files/scripts/thinstation"
 WORKDIR="${WORKDIR:-$ROOT/.build/thinstation}"
 TS_SRC="$WORKDIR/thinstation-ng"
-TS_REF="$(cat "$TS_INTEGRATION/THINSTATION_REF")"
 TS_REPO="https://github.com/Thinstation/thinstation-ng.git"
 
 RELEASE_DIR="$ROOT/release/thinstation"
 PXE_DIR="$RELEASE_DIR/pxe"
 DISCOVERY_ROOT="$WORKDIR/discovery-chroot"
-CACHE_DIR="$WORKDIR/cache"
+CACHE_DIR="${CACHE_DIR:-$ROOT/.cache/thinstation}"
 
 PRUNE_RPM_FILES=(firmware system other)
 PROTECT_RPM_FILES=(core grub kernel ts)
 
 REQUIRED_RPMS=(
-  xorriso
-  squashfs-tools
-  glib2-devel
-  librsvg2-tools
-  ImageMagick
-  tigervnc-server-minimal
-  samba-common-tools
-  which
-  util-linux-core
-  gawk
-  tar
-  iso-codes
-  wget
-  binutils
+  xorriso squashfs-tools glib2-devel librsvg2-tools ImageMagick
+  tigervnc-server-minimal samba-common-tools which util-linux-core
+  gawk tar iso-codes wget binutils
 )
 
-REQUIRED_PACKAGES=(
-  coreutils
-  file
-  tar
-  glib2
-  util-linux
-)
+REQUIRED_PACKAGES=(coreutils file tar glib2 util-linux)
 
 PROTECTED_RPMS=()
 PROTECTED_PACKAGES=()
@@ -76,51 +61,55 @@ add() {
   echo "  protected $label: $value"
 }
 
-list_file() {
-  local file="$1" line
+read_file() {
+  local file="$1" mode="${2:-list}" line
   [ -f "$file" ] || return 0
 
   while read -r line || [ -n "$line" ]; do
     line="$(printf '%s\n' "$line" | clean)"
-    [ -n "$line" ] && printf '%s\n' "$line"
+    [ -z "$line" ] && continue
+
+    case "$mode" in
+      list) printf '%s\n' "$line" ;;
+      conf) awk '{ printf "%s|%s|%s\n", $1, $2, $3 }' <<< "$line" ;;
+      *) echo "Unknown read_file mode: $mode" >&2; exit 1 ;;
+    esac
   done < "$file"
 }
 
-conf_file() {
-  local file="$1" line
-  [ -f "$file" ] || return 0
+bootstrap() {
+  echo
+  echo "Installing ThinStation build prerequisites..."
 
-  while read -r line || [ -n "$line" ]; do
-    line="$(printf '%s\n' "$line" | clean)"
-    [ -n "$line" ] && awk '{ printf "%s|%s|%s\n", $1, $2, $3 }' <<< "$line"
-  done < "$file"
+  dnf install -y \
+    git sudo tar zstd xz rsync findutils which util-linux procps-ng \
+    dbus-tools kmod rpm cpio
+
+  mkdir -p /var/lib/dbus
+  rm -f /etc/machine-id /var/lib/dbus/machine-id
+  dbus-uuidgen --ensure=/etc/machine-id
+  dbus-uuidgen --ensure=/var/lib/dbus/machine-id
 }
 
-install_list() {
+install_rpms() {
   local file="$1" label="$2" rpm rpms=()
 
-  while read -r rpm; do rpms+=("$rpm"); done < <(list_file "$file")
+  while read -r rpm; do rpms+=("$rpm"); done < <(read_file "$file" list)
   [ "${#rpms[@]}" -gt 0 ] || return 0
 
   echo
   echo "Installing $label RPMs into discovery chroot..."
 
-  local args=(
-    install
-    --installroot "$DISCOVERY_ROOT"
-    --use-host-config
-    --setopt=install_weak_deps=False
-    --setopt=keepcache=1
-    -y
-  )
-
-  # First kernel install has no kernel path yet; later installs derive releasever from it.
-  if [ "$label" != "kernel" ] || [ -d "$DISCOVERY_ROOT/lib/modules" ]; then
-    args+=(--releasever "$(releasever)")
-  fi
-
   mkdir -p "$DISCOVERY_ROOT"
-  $SUDO dnf "${args[@]}" "${rpms[@]}"
+
+  $SUDO dnf install \
+    --installroot "$DISCOVERY_ROOT" \
+    --use-host-config \
+    --releasever "$THINSTATION_FEDORA" \
+    --setopt=install_weak_deps=False \
+    --setopt=keepcache=1 \
+    -y \
+    "${rpms[@]}"
 }
 
 kernel_version() {
@@ -130,26 +119,9 @@ kernel_version() {
     | tail -n1
 }
 
-releasever() {
-  local kv fedora
-  kv="$(kernel_version)"
-  fedora="$(sed -nE 's/.*\.fc([0-9]+)\..*/\1/p' <<< "$kv")"
-
-  [ -n "$fedora" ] || {
-    echo "Could not derive Fedora release from $DISCOVERY_ROOT/lib/modules" >&2
-    exit 1
-  }
-
-  echo "$fedora"
-}
-
 set_cache_paths() {
-  local kv="$1" fedora key
-
-  fedora="$(sed -nE 's/.*\.fc([0-9]+)\..*/fc\1/p' <<< "$kv")"
-  [ -n "$fedora" ] || fedora="unknown"
-
-  key="thinstation-fw-map-${fedora}-$(uname -m)-${kv}"
+  local kv="$1"
+  local key="thinstation-fw-map-fc${THINSTATION_FEDORA}-$(uname -m)-${kv}"
 
   MODULE_CACHE="$CACHE_DIR/${key}-modules.txt"
   FIRMWARE_CACHE="$CACHE_DIR/${key}-firmware.txt"
@@ -173,7 +145,6 @@ create_caches() {
     mod="$(basename "$ko")"
     mod="${mod%%.ko*}"
     deps="$(modinfo -F depends "$ko" 2>/dev/null | tr ',' ' ' | xargs || true)"
-
     printf '%s|%s|%s\n' "$mod" "$ko" "$deps" >> "$MODULE_CACHE"
 
     while read -r fw || [ -n "$fw" ]; do
@@ -194,10 +165,7 @@ create_caches() {
     )"
 
     [ -n "$owner" ] && printf '%s|%s\n' "$rel" "$owner" >> "$FW_OWNER_CACHE"
-  done < <(
-    find "$DISCOVERY_ROOT/usr/lib/firmware" "$DISCOVERY_ROOT/lib/firmware" \
-      -type f 2>/dev/null | sort -u
-  )
+  done < <(find "$DISCOVERY_ROOT/usr/lib/firmware" "$DISCOVERY_ROOT/lib/firmware" -type f 2>/dev/null | sort -u)
 
   sort -u "$MODULE_CACHE" -o "$MODULE_CACHE"
   sort -u "$FIRMWARE_CACHE" -o "$FIRMWARE_CACHE"
@@ -207,9 +175,9 @@ create_caches() {
 prepare_cache() {
   local kv rpm
 
-  while read -r rpm; do add RPMS "$rpm" rpm; done < <(list_file "$TS_SRC/ts/rpms/kernel")
+  while read -r rpm; do add RPMS "$rpm" rpm; done < <(read_file "$TS_SRC/ts/rpms/kernel" list)
 
-  install_list "$TS_SRC/ts/rpms/kernel" kernel
+  install_rpms "$TS_SRC/ts/rpms/kernel" kernel
 
   kv="$(kernel_version)"
   [ -n "$kv" ] || {
@@ -226,17 +194,8 @@ prepare_cache() {
   fi
 
   echo "Discovery caches missing; installing firmware RPMs and creating caches."
-  install_list "$TS_SRC/ts/rpms/firmware" firmware
+  install_rpms "$TS_SRC/ts/rpms/firmware" firmware
   create_caches "$kv"
-
-  install_list "$TS_SRC/ts/rpms/kernel" kernel
-  kv="$(kernel_version)"
-  [ -n "$kv" ] || {
-    echo "Could not determine kernel version after cache creation"
-    exit 1
-  }
-
-  set_cache_paths "$kv"
 }
 
 protect_firmware() {
@@ -256,7 +215,7 @@ module_line() {
   awk -F'|' -v m="$mod" -v a="$alt" '$1 == m || $1 == a { print; exit }' "$MODULE_CACHE"
 }
 
-handle_config_item() {
+handle_conf_item() {
   local key="$1" value="$2" arg="$3"
 
   case "$key" in
@@ -274,14 +233,14 @@ handle_config_item() {
 }
 
 protect_module() {
-  local mod="$1" line deps dep fw rpm
+  local mod="$1" line deps dep fw rpm key value arg
 
   [ -z "$mod" ] && return 0
   has "$mod" "${PROTECTED_MODULES[@]}" && return 0
 
   add MODULES "$mod" module
 
-  while read -r rpm; do add RPMS "$rpm" rpm; done < <(list_file "$TS_SRC/ts/rpms/kernel")
+  while read -r rpm; do add RPMS "$rpm" rpm; done < <(read_file "$TS_SRC/ts/rpms/kernel" list)
 
   line="$(module_line "$mod" || true)"
   deps="$(awk -F'|' '{print $3}' <<< "$line")"
@@ -289,8 +248,8 @@ protect_module() {
   for dep in $deps; do protect_module "$dep"; done
 
   while IFS='|' read -r key value arg; do
-    handle_config_item "$key" "$value" "$arg"
-  done < <(conf_file "$TS_SRC/ts/build/kernel/dependencies_module/$mod")
+    handle_conf_item "$key" "$value" "$arg"
+  done < <(read_file "$TS_SRC/ts/build/kernel/dependencies_module/$mod" conf)
 
   [ "$ALLFIRMWARE" = true ] || return 0
 
@@ -312,8 +271,6 @@ protect_package_rpms() {
       | tr ' ' '\n' \
       || true
   )
-
-  return 0
 }
 
 protect_package() {
@@ -325,23 +282,22 @@ protect_package() {
   add PACKAGES "$pkg" package
   protect_package_rpms "$pkg"
 
-  file="$TS_SRC/ts/build/packages/$pkg/dependencies"
-  if [ -f "$file" ]; then
+  for file in \
+    "$TS_SRC/ts/build/packages/$pkg/dependencies" \
+    "$TS_SRC/ts/build/kernel/dependencies_package/$pkg"
+  do
+    [ -f "$file" ] || continue
+
     while read -r dep || [ -n "$dep" ]; do
       dep="$(printf '%s\n' "$dep" | clean)"
-      [ -n "$dep" ] && protect_package "$dep"
-    done < "$file"
-  fi
+      [ -z "$dep" ] && continue
 
-  file="$TS_SRC/ts/build/kernel/dependencies_package/$pkg"
-  if [ -f "$file" ]; then
-    while read -r dep || [ -n "$dep" ]; do
-      dep="$(printf '%s\n' "$dep" | clean)"
-      [ -n "$dep" ] && protect_module "$dep"
+      case "$file" in
+        */dependencies_package/*) protect_module "$dep" ;;
+        *) protect_package "$dep" ;;
+      esac
     done < "$file"
-  fi
-
-  return 0
+  done
 }
 
 parse_mode_file() {
@@ -364,7 +320,7 @@ parse_mode_file() {
       module) protect_module "$selected" ;;
       firmware) protect_firmware "$selected" ;;
     esac
-  done < <(conf_file "$file")
+  done < <(read_file "$file" conf)
 }
 
 protect_machine() {
@@ -389,22 +345,22 @@ parse_build_conf() {
   echo "Reading build.conf: $TS_INTEGRATION/config/build.conf"
 
   while IFS='|' read -r key value arg; do
-    handle_config_item "$key" "$value" "$arg"
-  done < <(conf_file "$TS_INTEGRATION/config/build.conf")
+    handle_conf_item "$key" "$value" "$arg"
+  done < <(read_file "$TS_INTEGRATION/config/build.conf" conf)
 }
 
 append_protected_rpms() {
-  local rpm file="$TS_SRC/ts/rpms/system"
+  local rpm file="$TS_SRC/ts/rpms/core"
 
   echo
-  echo "Appending protected RPMs to ts/rpms/system..."
+  echo "Appending protected RPMs to ts/rpms/core..."
 
   touch "$file"
 
   for rpm in "${PROTECTED_RPMS[@]}"; do
     grep -qxF "$rpm" "$file" || {
       echo "$rpm" >> "$file"
-      echo "  added to system: $rpm"
+      echo "  added to core: $rpm"
     }
   done
 }
@@ -540,11 +496,15 @@ print_final_lists() {
 
 echo "Root:             $ROOT"
 echo "Workdir:          $WORKDIR"
-echo "ThinStation ref:  $TS_REF"
+echo "Cache dir:        $CACHE_DIR"
+echo "ThinStation ref:  $THINSTATION_RELEASE"
+echo "Fedora release:   $THINSTATION_FEDORA"
 echo "Release dir:      $RELEASE_DIR"
 
 rm -rf "$WORKDIR" "$RELEASE_DIR"
 mkdir -p "$WORKDIR" "$PXE_DIR" "$CACHE_DIR"
+
+bootstrap
 
 echo
 echo "Cloning ThinStation..."
@@ -553,8 +513,8 @@ cd "$TS_SRC"
 
 echo "Checking out ThinStation ref..."
 git fetch --all --tags --prune
-git checkout "$TS_REF"
-git reset --hard "$TS_REF"
+git checkout "$THINSTATION_RELEASE"
+git reset --hard "$THINSTATION_RELEASE"
 
 echo
 echo "Protecting build-required RPMs..."
@@ -567,7 +527,7 @@ for pkg in "${REQUIRED_PACKAGES[@]}"; do protect_package "$pkg"; done
 echo
 echo "Protecting RPMs from protected RPM files: ${PROTECT_RPM_FILES[*]}"
 for name in "${PROTECT_RPM_FILES[@]}"; do
-  while read -r rpm; do add RPMS "$rpm" rpm; done < <(list_file "$TS_SRC/ts/rpms/$name")
+  while read -r rpm; do add RPMS "$rpm" rpm; done < <(read_file "$TS_SRC/ts/rpms/$name" list)
 done
 
 prepare_cache
