@@ -71,7 +71,6 @@ modules:
       - plasma-workspace-common
       - plasma-workspace-libs
       - plasma-workspace-wallpapers
-      - plasma-workspace-x11
       - powerdevil
   - type: script
     scripts:
