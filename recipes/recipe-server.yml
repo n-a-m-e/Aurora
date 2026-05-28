@@ -44,7 +44,6 @@ modules:
       - plasma-firewall
       - plasma-firewall-firewalld
       - plasma-keyboard
-      - plasma-login-manager
       - plasma-lookandfeel-fedora
       - plasma-milou
       - plasma-nm
@@ -69,8 +68,6 @@ modules:
       - plasma-workspace-wallpapers
       - powerdevil
       - kcm-plasma-keyboard
-      - kde-settings-plasmalogin
-      - kcm-plasmalogin
   - type: script
     scripts:
       - server/replace-plasma-with-lxqt-xfwm4.sh
