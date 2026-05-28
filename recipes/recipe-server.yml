@@ -30,6 +30,8 @@ modules:
       - nm-connection-editor
       - network-manager-applet
     remove:
+      - plasma-lookandfeel-fedora
+      - plasma-workspace-wallpapers
       - plasma-desktop
       - plasma-workspace
       - kwin
