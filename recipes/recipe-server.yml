@@ -33,9 +33,6 @@ modules:
       - firewall-config
       - qps
     remove:
-      - kwin
-      - kwin-common
-      - kwin-libs
       - plasma-browser-integration
       - plasma-desktop
       - plasma-desktop-doc
@@ -44,7 +41,6 @@ modules:
       - plasma-firewall
       - plasma-firewall-firewalld
       - plasma-keyboard
-      - plasma-lookandfeel-fedora
       - plasma-milou
       - plasma-nm
       - plasma-nm-openconnect
