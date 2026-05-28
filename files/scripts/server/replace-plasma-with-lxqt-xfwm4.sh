@@ -19,3 +19,14 @@ cat > /usr/etc/xdg/lxqt/session.conf <<'EOF'
 [General]
 window_manager=xfwm4
 EOF
+
+# Make SDDM default to LXQt on X11.
+mkdir -p /usr/etc/sddm.conf.d
+
+cat > /usr/etc/sddm.conf.d/10-lxqt.conf <<'EOF'
+[Autologin]
+Session=lxqt.desktop
+
+[General]
+DisplayServer=x11
+EOF
