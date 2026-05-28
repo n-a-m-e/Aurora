@@ -36,8 +36,6 @@ modules:
       - kwin
       - kwin-common
       - kwin-libs
-      - plasma-activities
-      - plasma-activities-stats
       - plasma-browser-integration
       - plasma-desktop
       - plasma-desktop-doc
@@ -72,6 +70,10 @@ modules:
       - plasma-workspace-libs
       - plasma-workspace-wallpapers
       - powerdevil
+      - kcm-plasma-keyboard
+      - kde-settings-plasmalogin
+      - kcm-plasmalogin
+      - libkworkspace6
   - type: script
     scripts:
       - server/replace-plasma-with-lxqt-xfwm4.sh
