@@ -20,13 +20,15 @@ cat > /usr/etc/xdg/lxqt/session.conf <<'EOF'
 window_manager=xfwm4
 EOF
 
-# Make SDDM default to LXQt on X11.
+# Make SDDM use X11.
 mkdir -p /usr/etc/sddm.conf.d
 
 cat > /usr/etc/sddm.conf.d/10-lxqt.conf <<'EOF'
-[Autologin]
-Session=lxqt.desktop
-
 [General]
 DisplayServer=x11
 EOF
+
+# Repair missing base groups in the mutable /etc overlay.
+if [[ -f /usr/lib/group && -f /etc/group ]]; then
+  awk -F: 'NR==FNR {seen[$1]=1; next} !seen[$1] {print}' /etc/group /usr/lib/group >> /etc/group
+fi
