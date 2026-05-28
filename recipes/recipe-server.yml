@@ -59,7 +59,6 @@ modules:
       - plasma-wallpapers-dynamic-builder-fish-completion
       - plasma-wallpapers-dynamic-builder-zsh-completion
       - plasma-welcome
-      - plasma-workspace
       - plasma-workspace-libs
       - plasma-workspace-wallpapers
       - powerdevil
