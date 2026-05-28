@@ -36,7 +36,6 @@ modules:
       - kwin
       - kwin-common
       - kwin-libs
-      - kwin-x11
       - kwin-x11-libs
       - plasma-activities
       - plasma-activities-stats
