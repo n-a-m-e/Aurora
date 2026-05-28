@@ -32,7 +32,13 @@ modules:
       - system-config-printer
       - firewall-config
       - qps
+      - sddm
+      - sddm-conf
+      - sddm-themes
     remove:
+      - kwin
+      - kwin-common
+      - kwin-libs
       - plasma-browser-integration
       - plasma-desktop
       - plasma-desktop-doc
@@ -41,6 +47,8 @@ modules:
       - plasma-firewall
       - plasma-firewall-firewalld
       - plasma-keyboard
+      - plasma-login-manager
+      - plasma-lookandfeel-fedora
       - plasma-milou
       - plasma-nm
       - plasma-nm-openconnect
@@ -59,13 +67,20 @@ modules:
       - plasma-wallpapers-dynamic-builder-fish-completion
       - plasma-wallpapers-dynamic-builder-zsh-completion
       - plasma-welcome
+      - plasma-workspace
       - plasma-workspace-libs
       - plasma-workspace-wallpapers
       - powerdevil
       - kcm-plasma-keyboard
+      - kde-settings-plasmalogin
+      - kcm-plasmalogin
   - type: script
     scripts:
       - server/replace-plasma-with-lxqt-xfwm4.sh
+  - type: systemd
+    system:
+      enabled:
+        - sddm.service
 
   - type: rpm-ostree
     repos: []
