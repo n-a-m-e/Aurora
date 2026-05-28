@@ -56,7 +56,6 @@ modules:
       - plasma-print-manager-libs
       - plasma-setup
       - plasma-systemmonitor
-      - plasma-systemsettings
       - plasma-thunderbolt
       - plasma-vault
       - plasma-wallpapers-dynamic
@@ -66,14 +65,12 @@ modules:
       - plasma-wallpapers-dynamic-builder-zsh-completion
       - plasma-welcome
       - plasma-workspace
-      - plasma-workspace-common
       - plasma-workspace-libs
       - plasma-workspace-wallpapers
       - powerdevil
       - kcm-plasma-keyboard
       - kde-settings-plasmalogin
       - kcm-plasmalogin
-      - libkworkspace6
   - type: script
     scripts:
       - server/replace-plasma-with-lxqt-xfwm4.sh
