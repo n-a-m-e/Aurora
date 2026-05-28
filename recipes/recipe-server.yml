@@ -11,6 +11,39 @@ modules:
     files:
       - source: system
         destination: / # copies files/system/* (* means everything inside it) into your image's root folder /
+
+  # Replace Plasma/KWin with LXQt + xfwm4
+  - type: rpm-ostree
+    install:
+      - lxqt-session
+      - lxqt-panel
+      - lxqt-config
+      - lxqt-globalkeys
+      - lxqt-notificationd
+      - lxqt-powermanagement
+      - lxqt-qtplugin
+      - lxqt-runner
+      - lxqt-sudo
+      - xfwm4
+      - xfconf
+      - pavucontrol-qt
+      - nm-connection-editor
+      - network-manager-applet
+    remove:
+      - plasma-desktop
+      - plasma-workspace
+      - plasma-workspace-x11
+      - plasma-workspace-wayland
+      - kwin
+      - kwin-x11
+      - kwin-wayland
+      - powerdevil
+      - plasma-nm
+      - plasma-pa
+  - type: script
+    scripts:
+      - server/replace-plasma-with-lxqt-xfwm4.sh
+
   - type: rpm-ostree
     repos: []
     install:
@@ -63,12 +96,6 @@ modules:
       - server/kde-config.sh
   - type: script
     scripts:
-      - server/davinci-resolve.sh
-  - type: script
-    scripts:
-      - server/sunshine.sh
-  - type: script
-    scripts:
       - shared/bluebuild-cleanup.sh
 
   - type: systemd
@@ -90,7 +117,7 @@ modules:
         #- restic-backup.service
         #- restic-backup.timer
         - vsftpd.service
-        - install-davinci-resolve.service
+        #- install-davinci-resolve.service
         - manage-kargs.service
         - remote-shutdown.service
       disabled:
