@@ -32,7 +32,6 @@ modules:
     remove:
       - plasma-desktop
       - plasma-workspace
-      - plasma-workspace-x11
       - kwin
       - powerdevil
       - plasma-nm
