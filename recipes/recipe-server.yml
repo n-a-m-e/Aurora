@@ -29,15 +29,52 @@ modules:
       - pavucontrol-qt
       - nm-connection-editor
       - network-manager-applet
+      - system-config-printer
+      - firewall-config
+      - qps
     remove:
-      - plasma-lookandfeel-fedora
-      - plasma-workspace-wallpapers
-      - plasma-desktop
-      - plasma-workspace
       - kwin
-      - powerdevil
+      - kwin-common
+      - kwin-libs
+      - kwin-x11
+      - kwin-x11-libs
+      - plasma-activities
+      - plasma-activities-stats
+      - plasma-browser-integration
+      - plasma-desktop
+      - plasma-desktop-doc
+      - plasma-disks
+      - plasma-drkonqi
+      - plasma-firewall
+      - plasma-firewall-firewalld
+      - plasma-keyboard
+      - plasma-login-manager
+      - plasma-lookandfeel-fedora
+      - plasma-milou
       - plasma-nm
+      - plasma-nm-openconnect
+      - plasma-nm-openvpn
+      - plasma-nm-vpnc
       - plasma-pa
+      - plasma-print-manager
+      - plasma-print-manager-libs
+      - plasma-setup
+      - plasma-systemmonitor
+      - plasma-systemsettings
+      - plasma-thunderbolt
+      - plasma-vault
+      - plasma-wallpapers-dynamic
+      - plasma-wallpapers-dynamic-builder
+      - plasma-wallpapers-dynamic-builder-bash-completion
+      - plasma-wallpapers-dynamic-builder-fish-completion
+      - plasma-wallpapers-dynamic-builder-zsh-completion
+      - plasma-welcome
+      - plasma-workspace
+      - plasma-workspace-common
+      - plasma-workspace-libs
+      - plasma-workspace-wallpapers
+      - plasma-workspace-x11
+      - powerdevil
   - type: script
     scripts:
       - server/replace-plasma-with-lxqt-xfwm4.sh
