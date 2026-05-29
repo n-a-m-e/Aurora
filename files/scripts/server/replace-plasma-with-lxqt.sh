@@ -16,7 +16,7 @@ done
 
 # Configure custom X11 LXQt component session using xfwm4.
 mkdir -p \
-  /usr/local/bin \
+  /usr/sbin \
   /usr/share/xsessions \
   /etc/sddm.conf.d \
   /etc/skel/.config/variety
@@ -38,7 +38,7 @@ folders = [['/usr/share/backgrounds/aurora', True]]
 sources = [['album', '/usr/share/backgrounds/aurora', True]]
 EOF
 
-cat > /usr/local/bin/start-lxqt <<'EOF'
+cat > /usr/sbin/start-lxqt.sh <<'EOF'
 #!/usr/bin/env bash
 set +e
 
@@ -71,13 +71,13 @@ nm-applet &
 exec xfwm4 --replace
 EOF
 
-chmod +x /usr/local/bin/start-lxqt
+chmod a+x "/usr/sbin/start-lxqt.sh"
 
 cat > /usr/share/xsessions/lxqt.desktop <<'EOF'
 [Desktop Entry]
 Name=LXQt
 Comment=LXQt desktop session
-Exec=/usr/local/bin/start-lxqt
+Exec=/usr/sbin/start-lxqt.sh
 Type=Application
 DesktopNames=LXQt
 EOF
