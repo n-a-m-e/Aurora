@@ -52,6 +52,20 @@ sed -i 's|#import thinlinc . tlsetup . requirements|import thinlinc . tlsetup . 
 
 #Remove intro from login
 sed -i 's|show_intro=.*|show_intro=false|g' /opt/thinlinc/etc/conf.d/profiles.hconf
+cat > /opt/thinlinc/etc/conf.d/profiles.hconf <<'EOF'
+[/profiles]
+default=lxqt
+order=lxqt
+show_intro=false
+
+[/profiles/lxqt]
+xdg_session=lxqt
+name=LXQt
+description=LXQt desktop session.
+cmdline=/usr/local/bin/start-lxqt
+testcmd=test -x /usr/local/bin/start-lxqt
+description_from_testcmd=false
+EOF
 
 #add hostname to /usr/lib/opt/thinlinc/etc/conf.d/vsmagent.hconf
 #sed -i 's|agent_hostname=|agent_hostname=aurora|g' /opt/thinlinc/etc/conf.d/vsmagent.hconf
