@@ -35,6 +35,7 @@ modules:
       - sddm
       - sddm-conf
       - sddm-themes
+      - xorg-x11-server-Xorg
     remove:
       - kwin
       - kwin-common
