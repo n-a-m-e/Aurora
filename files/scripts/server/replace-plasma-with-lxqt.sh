@@ -10,14 +10,16 @@ for file in \
   /etc/xdg/autostart/org.kde.polkit-kde-authentication-agent-1.desktop
 do
   if [[ -f "$file" ]]; then
-    sed -i 's/^OnlyShowIn=.*/OnlyShowIn=KDE;LXQt;/' "$file"
+    sed -i 's/^OnlyShowIn=.*/OnlyShowIn=KDE;LXQt;XFCE;/' "$file"
   fi
 done
 
-# Configure SDDM for an X11 greeter/session path.
-# In BlueBuild/rpm-ostree images, write system defaults to /etc during build;
-# rpm-ostree will deploy them appropriately.
-mkdir -p /usr/local/bin /usr/share/xsessions /etc/sddm.conf.d /etc/skel/.config/variety
+# Configure custom X11 LXQt component session using xfwm4.
+mkdir -p \
+  /usr/local/bin \
+  /usr/share/xsessions \
+  /etc/sddm.conf.d \
+  /etc/skel/.config/variety
 
 cat > /etc/skel/.config/variety/variety.conf <<'EOF'
 [config]
@@ -36,26 +38,29 @@ folders = [['/usr/share/backgrounds/aurora', True]]
 sources = [['album', '/usr/share/backgrounds/aurora', True]]
 EOF
 
-cat > /usr/local/bin/start-xfwm4-lxqt <<'EOF'
+cat > /usr/local/bin/start-lxqt <<'EOF'
 #!/usr/bin/env bash
 set +e
 
-export DESKTOP_SESSION=xfwm4-lxqt
+mkdir -p "$HOME/.cache"
+exec >"$HOME/.cache/lxqt-session.log" 2>&1
+
+export DESKTOP_SESSION=lxqt
 export XDG_CURRENT_DESKTOP=LXQt
-export XDG_SESSION_DESKTOP=xfwm4-lxqt
+export XDG_SESSION_DESKTOP=lxqt
 export QT_QPA_PLATFORM=xcb
 
 dbus-update-activation-environment --systemd \
   DISPLAY XAUTHORITY DESKTOP_SESSION XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP \
-  2>/dev/null
+  2>/dev/null || true
 
-if [ ! -f "$HOME/.config/variety/variety.conf" ]; then
+# Seed Variety config for users that do not have one yet.
+if [ ! -f "$HOME/.config/variety/variety.conf" ] && [ -f /etc/skel/.config/variety/variety.conf ]; then
   mkdir -p "$HOME/.config/variety"
   cp /etc/skel/.config/variety/variety.conf "$HOME/.config/variety/variety.conf"
 fi
 
 xfsettingsd &
-xfwm4 --replace &
 variety &
 lxqt-globalkeysd &
 lxqt-notificationd &
@@ -63,19 +68,16 @@ lxqt-powermanagement &
 lxqt-panel &
 nm-applet &
 
-wait
+exec xfwm4 --replace
 EOF
 
-chmod +x /usr/local/bin/start-xfwm4-lxqt
+chmod +x /usr/local/bin/start-lxqt
 
-rm -f /usr/share/xsessions/lxqt.desktop \
-      /usr/share/xsessions/openbox.desktop \
-      /usr/share/wayland-sessions/*.desktop
-
-cat > /usr/share/xsessions/xfwm4-lxqt.desktop <<'EOF'
+cat > /usr/share/xsessions/lxqt.desktop <<'EOF'
 [Desktop Entry]
-Name=xfwm4 LXQt
-Exec=/usr/local/bin/start-xfwm4-lxqt
+Name=LXQt
+Comment=LXQt desktop session
+Exec=/usr/local/bin/start-lxqt
 Type=Application
 DesktopNames=LXQt
 EOF
@@ -84,4 +86,5 @@ cat > /etc/sddm.conf.d/10-x11.conf <<'EOF'
 [General]
 DisplayServer=x11
 GreeterEnvironment=QT_QPA_PLATFORM=xcb
+InputMethod=
 EOF
