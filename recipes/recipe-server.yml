@@ -37,6 +37,8 @@ modules:
       - sddm-conf
       - sddm-themes
       - xorg-x11-server-Xorg
+      - xfce4-settings
+      - dbus-x11
     remove:
       - kwin
       - kwin-common
@@ -78,7 +80,7 @@ modules:
       - kcm-plasmalogin
   - type: script
     scripts:
-      - server/replace-plasma-with-lxqt-xfwm4.sh
+      - server/replace-plasma-with-lxqt.sh
   - type: systemd
     system:
       enabled:
