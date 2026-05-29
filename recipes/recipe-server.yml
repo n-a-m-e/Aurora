@@ -15,7 +15,6 @@ modules:
   # Replace Plasma/KWin with LXQt + xfwm4
   - type: rpm-ostree
     install:
-      - lxqt-session
       - lxqt-panel
       - lxqt-config
       - lxqt-globalkeys
@@ -24,8 +23,10 @@ modules:
       - lxqt-qtplugin
       - lxqt-runner
       - lxqt-sudo
+      - lxqt-about
       - xfwm4
       - xfconf
+      - variety
       - pavucontrol-qt
       - nm-connection-editor
       - network-manager-applet
@@ -78,6 +79,10 @@ modules:
   - type: script
     scripts:
       - server/replace-plasma-with-lxqt-xfwm4.sh
+  - type: systemd
+    system:
+      enabled:
+        - sddm.service
 
   - type: rpm-ostree
     repos: []
