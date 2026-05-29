@@ -62,8 +62,8 @@ show_intro=false
 xdg_session=lxqt
 name=LXQt
 description=LXQt desktop session.
-cmdline=/usr/local/bin/start-lxqt
-testcmd=test -x /usr/local/bin/start-lxqt
+cmdline=/usr/sbin/start-lxqt.sh
+testcmd=test -x /usr/sbin/start-lxqt.sh
 description_from_testcmd=false
 EOF
 
