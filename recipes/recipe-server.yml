@@ -24,20 +24,38 @@ modules:
       - lxqt-runner
       - lxqt-sudo
       - lxqt-about
+
+      # LXQt / Qt theming
+      - lxqt-themes
+      - breeze-icon-theme
+      - breeze-gtk
+      - adwaita-icon-theme
+      - kvantum
+      - kvantum-qt5
+      - qt5ct
+      - qt6ct
+
+      # Window manager
       - xfwm4
       - xfconf
-      - variety
+      - xfce4-settings
+
+      # Wallpaper
+      - feh
+
+      # Audio / network / admin tools
       - pavucontrol-qt
       - nm-connection-editor
       - network-manager-applet
       - system-config-printer
       - firewall-config
       - qps
+
+      # Login/session
       - sddm
       - sddm-conf
       - sddm-themes
       - xorg-x11-server-Xorg
-      - xfce4-settings
       - dbus-x11
     remove:
       - kwin
