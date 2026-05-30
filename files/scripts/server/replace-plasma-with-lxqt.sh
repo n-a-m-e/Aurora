@@ -7,6 +7,26 @@ LXQT_THEME="Dark-Breeze"
 CURSOR_THEME="breeze_cursors"
 CURSOR_SIZE="24"
 DARK_BREEZE_URL="https://github.com/n-a-m-e/Aurora-Files/releases/download/Dark_Breeze_by_Nudnik/Dark_Breeze_by_Nudnik.tar.gz"
+WINGMENU_URL="https://github.com/elviosak/plugin-wingmenu/archive/refs/heads/master.tar.gz"
+WINGMENU_BUILD_DEPS=(
+  cmake
+  gcc-c++
+  lxqt-build-tools
+  liblxqt-devel
+  lxqt-globalkeys-devel
+  libqtxdg-devel
+  qt6-qtbase-devel
+)
+
+install_wingmenu_build_deps() {
+  echo "Installing temporary WingMenu build dependencies..."
+  rpm-ostree install --idempotent "${WINGMENU_BUILD_DEPS[@]}"
+}
+
+remove_wingmenu_build_deps() {
+  echo "Removing temporary WingMenu build dependencies..."
+  rpm-ostree uninstall --idempotent "${WINGMENU_BUILD_DEPS[@]}"
+}
 
 # Allow KDE polkit agent to autostart in LXQt.
 for file in \
@@ -45,7 +65,60 @@ install_dark_breeze_lxqt_theme() {
   rm -rf "/usr/share/lxqt/themes/${LXQT_THEME}"
   cp -a "$found" "/usr/share/lxqt/themes/${LXQT_THEME}"
 }
+
+install_wingmenu_plugin() {
+  local workdir archive srcdir
+  workdir="$(mktemp -d)"
+  archive="${workdir}/plugin-wingmenu.tar.gz"
+
+  cleanup_wingmenu_tmp() { rm -rf "$workdir"; }
+  trap cleanup_wingmenu_tmp RETURN
+
+  echo "Downloading and building LXQt WingMenu plugin..."
+  curl -fL --retry 3 --retry-delay 2 \
+    -H 'User-Agent: Mozilla/5.0' \
+    "${WINGMENU_URL}" \
+    -o "$archive"
+
+  tar -xzf "$archive" -C "$workdir"
+  srcdir="$(find "$workdir" -maxdepth 1 -type d -name 'plugin-wingmenu-*' | head -n1)"
+  if [[ -z "$srcdir" ]]; then
+    echo "WingMenu archive did not extract to plugin-wingmenu-*" >&2
+    return 1
+  fi
+
+  cmake -B "${workdir}/build" -S "$srcdir" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr
+  cmake --build "${workdir}/build" --parallel "$(nproc)"
+  cmake --install "${workdir}/build"
+}
+
+ensure_distributor_logo_icon() {
+  mkdir -p /usr/share/icons/hicolor/scalable/apps
+
+  local candidate
+  for candidate in \
+    /usr/share/icons/hicolor/scalable/apps/distributor-logo.svg \
+    /usr/share/icons/hicolor/scalable/distributor-logo.svg \
+    /usr/share/pixmaps/distributor-logo.svg \
+    /usr/share/pixmaps/fedora-logo.svg \
+    /usr/share/icons/hicolor/scalable/apps/start-here.svg
+  do
+    if [[ -f "$candidate" ]]; then
+      cp -f "$candidate" /usr/share/icons/hicolor/scalable/apps/distributor-logo.svg
+      return 0
+    fi
+  done
+
+  echo "Warning: could not find distributor-logo.svg; WingMenu will still request icon=distributor-logo." >&2
+}
+
 install_dark_breeze_lxqt_theme
+install_wingmenu_build_deps
+install_wingmenu_plugin
+remove_wingmenu_build_deps
+ensure_distributor_logo_icon
 
 mkdir -p \
   /usr/sbin \
@@ -94,7 +167,7 @@ hidable=false
 lineCount=1
 lockPanel=false
 panelSize=40
-plugins=mainmenu,quicklaunch,taskbar,statusnotifier,tray,volume,clock
+plugins=wingmenu,quicklaunch,taskbar,statusnotifier,tray,volume,worldclock
 position=Bottom
 reserve-space=true
 show-delay=0
@@ -102,10 +175,18 @@ type=panel
 width=100
 width-percent=true
 
-[mainmenu]
+[wingmenu]
 alignment=Left
+appLayout=1
+categoryLeft=true
+hoverDelay=200
 icon=distributor-logo
-type=mainmenu
+menuFile=/etc/xdg/menus/lxqt-applications.menu
+searchBottom=true
+showIcon=true
+showText=false
+switchOnHover=true
+type=wingmenu
 
 [quicklaunch]
 alignment=Left
@@ -132,9 +213,13 @@ type=tray
 alignment=Right
 type=volume
 
-[clock]
+[worldclock]
 alignment=Right
-type=clock
+dateFormat=yyyy-MM-dd
+showDate=false
+showSeconds=false
+timeFormat=HH:mm
+type=worldclock
 EOF_PANEL
 cp /etc/skel/.config/lxqt/panel.conf /usr/etc/xdg/lxqt/panel.conf
 
@@ -211,13 +296,6 @@ export QT_QPA_PLATFORMTHEME=lxqt
 export XCURSOR_THEME=${CURSOR_THEME}
 export XCURSOR_SIZE=${CURSOR_SIZE}
 
-xrdb -merge "\$HOME/.Xresources" 2>/dev/null || xrdb -merge /etc/skel/.Xresources 2>/dev/null || true
-
-dbus-update-activation-environment --systemd \
-  DISPLAY XAUTHORITY DESKTOP_SESSION XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP \
-  QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME XCURSOR_THEME XCURSOR_SIZE \
-  2>/dev/null || true
-
 seed_file() {
   [[ -f "\$2" || ! -f "\$1" ]] && return 0
   mkdir -p "\$(dirname "\$2")"
@@ -234,8 +312,17 @@ seed_file /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml "\$HO
 seed_file /etc/skel/.icons/default/index.theme "\$HOME/.icons/default/index.theme"
 seed_file /etc/skel/.Xresources "\$HOME/.Xresources"
 
+xrdb -merge "\$HOME/.Xresources" 2>/dev/null || true
+
+dbus-update-activation-environment --systemd \
+  DISPLAY XAUTHORITY DESKTOP_SESSION XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP \
+  QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME XCURSOR_THEME XCURSOR_SIZE \
+  2>/dev/null || true
+
 xfconf-query -c xfwm4 -p /general/workspace_count -s 1 --create -t int 2>/dev/null || true
 xfconf-query -c xfwm4 -p /general/tile_on_move -s true --create -t bool 2>/dev/null || true
+xfconf-query -c xfwm4 -p /general/snap_to_border -s true --create -t bool 2>/dev/null || true
+xfconf-query -c xfwm4 -p /general/snap_to_windows -s true --create -t bool 2>/dev/null || true
 xfconf-query -c xfwm4 -p /general/wrap_windows -s false --create -t bool 2>/dev/null || true
 xfconf-query -c xfwm4 -p /general/wrap_workspaces -s false --create -t bool 2>/dev/null || true
 
