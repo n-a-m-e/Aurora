@@ -16,6 +16,8 @@ WINGMENU_BUILD_DEPS=(
   lxqt-globalkeys-devel
   libqtxdg-devel
   qt6-qtbase-devel
+  qt6-linguist
+  qt6-qttools-devel
 )
 
 install_wingmenu_build_deps() {
