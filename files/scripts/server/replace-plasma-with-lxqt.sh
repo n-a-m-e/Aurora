@@ -23,43 +23,112 @@ install_dark_breeze_lxqt_theme() {
   command -v curl >/dev/null || { echo "curl is required to download ${LXQT_THEME}" >&2; return 1; }
   command -v python3 >/dev/null || { echo "python3 is required to parse theme download metadata" >&2; return 1; }
 
-  local workdir archive download_url
+  local workdir archive metadata candidates url
   workdir="$(mktemp -d)"
-  archive="${workdir}/dark-breeze-theme"
+  archive="${workdir}/dark-breeze-theme.archive"
+  metadata="${workdir}/metadata.txt"
+  candidates="${workdir}/candidate-urls.txt"
 
-  download_url="$({
-    curl -fsSL "https://www.pling.com/p/${DARK_BREEZE_ID}/loadFiles" || \
-    curl -fsSL "https://store.kde.org/p/${DARK_BREEZE_ID}/loadFiles" || \
-    curl -fsSL "https://www.opendesktop.org/p/${DARK_BREEZE_ID}/loadFiles"
-  } | python3 -c '
-import json, re, sys
-raw = sys.stdin.read()
+  cleanup_dark_breeze_tmp() { rm -rf "$workdir"; }
+  trap cleanup_dark_breeze_tmp RETURN
+
+  if [[ -n "${DARK_BREEZE_URL:-}" ]]; then
+    printf '%s\n' "${DARK_BREEZE_URL}" > "$candidates"
+  else
+    : > "$metadata"
+    for endpoint in \
+      "https://www.pling.com/p/${DARK_BREEZE_ID}/loadFiles" \
+      "https://www.gnome-look.org/p/${DARK_BREEZE_ID}/loadFiles" \
+      "https://store.kde.org/p/${DARK_BREEZE_ID}/loadFiles" \
+      "https://www.opendesktop.org/p/${DARK_BREEZE_ID}/loadFiles" \
+      "https://www.appimagehub.com/p/${DARK_BREEZE_ID}/loadFiles"
+    do
+      curl -fsSL --retry 3 --retry-delay 2 "$endpoint" >> "$metadata" && break || true
+    done
+
+    python3 - "$metadata" > "$candidates" <<'PY_URLS'
+import html
+import json
+import re
+import sys
+from urllib.parse import urlparse
+
+raw = html.unescape(open(sys.argv[1], 'r', encoding='utf-8', errors='ignore').read())
 urls = []
+
+def add(value):
+    if not isinstance(value, str):
+        return
+    value = html.unescape(value).replace('\\/', '/').strip().strip('"\'')
+    value = re.sub(r'[\x00-\x20]+', '', value)
+    parsed = urlparse(value)
+    if parsed.scheme in ('http', 'https') and parsed.netloc and ' ' not in value:
+        urls.append(value)
+
 try:
     data = json.loads(raw)
-    items = data.get("files", data if isinstance(data, list) else [])
-    for item in items:
+    stack = [data]
+    while stack:
+        item = stack.pop()
         if isinstance(item, dict):
-            for key in ("url", "downloadUrl", "downloadlink", "link"):
-                val = item.get(key)
-                if isinstance(val, str) and val.startswith("http"):
-                    urls.append(val)
+            for v in item.values():
+                if isinstance(v, (dict, list)):
+                    stack.append(v)
+                else:
+                    add(v)
+        elif isinstance(item, list):
+            stack.extend(item)
 except Exception:
     pass
-urls += re.findall(r"https?://[^\\\"<> ]+", raw)
-for url in urls:
-    if any(x in url.lower() for x in ("download", "files", "dl.opendesktop", "ocs-files")):
-        print(url.replace("\\/", "/"))
-        break
-' )"
 
-  if [[ -z "${download_url}" ]]; then
-    echo "Could not determine Dark Breeze download URL from OpenDesktop metadata." >&2
-    echo "Set DARK_BREEZE_URL to a direct archive URL and rerun the build." >&2
+for match in re.findall(r'https?://[^"\'<>\\\s]+', raw):
+    add(match)
+
+preferred = []
+other = []
+for u in urls:
+    l = u.lower()
+    if any(token in l for token in (
+        'dark-breeze-by-nudnik',
+        'startdownload',
+        'downloadfile',
+        '/download/',
+        'ocs-files',
+        'dl.opendesktop',
+        'files.opendesktop',
+    )):
+        preferred.append(u)
+    else:
+        other.append(u)
+
+seen = set()
+for u in preferred + other:
+    if u not in seen:
+        seen.add(u)
+        print(u)
+PY_URLS
+  fi
+
+  if [[ ! -s "$candidates" ]]; then
+    echo "Could not determine a Dark Breeze download URL." >&2
+    echo "Set DARK_BREEZE_URL to the direct Dark-Breeze-by-Nudnik.tar.gz URL and rerun." >&2
     return 1
   fi
 
-  curl -fL "$download_url" -o "$archive"
+  while IFS= read -r url; do
+    [[ -n "$url" ]] || continue
+    echo "Trying Dark Breeze download: $url"
+    if curl -fL --retry 3 --retry-delay 2 "$url" -o "$archive"; then
+      break
+    fi
+    rm -f "$archive"
+  done < "$candidates"
+
+  if [[ ! -s "$archive" ]]; then
+    echo "Failed to download Dark Breeze from all discovered URLs." >&2
+    echo "Set DARK_BREEZE_URL to the direct Dark-Breeze-by-Nudnik.tar.gz URL and rerun." >&2
+    return 1
+  fi
 
   mkdir -p "${workdir}/extract" /usr/share/lxqt/themes
   if tar -tf "$archive" >/dev/null 2>&1; then
@@ -77,9 +146,7 @@ for url in urls:
 
   rm -rf "/usr/share/lxqt/themes/${LXQT_THEME}"
   cp -a "$found" "/usr/share/lxqt/themes/${LXQT_THEME}"
-  rm -rf "$workdir"
 }
-
 install_dark_breeze_lxqt_theme
 
 mkdir -p \
@@ -116,6 +183,63 @@ sGtk/FontName=Noto Sans 10
 EOF_LXQT_APPEARANCE
 cp /etc/skel/.config/lxqt/lxqt-config-appearance.conf /usr/etc/xdg/lxqt/lxqt-config-appearance.conf
 
+cat > /etc/skel/.config/lxqt/panel.conf <<'EOF_PANEL'
+[General]
+__userfile__=true
+panels=panel1
+
+[panel1]
+alignment=0
+animation-duration=0
+desktop=0
+hidable=false
+lineCount=1
+lockPanel=false
+panelSize=40
+plugins=mainmenu,quicklaunch,taskbar,statusnotifier,tray,volume,clock
+position=Bottom
+reserve-space=true
+show-delay=0
+type=panel
+width=100
+width-percent=true
+
+[mainmenu]
+alignment=Left
+icon=distributor-logo
+type=mainmenu
+
+[quicklaunch]
+alignment=Left
+apps\1\desktop=/var/lib/flatpak/exports/share/applications/org.mozilla.firefox.desktop
+apps\2\desktop=/usr/share/applications/org.kde.dolphin.desktop
+apps\3\desktop=/usr/share/applications/org.kde.yakuake.desktop
+apps\4\desktop=/usr/share/applications/org.kde.kate.desktop
+apps\size=4
+type=quicklaunch
+
+[taskbar]
+alignment=Left
+type=taskbar
+
+[statusnotifier]
+alignment=Right
+type=statusnotifier
+
+[tray]
+alignment=Right
+type=tray
+
+[volume]
+alignment=Right
+type=volume
+
+[clock]
+alignment=Right
+type=clock
+EOF_PANEL
+cp /etc/skel/.config/lxqt/panel.conf /usr/etc/xdg/lxqt/panel.conf
+
 cat > /etc/skel/.config/gtk-3.0/settings.ini <<EOF_GTK
 [Settings]
 gtk-theme-name=Breeze
@@ -148,6 +272,7 @@ cat > /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml <<'EOF_XFWM4'
     <property name="title_font" type="string" value="Noto Sans 10"/>
     <property name="button_layout" type="string" value="O|HMC"/>
     <property name="use_compositing" type="bool" value="true"/>
+    <property name="workspace_count" type="int" value="1"/>
     <property name="tile_on_move" type="bool" value="true"/>
     <property name="snap_to_border" type="bool" value="true"/>
     <property name="snap_to_windows" type="bool" value="true"/>
@@ -203,12 +328,18 @@ seed_file() {
 
 seed_file /etc/skel/.config/lxqt/lxqt.conf "\$HOME/.config/lxqt/lxqt.conf"
 seed_file /etc/skel/.config/lxqt/lxqt-config-appearance.conf "\$HOME/.config/lxqt/lxqt-config-appearance.conf"
+seed_file /etc/skel/.config/lxqt/panel.conf "\$HOME/.config/lxqt/panel.conf"
 seed_file /etc/skel/.config/gtk-3.0/settings.ini "\$HOME/.config/gtk-3.0/settings.ini"
 seed_file /etc/skel/.config/gtk-4.0/settings.ini "\$HOME/.config/gtk-4.0/settings.ini"
 seed_file /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml "\$HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
 seed_file /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml "\$HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
 seed_file /etc/skel/.icons/default/index.theme "\$HOME/.icons/default/index.theme"
 seed_file /etc/skel/.Xresources "\$HOME/.Xresources"
+
+xfconf-query -c xfwm4 -p /general/workspace_count -s 1 --create -t int 2>/dev/null || true
+xfconf-query -c xfwm4 -p /general/tile_on_move -s true --create -t bool 2>/dev/null || true
+xfconf-query -c xfwm4 -p /general/wrap_windows -s false --create -t bool 2>/dev/null || true
+xfconf-query -c xfwm4 -p /general/wrap_workspaces -s false --create -t bool 2>/dev/null || true
 
 xfsettingsd &
 feh --bg-fill "${WALLPAPER}" &
