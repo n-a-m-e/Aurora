@@ -6,7 +6,7 @@ WALLPAPER="/usr/share/backgrounds/aurora/jonatan-pie-aurora/contents/images/3944
 LXQT_THEME="Dark-Breeze"
 CURSOR_THEME="breeze_cursors"
 CURSOR_SIZE="24"
-DARK_BREEZE_ID="2172931"
+DARK_BREEZE_URL="https://github.com/n-a-m-e/Aurora-Files/releases/download/Dark_Breeze_by_Nudnik/Dark_Breeze_by_Nudnik.tar.gz"
 
 # Allow KDE polkit agent to autostart in LXQt.
 for file in \
@@ -18,131 +18,29 @@ do
 done
 
 install_dark_breeze_lxqt_theme() {
-  [[ -d "/usr/share/lxqt/themes/${LXQT_THEME}" ]] && return 0
+  mkdir -p /usr/share/lxqt/themes
 
-  command -v curl >/dev/null || { echo "curl is required to download ${LXQT_THEME}" >&2; return 1; }
-  command -v python3 >/dev/null || { echo "python3 is required to parse theme download metadata" >&2; return 1; }
-
-  local workdir archive metadata candidates url
+  local workdir archive found
   workdir="$(mktemp -d)"
-  archive="${workdir}/dark-breeze-theme.archive"
-  metadata="${workdir}/metadata.txt"
-  candidates="${workdir}/candidate-urls.txt"
+  archive="${workdir}/Dark_Breeze_by_Nudnik.tar.gz"
 
   cleanup_dark_breeze_tmp() { rm -rf "$workdir"; }
   trap cleanup_dark_breeze_tmp RETURN
 
-  if [[ -n "${DARK_BREEZE_URL:-}" ]]; then
-    printf '%s\n' "${DARK_BREEZE_URL}" > "$candidates"
-  else
-    : > "$metadata"
-    for endpoint in \
-      "https://www.pling.com/p/${DARK_BREEZE_ID}/loadFiles" \
-      "https://www.gnome-look.org/p/${DARK_BREEZE_ID}/loadFiles" \
-      "https://store.kde.org/p/${DARK_BREEZE_ID}/loadFiles" \
-      "https://www.opendesktop.org/p/${DARK_BREEZE_ID}/loadFiles" \
-      "https://www.appimagehub.com/p/${DARK_BREEZE_ID}/loadFiles"
-    do
-      curl -fsSL --retry 3 --retry-delay 2 "$endpoint" >> "$metadata" && break || true
-    done
+  echo "Downloading Dark Breeze by Nudnik LXQt theme..."
+  curl -fL --retry 3 --retry-delay 2 \
+    -H 'User-Agent: Mozilla/5.0' \
+    "${DARK_BREEZE_URL}" \
+    -o "$archive"
 
-    python3 - "$metadata" > "$candidates" <<'PY_URLS'
-import html
-import json
-import re
-import sys
-from urllib.parse import urlparse
+  mkdir -p "${workdir}/extract"
+  tar -xzf "$archive" -C "${workdir}/extract"
 
-raw = html.unescape(open(sys.argv[1], 'r', encoding='utf-8', errors='ignore').read())
-urls = []
-
-def add(value):
-    if not isinstance(value, str):
-        return
-    value = html.unescape(value).replace('\\/', '/').strip().strip('"\'')
-    value = re.sub(r'[\x00-\x20]+', '', value)
-    parsed = urlparse(value)
-    if parsed.scheme in ('http', 'https') and parsed.netloc and ' ' not in value:
-        urls.append(value)
-
-try:
-    data = json.loads(raw)
-    stack = [data]
-    while stack:
-        item = stack.pop()
-        if isinstance(item, dict):
-            for v in item.values():
-                if isinstance(v, (dict, list)):
-                    stack.append(v)
-                else:
-                    add(v)
-        elif isinstance(item, list):
-            stack.extend(item)
-except Exception:
-    pass
-
-for match in re.findall(r'https?://[^"\'<>\\\s]+', raw):
-    add(match)
-
-preferred = []
-other = []
-for u in urls:
-    l = u.lower()
-    if any(token in l for token in (
-        'dark-breeze-by-nudnik',
-        'startdownload',
-        'downloadfile',
-        '/download/',
-        'ocs-files',
-        'dl.opendesktop',
-        'files.opendesktop',
-    )):
-        preferred.append(u)
-    else:
-        other.append(u)
-
-seen = set()
-for u in preferred + other:
-    if u not in seen:
-        seen.add(u)
-        print(u)
-PY_URLS
-  fi
-
-  if [[ ! -s "$candidates" ]]; then
-    echo "Could not determine a Dark Breeze download URL." >&2
-    echo "Set DARK_BREEZE_URL to the direct Dark-Breeze-by-Nudnik.tar.gz URL and rerun." >&2
+  found="$(find "${workdir}/extract" -type f -name 'lxqt-panel.qss' -printf '%h\n' | head -n1)"
+  if [[ -z "$found" ]]; then
+    echo "Dark Breeze archive did not contain lxqt-panel.qss" >&2
     return 1
   fi
-
-  while IFS= read -r url; do
-    [[ -n "$url" ]] || continue
-    echo "Trying Dark Breeze download: $url"
-    if curl -fL --retry 3 --retry-delay 2 "$url" -o "$archive"; then
-      break
-    fi
-    rm -f "$archive"
-  done < "$candidates"
-
-  if [[ ! -s "$archive" ]]; then
-    echo "Failed to download Dark Breeze from all discovered URLs." >&2
-    echo "Set DARK_BREEZE_URL to the direct Dark-Breeze-by-Nudnik.tar.gz URL and rerun." >&2
-    return 1
-  fi
-
-  mkdir -p "${workdir}/extract" /usr/share/lxqt/themes
-  if tar -tf "$archive" >/dev/null 2>&1; then
-    tar -xf "$archive" -C "${workdir}/extract"
-  elif command -v unzip >/dev/null && unzip -tq "$archive" >/dev/null 2>&1; then
-    unzip -q "$archive" -d "${workdir}/extract"
-  else
-    echo "Downloaded Dark Breeze archive is not a supported tar/zip file." >&2
-    return 1
-  fi
-
-  local found
-  found="$(find "${workdir}/extract" -type f -name "lxqt-panel.qss" -printf '%h\n' | head -n1)"
-  [[ -n "$found" ]] || { echo "Could not find lxqt-panel.qss in Dark Breeze archive." >&2; return 1; }
 
   rm -rf "/usr/share/lxqt/themes/${LXQT_THEME}"
   cp -a "$found" "/usr/share/lxqt/themes/${LXQT_THEME}"
