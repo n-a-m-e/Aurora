@@ -12,6 +12,7 @@ WINGMENU_BUILD_DEPS=(
   cmake
   gcc-c++
   lxqt-build-tools
+  lxqt-panel-devel
   liblxqt-devel
   lxqt-globalkeys-devel
   libqtxdg-devel
@@ -105,7 +106,8 @@ Q_DECLARE_INTERFACE(ILXQtPanelPluginLibrary, "lxqt.org/Panel/PluginInterface/3.0
 
   cmake -B "${workdir}/build" -S "$srcdir" \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=/usr
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_CXX_FLAGS="-I/usr/include/lxqt"
   cmake --build "${workdir}/build" --parallel "$(nproc)"
   cmake --install "${workdir}/build"
 }
@@ -371,4 +373,3 @@ InputMethod=
 EOF_SDDM
 
 gtk-update-icon-cache -f /usr/share/icons/hicolor >/dev/null 2>&1 || true
-
