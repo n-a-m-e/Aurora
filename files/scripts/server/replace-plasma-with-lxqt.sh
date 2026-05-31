@@ -18,6 +18,8 @@ WINGMENU_BUILD_DEPS=(
   qt6-qtbase-devel
   qt6-linguist
   qt6-qttools-devel
+  kf6-kwindowsystem-devel
+  qt6-qtbase-private-devel
 )
 
 install_wingmenu_build_deps() {
