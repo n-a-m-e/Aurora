@@ -11,6 +11,7 @@ WINGMENU_URL="https://github.com/elviosak/plugin-wingmenu/archive/refs/heads/mas
 WINGMENU_BUILD_DEPS=(
   cmake
   gcc-c++
+  glib2-devel
   lxqt-build-tools
   lxqt-panel-devel
   liblxqt-devel
