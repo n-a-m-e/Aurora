@@ -6,6 +6,8 @@ WALLPAPER="/usr/share/backgrounds/aurora/jonatan-pie-aurora/contents/images/3944
 LXQT_THEME="Dark-Breeze"
 CURSOR_THEME="breeze_cursors"
 CURSOR_SIZE="24"
+MANAGED_LXQT_CONFIG_VERSION="2026-05-31-4"
+REMOTE_SHUTDOWN="/usr/sbin/remote-shutdown.py"
 DARK_BREEZE_URL="https://github.com/n-a-m-e/Aurora-Files/releases/download/Dark_Breeze_by_Nudnik/Dark_Breeze_by_Nudnik.tar.gz"
 WINGMENU_URL="https://github.com/elviosak/plugin-wingmenu/archive/refs/heads/master.tar.gz"
 WINGMENU_BUILD_DEPS=(
@@ -46,6 +48,10 @@ for file in \
 do
   [[ -f "$file" ]] && sed -i 's/^OnlyShowIn=.*/OnlyShowIn=KDE;LXQt;XFCE;/' "$file"
 done
+
+install_lxqt_runtime_deps() {
+  rpm-ostree install --idempotent lxqt-session
+}
 
 install_dark_breeze_lxqt_theme() {
   mkdir -p /usr/share/lxqt/themes
@@ -137,11 +143,56 @@ ensure_distributor_logo_icon() {
   echo "Warning: could not find distributor-logo.svg; WingMenu will still request icon=distributor-logo." >&2
 }
 
+install_remote_power_wrapper() {
+  # remote-shutdown.py and remote-shutdown.service are managed elsewhere.
+  # This wrapper is only the user-session action that WingMenu calls.
+  cat > /usr/sbin/aurora-remote-power-action <<'EOF_REMOTE_POWER_ACTION'
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+REMOTE_SHUTDOWN="/usr/sbin/remote-shutdown.py"
+cmd="${1:-}"
+
+case "$cmd" in
+  shutdown|poweroff)
+    action="org.freedesktop.login1.power-off"
+    ;;
+  reboot|restart)
+    action="org.freedesktop.login1.reboot"
+    ;;
+  halt)
+    action="org.freedesktop.login1.halt"
+    ;;
+  *)
+    echo "usage: aurora-remote-power-action shutdown|reboot|halt" >&2
+    exit 2
+    ;;
+esac
+
+if [[ ! -x "$REMOTE_SHUTDOWN" ]]; then
+  echo "$REMOTE_SHUTDOWN is missing or not executable" >&2
+  exit 1
+fi
+
+user="${USER:-$(id -un)}"
+session="${XDG_SESSION_ID:-}"
+
+if [[ -z "$session" ]]; then
+  session="$(loginctl list-sessions --no-legend 2>/dev/null | awk -v u="$user" '$3 == u {print $1; exit}')"
+fi
+
+exec "$REMOTE_SHUTDOWN" request "$user" "$session" "$action"
+EOF_REMOTE_POWER_ACTION
+  chmod 0755 /usr/sbin/aurora-remote-power-action
+}
+
+install_lxqt_runtime_deps
 install_dark_breeze_lxqt_theme
 install_wingmenu_build_deps
 install_wingmenu_plugin
 remove_wingmenu_build_deps
 ensure_distributor_logo_icon
+install_remote_power_wrapper
 
 mkdir -p \
   /usr/sbin \
@@ -155,7 +206,8 @@ mkdir -p \
   /usr/etc/xdg/lxqt \
   /usr/etc/xdg/gtk-3.0 \
   /usr/etc/xdg/gtk-4.0 \
-  /usr/share/icons/default
+  /usr/share/icons/default \
+  /usr/share/applications
 
 cat > /etc/skel/.config/lxqt/lxqt.conf <<EOF_LXQT
 [General]
@@ -202,12 +254,15 @@ width-percent=true
 alignment=Left
 appLayout=1
 categoryLeft=true
+customizeLeave=true
 hoverDelay=200
 icon=distributor-logo
+leaveActions=/usr/share/applications/aurora-lxqt-logout.desktop,/usr/share/applications/aurora-lxqt-reboot.desktop,/usr/share/applications/aurora-lxqt-shutdown.desktop
 menuFile=/etc/xdg/menus/lxqt-applications.menu
 searchBottom=true
 showIcon=true
 showText=false
+sidebarLeft=true
 switchOnHover=true
 type=wingmenu
 
@@ -245,6 +300,40 @@ timeFormat=HH:mm
 type=worldclock
 EOF_PANEL
 cp /etc/skel/.config/lxqt/panel.conf /usr/etc/xdg/lxqt/panel.conf
+
+cat > /usr/share/applications/aurora-lxqt-logout.desktop <<'EOF_LOGOUT_DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Log Out
+Comment=Log out of the current LXQt session
+Icon=system-log-out
+Exec=lxqt-leave --logout
+Categories=System;
+NoDisplay=true
+EOF_LOGOUT_DESKTOP
+
+cat > /usr/share/applications/aurora-lxqt-reboot.desktop <<'EOF_REBOOT_DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Restart
+Comment=Restart the computer
+Icon=system-reboot
+Exec=/usr/sbin/aurora-remote-power-action reboot
+Categories=System;
+NoDisplay=true
+EOF_REBOOT_DESKTOP
+
+cat > /usr/share/applications/aurora-lxqt-shutdown.desktop <<'EOF_SHUTDOWN_DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Shut Down
+Comment=Shut down the computer
+Icon=system-shutdown
+Exec=/usr/sbin/aurora-remote-power-action shutdown
+Categories=System;
+NoDisplay=true
+EOF_SHUTDOWN_DESKTOP
+
 
 cat > /etc/skel/.config/gtk-3.0/settings.ini <<EOF_GTK
 [Settings]
@@ -325,15 +414,38 @@ seed_file() {
   cp "\$1" "\$2"
 }
 
-seed_file /etc/skel/.config/lxqt/lxqt.conf "\$HOME/.config/lxqt/lxqt.conf"
-seed_file /etc/skel/.config/lxqt/lxqt-config-appearance.conf "\$HOME/.config/lxqt/lxqt-config-appearance.conf"
-seed_file /etc/skel/.config/lxqt/panel.conf "\$HOME/.config/lxqt/panel.conf"
-seed_file /etc/skel/.config/gtk-3.0/settings.ini "\$HOME/.config/gtk-3.0/settings.ini"
-seed_file /etc/skel/.config/gtk-4.0/settings.ini "\$HOME/.config/gtk-4.0/settings.ini"
-seed_file /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml "\$HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
-seed_file /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml "\$HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
-seed_file /etc/skel/.icons/default/index.theme "\$HOME/.icons/default/index.theme"
-seed_file /etc/skel/.Xresources "\$HOME/.Xresources"
+install_managed_file() {
+  [[ ! -f "\$1" ]] && return 0
+  mkdir -p "\$(dirname "\$2")"
+  cp "\$1" "\$2"
+}
+
+# Force-refresh the configs this image owns when the version changes. This fixes
+# homes that were seeded with KDE-Plasma/bright panel settings before this config.
+stamp="\$HOME/.config/lxqt/.aurora-managed-config-version"
+if [[ ! -f "\$stamp" ]] || [[ "\$(cat "\$stamp" 2>/dev/null)" != "${MANAGED_LXQT_CONFIG_VERSION}" ]]; then
+  install_managed_file /etc/skel/.config/lxqt/lxqt.conf "\$HOME/.config/lxqt/lxqt.conf"
+  install_managed_file /etc/skel/.config/lxqt/lxqt-config-appearance.conf "\$HOME/.config/lxqt/lxqt-config-appearance.conf"
+  install_managed_file /etc/skel/.config/lxqt/panel.conf "\$HOME/.config/lxqt/panel.conf"
+  install_managed_file /etc/skel/.config/gtk-3.0/settings.ini "\$HOME/.config/gtk-3.0/settings.ini"
+  install_managed_file /etc/skel/.config/gtk-4.0/settings.ini "\$HOME/.config/gtk-4.0/settings.ini"
+  install_managed_file /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml "\$HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
+  install_managed_file /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml "\$HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
+  install_managed_file /etc/skel/.icons/default/index.theme "\$HOME/.icons/default/index.theme"
+  install_managed_file /etc/skel/.Xresources "\$HOME/.Xresources"
+  mkdir -p "\$(dirname "\$stamp")"
+  echo "${MANAGED_LXQT_CONFIG_VERSION}" > "\$stamp"
+else
+  seed_file /etc/skel/.config/lxqt/lxqt.conf "\$HOME/.config/lxqt/lxqt.conf"
+  seed_file /etc/skel/.config/lxqt/lxqt-config-appearance.conf "\$HOME/.config/lxqt/lxqt-config-appearance.conf"
+  seed_file /etc/skel/.config/lxqt/panel.conf "\$HOME/.config/lxqt/panel.conf"
+  seed_file /etc/skel/.config/gtk-3.0/settings.ini "\$HOME/.config/gtk-3.0/settings.ini"
+  seed_file /etc/skel/.config/gtk-4.0/settings.ini "\$HOME/.config/gtk-4.0/settings.ini"
+  seed_file /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml "\$HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
+  seed_file /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml "\$HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
+  seed_file /etc/skel/.icons/default/index.theme "\$HOME/.icons/default/index.theme"
+  seed_file /etc/skel/.Xresources "\$HOME/.Xresources"
+fi
 
 xrdb -merge "\$HOME/.Xresources" 2>/dev/null || true
 
