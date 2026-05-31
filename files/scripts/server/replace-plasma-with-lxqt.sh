@@ -30,8 +30,12 @@ install_wingmenu_build_deps() {
 }
 
 remove_wingmenu_build_deps() {
-  echo "Removing temporary WingMenu build dependencies..."
-  rpm-ostree uninstall --idempotent "${WINGMENU_BUILD_DEPS[@]}"
+  # Do not uninstall these here. Some devel packages pull in shared RPM macro/data
+  # packages that remain required by other installed build artifacts, and rpm-ostree
+  # can fail the whole build while trying to depsolve the removal transaction.
+  # Keep the install/build path deterministic; clean-up should be handled by a
+  # separate layer/squash strategy if needed.
+  true
 }
 
 # Allow KDE polkit agent to autostart in LXQt.
