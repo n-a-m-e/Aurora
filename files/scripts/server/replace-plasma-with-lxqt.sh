@@ -91,6 +91,18 @@ install_wingmenu_plugin() {
     return 1
   fi
 
+  # Fedora/LXQt 2.4's automoc can fail with:
+  #   wingmenuplugin.h:88:1: error: Undefined interface
+  # Make the interface declaration visible to moc without adding a duplicate
+  # declaration for the real C++ compiler.
+  if [[ -f "$srcdir/wingmenuplugin.h" ]] && ! grep -q 'Q_MOC_RUN.*ILXQtPanelPluginLibrary' "$srcdir/wingmenuplugin.h"; then
+    sed -i '/class WingMenuLibrary/i\
+#ifdef Q_MOC_RUN\
+Q_DECLARE_INTERFACE(ILXQtPanelPluginLibrary, "lxqt.org/Panel/PluginInterface/3.0")\
+#endif\
+' "$srcdir/wingmenuplugin.h"
+  fi
+
   cmake -B "${workdir}/build" -S "$srcdir" \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr
@@ -359,3 +371,4 @@ InputMethod=
 EOF_SDDM
 
 gtk-update-icon-cache -f /usr/share/icons/hicolor >/dev/null 2>&1 || true
+
