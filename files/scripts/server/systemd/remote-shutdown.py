@@ -51,7 +51,7 @@ def thinlinc_users():
 
 
 def session_env(user):
-    pid = sh("pgrep", "-u", user, "-n", "startplasma-x11")
+    pid = sh("pgrep", "-u", user, "-n", "xfwm4")
     if not pid:
         return None
     try:
