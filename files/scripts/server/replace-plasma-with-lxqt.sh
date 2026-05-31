@@ -6,7 +6,7 @@ WALLPAPER="/usr/share/backgrounds/aurora/jonatan-pie-aurora/contents/images/3944
 LXQT_THEME="Dark-Breeze"
 CURSOR_THEME="breeze_cursors"
 CURSOR_SIZE="24"
-MANAGED_LXQT_CONFIG_VERSION="2026-05-31-4"
+MANAGED_LXQT_CONFIG_VERSION="2026-05-31-6"
 REMOTE_SHUTDOWN="/usr/sbin/remote-shutdown.py"
 DARK_BREEZE_URL="https://github.com/n-a-m-e/Aurora-Files/releases/download/Dark_Breeze_by_Nudnik/Dark_Breeze_by_Nudnik.tar.gz"
 WINGMENU_URL="https://github.com/elviosak/plugin-wingmenu/archive/refs/heads/master.tar.gz"
@@ -82,6 +82,92 @@ install_dark_breeze_lxqt_theme() {
   cp -a "$found" "/usr/share/lxqt/themes/${LXQT_THEME}"
 }
 
+
+patch_dark_breeze_for_wingmenu() {
+  local qss="/usr/share/lxqt/themes/${LXQT_THEME}/lxqt-panel.qss"
+  [[ -f "$qss" ]] || return 0
+
+  # Dark Breeze by Nudnik was written for LXQt's built-in menus/FancyMenu.
+  # WingMenu uses different widgets/object names, so add explicit rules for it.
+  if ! grep -q 'AURORA_WINGMENU_DARK_PATCH' "$qss"; then
+    cat >> "$qss" <<'EOF_WINGMENU_QSS'
+
+/* AURORA_WINGMENU_DARK_PATCH */
+#WingMenu,
+#WingMenu QWidget,
+#WingMenu QFrame,
+#WingMenu QStackedWidget {
+    background: #2a2e32;
+    color: #fcfcfc;
+}
+
+#WingMenu QLineEdit,
+#WingMenu #MainMenuSearchEdit {
+    background: #1b1e20;
+    color: #fcfcfc;
+    border: 1px solid #5e6061;
+    border-radius: 2px;
+    padding: 4px 6px;
+    selection-color: #fcfcfc;
+    selection-background-color: #3daee9;
+}
+
+#WingMenu QListView,
+#WingMenu ApplicationsView {
+    background: #303439;
+    color: #fcfcfc;
+    border: 1px solid #484c4f;
+    outline: 0;
+}
+
+#WingMenu QListView::item {
+    color: #fcfcfc;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    padding: 5px 8px;
+}
+
+#WingMenu QListView::item:hover,
+#WingMenu QListView::item:selected {
+    color: #fcfcfc;
+    background: rgba(61, 174, 233, 33%);
+    border: 1px solid rgba(61, 174, 233, 100%);
+}
+
+#WingMenu QToolButton#CategoryButton {
+    color: #fcfcfc;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    padding: 6px 10px;
+    text-align: left;
+}
+
+#WingMenu QToolButton#CategoryButton:hover,
+#WingMenu QToolButton#CategoryButton:checked,
+#WingMenu QToolButton#CategoryButton:pressed {
+    color: #fcfcfc;
+    background: rgba(61, 174, 233, 33%);
+    border: 1px solid rgba(61, 174, 233, 100%);
+    text-align: left;
+}
+
+#WingMenu QToolButton {
+    color: #fcfcfc;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 2px;
+}
+
+#WingMenu QLabel {
+    color: #fcfcfc;
+    background: transparent;
+}
+EOF_WINGMENU_QSS
+  fi
+}
+
 install_wingmenu_plugin() {
   local workdir archive srcdir
   workdir="$(mktemp -d)"
@@ -113,6 +199,18 @@ install_wingmenu_plugin() {
 Q_DECLARE_INTERFACE(ILXQtPanelPluginLibrary, "lxqt.org/Panel/PluginInterface/3.0")\
 #endif\
 ' "$srcdir/wingmenuplugin.h"
+  fi
+
+  # Give the popup widget a stable object name so the LXQt theme can
+  # style WingMenu itself, not just the panel button.
+  if [[ -f "$srcdir/wingmenuwidget.cpp" ]] && ! grep -q 'setObjectName(QSL("WingMenu"))' "$srcdir/wingmenuwidget.cpp"; then
+    sed -i '0,/^{$/{s/^{$/{\n    setObjectName(QSL("WingMenu"));/}' "$srcdir/wingmenuwidget.cpp"
+  fi
+
+  # Keep the category column text left aligned. Qt stylesheets can center
+  # QToolButton labels depending on the active theme; make it explicit.
+  if [[ -f "$srcdir/wingmenuwidget.cpp" ]] && ! grep -q 'text-align: left' "$srcdir/wingmenuwidget.cpp"; then
+    sed -i 's/tb->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);/tb->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);\n    tb->setStyleSheet(QSL("text-align: left;"));/' "$srcdir/wingmenuwidget.cpp"
   fi
 
   cmake -B "${workdir}/build" -S "$srcdir" \
@@ -188,6 +286,7 @@ EOF_REMOTE_POWER_ACTION
 
 install_lxqt_runtime_deps
 install_dark_breeze_lxqt_theme
+patch_dark_breeze_for_wingmenu
 install_wingmenu_build_deps
 install_wingmenu_plugin
 remove_wingmenu_build_deps
@@ -201,6 +300,8 @@ mkdir -p \
   /etc/skel/.config/lxqt \
   /etc/skel/.config/gtk-3.0 \
   /etc/skel/.config/gtk-4.0 \
+  /etc/skel/.config/qt5ct \
+  /etc/skel/.config/qt6ct \
   /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml \
   /etc/skel/.icons/default \
   /usr/etc/xdg/lxqt \
@@ -217,17 +318,79 @@ single_click_activate=false
 
 [Qt]
 style=Breeze
-font="Noto Sans,10,-1,5,50,0,0,0,0,0"
+font=Noto Sans,10,-1,5,50,0,0,0,0,0
 EOF_LXQT
 cp /etc/skel/.config/lxqt/lxqt.conf /usr/etc/xdg/lxqt/lxqt.conf
 
 cat > /etc/skel/.config/lxqt/lxqt-config-appearance.conf <<'EOF_LXQT_APPEARANCE'
+[General]
+colorizeIcons=true
+
 [GTK]
 sNet/ThemeName=Breeze
 sNet/IconThemeName=breeze-dark
 sGtk/FontName=Noto Sans 10
+iXft/DPI=98304
+
+[Qt]
+style=Breeze
 EOF_LXQT_APPEARANCE
 cp /etc/skel/.config/lxqt/lxqt-config-appearance.conf /usr/etc/xdg/lxqt/lxqt-config-appearance.conf
+
+mkdir -p /etc/skel/.config /usr/etc/xdg
+cat > /etc/skel/.config/kdeglobals <<'EOF_KDEGLOBALS'
+[General]
+ColorScheme=BreezeDark
+Name=Breeze Dark
+fixed=Noto Sans Mono,10,-1,5,50,0,0,0,0,0
+font=Noto Sans,10,-1,5,50,0,0,0,0,0
+menuFont=Noto Sans,10,-1,5,50,0,0,0,0,0
+smallestReadableFont=Noto Sans,8,-1,5,50,0,0,0,0,0
+toolBarFont=Noto Sans,10,-1,5,50,0,0,0,0,0
+
+[Icons]
+Theme=breeze-dark
+
+[KDE]
+SingleClick=false
+widgetStyle=Breeze
+
+[WM]
+activeFont=Noto Sans,10,-1,5,50,0,0,0,0,0
+EOF_KDEGLOBALS
+cp /etc/skel/.config/kdeglobals /usr/etc/xdg/kdeglobals
+
+cat > /etc/skel/.config/mimeapps.list <<'EOF_MIMEAPPS'
+[Default Applications]
+inode/directory=org.kde.dolphin.desktop
+text/plain=org.kde.kate.desktop
+application/x-shellscript=org.kde.kate.desktop
+application/json=org.kde.kate.desktop
+application/xml=org.kde.kate.desktop
+text/html=org.mozilla.firefox.desktop
+application/xhtml+xml=org.mozilla.firefox.desktop
+x-scheme-handler/http=org.mozilla.firefox.desktop
+x-scheme-handler/https=org.mozilla.firefox.desktop
+x-scheme-handler/about=org.mozilla.firefox.desktop
+x-scheme-handler/unknown=org.mozilla.firefox.desktop
+application/pdf=org.mozilla.firefox.desktop
+image/svg+xml=org.mozilla.firefox.desktop
+
+[Added Associations]
+inode/directory=org.kde.dolphin.desktop;
+text/plain=org.kde.kate.desktop;
+application/x-shellscript=org.kde.kate.desktop;
+application/json=org.kde.kate.desktop;
+application/xml=org.kde.kate.desktop;
+text/html=org.mozilla.firefox.desktop;
+application/xhtml+xml=org.mozilla.firefox.desktop;
+x-scheme-handler/http=org.mozilla.firefox.desktop;
+x-scheme-handler/https=org.mozilla.firefox.desktop;
+application/pdf=org.mozilla.firefox.desktop;
+image/svg+xml=org.mozilla.firefox.desktop;
+EOF_MIMEAPPS
+cp /etc/skel/.config/mimeapps.list /usr/etc/xdg/mimeapps.list
+
 
 cat > /etc/skel/.config/lxqt/panel.conf <<'EOF_PANEL'
 [General]
@@ -343,6 +506,7 @@ gtk-cursor-theme-name=${CURSOR_THEME}
 gtk-cursor-theme-size=${CURSOR_SIZE}
 gtk-font-name=Noto Sans 10
 gtk-application-prefer-dark-theme=1
+gtk-enable-animations=1
 EOF_GTK
 cp /etc/skel/.config/gtk-3.0/settings.ini /usr/etc/xdg/gtk-3.0/settings.ini
 cp /etc/skel/.config/gtk-3.0/settings.ini /etc/skel/.config/gtk-4.0/settings.ini
@@ -357,7 +521,27 @@ cp /etc/skel/.icons/default/index.theme /usr/share/icons/default/index.theme
 cat > /etc/skel/.Xresources <<EOF_XRESOURCES
 Xcursor.theme: ${CURSOR_THEME}
 Xcursor.size: ${CURSOR_SIZE}
+Xft.dpi: 96
+Xft.antialias: 1
+Xft.hinting: 1
+Xft.hintstyle: hintslight
+Xft.rgba: rgb
 EOF_XRESOURCES
+
+
+cat > /etc/skel/.config/qt5ct/qt5ct.conf <<'EOF_QT5CT'
+[Appearance]
+color_scheme_path=/usr/share/qt5ct/colors/darker.conf
+custom_palette=false
+icon_theme=breeze-dark
+standard_dialogs=default
+style=Breeze
+
+[Fonts]
+fixed="Noto Sans Mono,10,-1,5,50,0,0,0,0,0"
+general="Noto Sans,10,-1,5,50,0,0,0,0,0"
+EOF_QT5CT
+cp /etc/skel/.config/qt5ct/qt5ct.conf /etc/skel/.config/qt6ct/qt6ct.conf
 
 cat > /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml <<'EOF_XFWM4'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -405,6 +589,12 @@ export XDG_CURRENT_DESKTOP=LXQt
 export XDG_SESSION_DESKTOP=lxqt
 export QT_QPA_PLATFORM=xcb
 export QT_QPA_PLATFORMTHEME=lxqt
+export QT_STYLE_OVERRIDE=Breeze
+export GTK_THEME=Breeze:dark
+export KDE_COLOR_SCHEME=BreezeDark
+export BROWSER="flatpak run org.mozilla.firefox"
+export TERMINAL=konsole
+export TERM=xterm-256color
 export XCURSOR_THEME=${CURSOR_THEME}
 export XCURSOR_SIZE=${CURSOR_SIZE}
 
@@ -427,6 +617,9 @@ if [[ ! -f "\$stamp" ]] || [[ "\$(cat "\$stamp" 2>/dev/null)" != "${MANAGED_LXQT
   install_managed_file /etc/skel/.config/lxqt/lxqt.conf "\$HOME/.config/lxqt/lxqt.conf"
   install_managed_file /etc/skel/.config/lxqt/lxqt-config-appearance.conf "\$HOME/.config/lxqt/lxqt-config-appearance.conf"
   install_managed_file /etc/skel/.config/lxqt/panel.conf "\$HOME/.config/lxqt/panel.conf"
+  install_managed_file /etc/skel/.config/kdeglobals "\$HOME/.config/kdeglobals"
+  install_managed_file /etc/skel/.config/qt5ct/qt5ct.conf "\$HOME/.config/qt5ct/qt5ct.conf"
+  install_managed_file /etc/skel/.config/qt6ct/qt6ct.conf "\$HOME/.config/qt6ct/qt6ct.conf"
   install_managed_file /etc/skel/.config/gtk-3.0/settings.ini "\$HOME/.config/gtk-3.0/settings.ini"
   install_managed_file /etc/skel/.config/gtk-4.0/settings.ini "\$HOME/.config/gtk-4.0/settings.ini"
   install_managed_file /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml "\$HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
@@ -439,6 +632,9 @@ else
   seed_file /etc/skel/.config/lxqt/lxqt.conf "\$HOME/.config/lxqt/lxqt.conf"
   seed_file /etc/skel/.config/lxqt/lxqt-config-appearance.conf "\$HOME/.config/lxqt/lxqt-config-appearance.conf"
   seed_file /etc/skel/.config/lxqt/panel.conf "\$HOME/.config/lxqt/panel.conf"
+  seed_file /etc/skel/.config/kdeglobals "\$HOME/.config/kdeglobals"
+  seed_file /etc/skel/.config/qt5ct/qt5ct.conf "\$HOME/.config/qt5ct/qt5ct.conf"
+  seed_file /etc/skel/.config/qt6ct/qt6ct.conf "\$HOME/.config/qt6ct/qt6ct.conf"
   seed_file /etc/skel/.config/gtk-3.0/settings.ini "\$HOME/.config/gtk-3.0/settings.ini"
   seed_file /etc/skel/.config/gtk-4.0/settings.ini "\$HOME/.config/gtk-4.0/settings.ini"
   seed_file /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml "\$HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
@@ -449,9 +645,30 @@ fi
 
 xrdb -merge "\$HOME/.Xresources" 2>/dev/null || true
 
+# Make GTK/libadwaita/Flatpak-aware apps prefer dark mode where possible.
+gsettings set org.gnome.desktop.interface color-scheme prefer-dark 2>/dev/null || true
+gsettings set org.gnome.desktop.interface gtk-theme Breeze 2>/dev/null || true
+gsettings set org.gnome.desktop.interface icon-theme breeze-dark 2>/dev/null || true
+gsettings set org.gnome.desktop.interface font-name 'Noto Sans 10' 2>/dev/null || true
+gsettings set org.gnome.desktop.interface monospace-font-name 'Noto Sans Mono 10' 2>/dev/null || true
+gsettings set org.gnome.desktop.interface cursor-theme ${CURSOR_THEME} 2>/dev/null || true
+gsettings set org.gnome.desktop.interface cursor-size ${CURSOR_SIZE} 2>/dev/null || true
+
+# Make xdg-open and LXQt/KDE file associations prefer Aurora's intended apps.
+xdg-mime default org.mozilla.firefox.desktop x-scheme-handler/http 2>/dev/null || true
+xdg-mime default org.mozilla.firefox.desktop x-scheme-handler/https 2>/dev/null || true
+xdg-mime default org.mozilla.firefox.desktop text/html 2>/dev/null || true
+xdg-mime default org.mozilla.firefox.desktop application/xhtml+xml 2>/dev/null || true
+xdg-mime default org.mozilla.firefox.desktop application/pdf 2>/dev/null || true
+xdg-mime default org.kde.dolphin.desktop inode/directory 2>/dev/null || true
+xdg-mime default org.kde.kate.desktop text/plain 2>/dev/null || true
+xdg-mime default org.kde.kate.desktop application/x-shellscript 2>/dev/null || true
+xdg-mime default org.kde.kate.desktop application/json 2>/dev/null || true
+xdg-mime default org.kde.kate.desktop application/xml 2>/dev/null || true
+
 dbus-update-activation-environment --systemd \
   DISPLAY XAUTHORITY DESKTOP_SESSION XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP \
-  QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME XCURSOR_THEME XCURSOR_SIZE \
+  QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE GTK_THEME KDE_COLOR_SCHEME BROWSER TERMINAL TERM XCURSOR_THEME XCURSOR_SIZE \
   2>/dev/null || true
 
 xfconf-query -c xfwm4 -p /general/workspace_count -s 1 --create -t int 2>/dev/null || true
@@ -485,7 +702,7 @@ EOF_SESSION
 cat > /etc/sddm.conf.d/10-x11.conf <<EOF_SDDM
 [General]
 DisplayServer=x11
-GreeterEnvironment=QT_QPA_PLATFORM=xcb,QT_QPA_PLATFORMTHEME=lxqt,XCURSOR_THEME=${CURSOR_THEME},XCURSOR_SIZE=${CURSOR_SIZE}
+GreeterEnvironment=QT_QPA_PLATFORM=xcb,QT_QPA_PLATFORMTHEME=lxqt,QT_STYLE_OVERRIDE=Breeze,GTK_THEME=Breeze:dark,KDE_COLOR_SCHEME=BreezeDark,XCURSOR_THEME=${CURSOR_THEME},XCURSOR_SIZE=${CURSOR_SIZE}
 InputMethod=
 EOF_SDDM
 
