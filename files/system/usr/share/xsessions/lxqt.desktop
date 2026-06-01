@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=LXQt
+Comment=LXQt desktop session
+Exec=/usr/sbin/start-lxqt.sh
+Type=Application
+DesktopNames=LXQt
