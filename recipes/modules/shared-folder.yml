@@ -21,3 +21,5 @@ modules:
     system:
       enabled:
         - vsftpd.service
+        - shared-folder.service
+        - shared-folder.timer
