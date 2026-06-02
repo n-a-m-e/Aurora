@@ -14,6 +14,7 @@ modules:
 
   - from-file: modules/local-user-backup.yml
   - from-file: modules/lxqt.yml
+  - from-file: modules/thinlinc.yml
 
   - type: rpm-ostree
     repos: []
@@ -43,9 +44,6 @@ modules:
       - shared/konsole.sh
   - type: script
     scripts:
-      - server/thinlinc-server.sh
-  - type: script
-    scripts:
       - server/printers.sh
   - type: script
     scripts:
@@ -66,12 +64,6 @@ modules:
   - type: systemd
     system:
       enabled:
-        - thinlinc-remove-symlink.service
-        - vsmserver.service
-        - vsmagent.service
-        - tlwebaccess.service
-        - tlwebadm.service
-        - sshd.service
         #- vikunja-start.service
         - flatpak-native-messaging-hosts.service
         - shared-folder.service
