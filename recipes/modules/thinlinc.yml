@@ -1,0 +1,23 @@
+# recipes/modules/thinlinc.yml
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+
+modules:
+  - type: files
+    files:
+      - source: modules/thinlinc
+        destination: /
+
+  - type: script
+    scripts:
+      - modules/thinlinc/build.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - thinlinc-remove-symlink.service
+        - vsmserver.service
+        - vsmagent.service
+        - tlwebaccess.service
+        - tlwebadm.service
+        - sshd.service
