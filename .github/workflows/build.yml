@@ -1,12 +1,12 @@
 name: bluebuild
 
 on:
-  push:
-    paths-ignore:
-      - "**.md"
-  pull_request:
-    paths-ignore:
-      - "**.md"
+  #push:
+  #  paths-ignore:
+  #    - "**.md"
+  #pull_request:
+  #  paths-ignore:
+  #    - "**.md"
   workflow_dispatch:
   schedule:
     - cron: '20 6 * * *'   # image builds
@@ -56,7 +56,7 @@ jobs:
               - 'recipes/recipe-thinclient.yml'
               - '.github/workflows/build.yml'
             thinstation:
-              - 'files/scripts/thinstation/**'
+              - 'thinstation/**'
               - '.github/workflows/build.yml'
 
   build-server:
@@ -146,7 +146,7 @@ jobs:
             -e THINSTATION_RELEASE="${THINSTATION_RELEASE}" \
             -e THINSTATION_FEDORA="${THINSTATION_FEDORA}" \
             "fedora:${THINSTATION_FEDORA}" \
-            bash -euxo pipefail files/scripts/thinstation/build-thinstation.sh
+            bash -euxo pipefail thinstation/build-thinstation.sh
 
       - name: Publish ThinStation PXE Release
         uses: softprops/action-gh-release@v3
