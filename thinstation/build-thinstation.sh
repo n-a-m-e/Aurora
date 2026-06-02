@@ -8,7 +8,7 @@ ROOT="$(cd "$ROOT" && pwd)"
 THINSTATION_RELEASE="${THINSTATION_RELEASE:?THINSTATION_RELEASE must be set}"
 THINSTATION_FEDORA="${THINSTATION_FEDORA:?THINSTATION_FEDORA must be set}"
 
-TS_INTEGRATION="$ROOT/files/scripts/thinstation"
+TS_INTEGRATION="$ROOT/thinstation"
 WORKDIR="${WORKDIR:-$ROOT/.build/thinstation}"
 TS_SRC="$WORKDIR/thinstation-ng"
 TS_REPO="https://github.com/Thinstation/thinstation-ng.git"
