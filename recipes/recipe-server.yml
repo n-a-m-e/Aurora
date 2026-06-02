@@ -15,6 +15,7 @@ modules:
   - from-file: modules/local-user-backup.yml
   - from-file: modules/lxqt.yml
   - from-file: modules/thinlinc.yml
+  - from-file: modules/shared-folder.yml
 
   - type: rpm-ostree
     repos: []
@@ -22,11 +23,9 @@ modules:
       - qpdf
       - konsole
       - yakuake
-      - flatpak-builder
       - inotify-tools
       - pam-kwallet
       - docker
-      - vsftpd
       - python3-tkinter
       # for printers.
       - poppler-glib
@@ -53,9 +52,6 @@ modules:
       - server/uivision.sh
   - type: script
     scripts:
-      - server/umask.sh
-  - type: script
-    scripts:
       - server/kde-config.sh
   - type: script
     scripts:
@@ -66,24 +62,17 @@ modules:
       enabled:
         #- vikunja-start.service
         - flatpak-native-messaging-hosts.service
-        - shared-folder.service
-        - shared-folder.timer
         - flatpak-force-x11.service
         - node-server.service
         #- pihole.service
         #- restic-backup.service
         #- restic-backup.timer
-        - vsftpd.service
         #- install-davinci-resolve.service
-        - manage-kargs.service
+        #- manage-kargs.service
       disabled:
         - sleep.target
         - suspend.target
         - hibernate.target
         - hybrid-sleep.target
-
-    user:
-      enabled: []
-      disabled: []
 
   - type: signing
