@@ -1,0 +1,23 @@
+# recipes/modules/shared-folder.yml
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+
+modules:
+  - type: rpm-ostree
+    repos: []
+    install:
+      - vsftpd
+
+  - type: files
+    files:
+      - source: modules/shared-folder
+        destination: /
+
+  - type: script
+    scripts:
+      - modules/shared-folder/build.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - vsftpd.service
