@@ -42,6 +42,9 @@ jobs:
         with:
           filters: |
             server:
+              - 'files/modules/**'
+              - 'files/scripts/modules/**'
+              - 'recipes/modules/**'
               - 'files/scripts/server/**'
               - 'files/scripts/shared/**'
               - 'recipes/recipe-server.yml'
@@ -146,7 +149,7 @@ jobs:
             -e THINSTATION_RELEASE="${THINSTATION_RELEASE}" \
             -e THINSTATION_FEDORA="${THINSTATION_FEDORA}" \
             "fedora:${THINSTATION_FEDORA}" \
-            bash -euxo pipefail thinstation/build-thinstation.sh
+            bash -euxo pipefail thinstation/build.sh
 
       - name: Publish ThinStation PXE Release
         uses: softprops/action-gh-release@v3
