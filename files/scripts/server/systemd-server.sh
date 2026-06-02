@@ -8,10 +8,6 @@ cd "$(dirname "$0")"
 cp systemd/thinlinc-remove-symlink.service /usr/lib/systemd/system/thinlinc-remove-symlink.service
 cp systemd/flatpak-force-x11.service /usr/lib/systemd/system/flatpak-force-x11.service
 
-cp systemd/remote-shutdown.service /usr/lib/systemd/system/remote-shutdown.service
-cp systemd/remote-shutdown.py /usr/sbin/remote-shutdown.py
-chmod a+x "/usr/sbin/remote-shutdown.py"
-
 cp systemd/manage-kargs.service /usr/lib/systemd/system/manage-kargs.service
 cp systemd/manage-kargs.sh /usr/sbin/manage-kargs.sh
 chmod a+x "/usr/sbin/manage-kargs.sh"
