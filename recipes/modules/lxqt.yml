@@ -1,0 +1,98 @@
+# recipes/modules/lxqt.yml
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+
+modules:
+  - type: rpm-ostree
+    install:
+      - lxqt-panel
+      - lxqt-config
+      - lxqt-globalkeys
+      - lxqt-notificationd
+      - lxqt-powermanagement
+      - lxqt-qtplugin
+      - lxqt-runner
+      - lxqt-sudo
+      - lxqt-about
+      # LXQt / Qt theming
+      - lxqt-themes
+      - breeze-icon-theme
+      - breeze-gtk
+      - adwaita-icon-theme
+      - kvantum
+      - kvantum-qt5
+      - qt5ct
+      - qt6ct
+      # Window manager
+      - xfwm4
+      - xfconf
+      - xfce4-settings
+      # Wallpaper
+      - feh
+      # Audio / network / admin tools
+      - pavucontrol-qt
+      - nm-connection-editor
+      - network-manager-applet
+      - system-config-printer
+      - firewall-config
+      - qps
+      # Login/session
+      - sddm
+      - sddm-conf
+      - sddm-themes
+      - xorg-x11-server-Xorg
+      - dbus-x11
+    remove:
+      - kwin
+      - kwin-common
+      - kwin-libs
+      - plasma-browser-integration
+      - plasma-desktop
+      - plasma-desktop-doc
+      - plasma-disks
+      - plasma-drkonqi
+      - plasma-firewall
+      - plasma-firewall-firewalld
+      - plasma-keyboard
+      - plasma-login-manager
+      - plasma-lookandfeel-fedora
+      - plasma-milou
+      - plasma-nm
+      - plasma-nm-openconnect
+      - plasma-nm-openvpn
+      - plasma-nm-vpnc
+      - plasma-pa
+      - plasma-print-manager
+      - plasma-print-manager-libs
+      - plasma-setup
+      - plasma-systemmonitor
+      - plasma-thunderbolt
+      - plasma-vault
+      - plasma-wallpapers-dynamic
+      - plasma-wallpapers-dynamic-builder
+      - plasma-wallpapers-dynamic-builder-bash-completion
+      - plasma-wallpapers-dynamic-builder-fish-completion
+      - plasma-wallpapers-dynamic-builder-zsh-completion
+      - plasma-welcome
+      - plasma-workspace
+      - plasma-workspace-libs
+      - plasma-workspace-wallpapers
+      - powerdevil
+      - kcm-plasma-keyboard
+      - kde-settings-plasmalogin
+      - kcm-plasmalogin
+
+  - type: files
+    files:
+      - source: modules/lxqt
+        destination: /
+
+  - type: script
+    scripts:
+      - modules/lxqt/build.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - sddm.service
+        - remote-shutdown.service
