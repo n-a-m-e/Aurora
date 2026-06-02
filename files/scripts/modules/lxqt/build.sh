@@ -690,15 +690,6 @@ exec xfwm4 --replace
 EOF_START
 chmod a+x /usr/sbin/start-lxqt.sh
 
-cat > /usr/share/xsessions/lxqt.desktop <<'EOF_SESSION'
-[Desktop Entry]
-Name=LXQt
-Comment=LXQt desktop session
-Exec=/usr/sbin/start-lxqt.sh
-Type=Application
-DesktopNames=LXQt
-EOF_SESSION
-
 cat > /etc/sddm.conf.d/10-x11.conf <<EOF_SDDM
 [General]
 DisplayServer=x11
