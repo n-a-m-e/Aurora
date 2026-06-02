@@ -2,6 +2,8 @@
 set -Eeuo pipefail
 source /usr/lib/bluebuild-debug.sh
 
+chmod a+x "/usr/sbin/remote-shutdown.py"
+
 WALLPAPER="/usr/share/backgrounds/aurora/jonatan-pie-aurora/contents/images/3944x2770.jxl"
 LXQT_THEME="Dark-Breeze"
 CURSOR_THEME="breeze_cursors"
