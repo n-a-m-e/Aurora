@@ -10,7 +10,7 @@ modules:
 
   - type: script
     scripts:
-      - modules/local-user-backup.sh
+      - modules/local-user-backup/build.sh
 
   - type: systemd
     system:
