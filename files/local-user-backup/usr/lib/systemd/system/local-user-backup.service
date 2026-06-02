@@ -1,0 +1,13 @@
+[Unit]
+Description=Backup and restore local users
+After=local-fs.target
+RequiresMountsFor=/var/lib/local-user-backup /home
+Before=nss-user-lookup.target
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/local-user-backup.sh
+
+[Install]
+WantedBy=multi-user.target
