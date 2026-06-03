@@ -42,6 +42,8 @@ modules:
       - sddm-themes
       - xorg-x11-server-Xorg
       - dbus-x11
+      # Remote Shutdown
+      - python3-tkinter
     remove:
       - kwin
       - kwin-common
