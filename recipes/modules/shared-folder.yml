@@ -6,6 +6,7 @@ modules:
     repos: []
     install:
       - vsftpd
+      - docker
 
   - type: files
     files:
