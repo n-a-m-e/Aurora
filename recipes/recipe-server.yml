@@ -19,6 +19,7 @@ modules:
   - from-file: modules/vikunja.yml
   - from-file: modules/printers.yml
   - from-file: modules/flatpak.yml
+  - from-file: modules/network.yml
 
   - type: rpm-ostree
     repos: []
@@ -55,7 +56,6 @@ modules:
   - type: systemd
     system:
       enabled:
-        #- pihole.service
         #- restic-backup.service
         #- restic-backup.timer
       disabled:
