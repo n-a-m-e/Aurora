@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 source /usr/lib/bluebuild-debug.sh
 
-chmod a+x "/usr/sbin/shared-folder.sh"
+chmod a+x "/usr/bin/shared-folder.sh"
 
 #Change Umask to make shared folders possible
 sed -i 's/UMASK		022/UMASK		002/g' /etc/login.defs
