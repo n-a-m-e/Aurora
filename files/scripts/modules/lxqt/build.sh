@@ -2,14 +2,14 @@
 set -Eeuo pipefail
 source /usr/lib/bluebuild-debug.sh
 
-chmod a+x "/usr/sbin/remote-shutdown.py"
+chmod a+x "/usr/bin/remote-shutdown.py"
 
 WALLPAPER="/usr/share/backgrounds/aurora/jonatan-pie-aurora/contents/images/3944x2770.jxl"
 LXQT_THEME="Dark-Breeze"
 CURSOR_THEME="breeze_cursors"
 CURSOR_SIZE="24"
 MANAGED_LXQT_CONFIG_VERSION="2026-05-31-6"
-REMOTE_SHUTDOWN="/usr/sbin/remote-shutdown.py"
+REMOTE_SHUTDOWN="/usr/bin/remote-shutdown.py"
 DARK_BREEZE_URL="https://github.com/n-a-m-e/Aurora-Files/releases/download/Dark_Breeze_by_Nudnik/Dark_Breeze_by_Nudnik.tar.gz"
 WINGMENU_URL="https://github.com/elviosak/plugin-wingmenu/archive/refs/heads/master.tar.gz"
 WINGMENU_BUILD_DEPS=(
@@ -246,11 +246,11 @@ ensure_distributor_logo_icon() {
 install_remote_power_wrapper() {
   # remote-shutdown.py and remote-shutdown.service are managed elsewhere.
   # This wrapper is only the user-session action that WingMenu calls.
-  cat > /usr/sbin/aurora-remote-power-action <<'EOF_REMOTE_POWER_ACTION'
+  cat > /usr/bin/aurora-remote-power-action <<'EOF_REMOTE_POWER_ACTION'
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-REMOTE_SHUTDOWN="/usr/sbin/remote-shutdown.py"
+REMOTE_SHUTDOWN="/usr/bin/remote-shutdown.py"
 cmd="${1:-}"
 
 case "$cmd" in
@@ -283,7 +283,7 @@ fi
 
 exec "$REMOTE_SHUTDOWN" request "$user" "$session" "$action"
 EOF_REMOTE_POWER_ACTION
-  chmod 0755 /usr/sbin/aurora-remote-power-action
+  chmod 0755 /usr/bin/aurora-remote-power-action
 }
 
 install_lxqt_runtime_deps
@@ -296,7 +296,7 @@ ensure_distributor_logo_icon
 install_remote_power_wrapper
 
 mkdir -p \
-  /usr/sbin \
+  /usr/bin \
   /usr/share/xsessions \
   /etc/sddm.conf.d \
   /etc/skel/.config/lxqt \
@@ -483,7 +483,7 @@ Type=Application
 Name=Restart
 Comment=Restart the computer
 Icon=system-reboot
-Exec=/usr/sbin/aurora-remote-power-action reboot
+Exec=/usr/bin/aurora-remote-power-action reboot
 Categories=System;
 NoDisplay=true
 EOF_REBOOT_DESKTOP
@@ -494,7 +494,7 @@ Type=Application
 Name=Shut Down
 Comment=Shut down the computer
 Icon=system-shutdown
-Exec=/usr/sbin/aurora-remote-power-action shutdown
+Exec=/usr/bin/aurora-remote-power-action shutdown
 Categories=System;
 NoDisplay=true
 EOF_SHUTDOWN_DESKTOP
@@ -579,7 +579,7 @@ cat > /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml <<EOF_XSE
 </channel>
 EOF_XSETTINGS
 
-cat > /usr/sbin/start-lxqt.sh <<EOF_START
+cat > /usr/bin/start-lxqt.sh <<EOF_START
 #!/usr/bin/env bash
 set +e
 
@@ -690,7 +690,7 @@ nm-applet &
 
 exec xfwm4 --replace
 EOF_START
-chmod a+x /usr/sbin/start-lxqt.sh
+chmod a+x /usr/bin/start-lxqt.sh
 
 cat > /etc/sddm.conf.d/10-x11.conf <<EOF_SDDM
 [General]
