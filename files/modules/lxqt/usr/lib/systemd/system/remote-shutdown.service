@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/sbin/remote-shutdown.py serve
+ExecStart=/usr/bin/remote-shutdown.py serve
 Restart=always
 RestartSec=1
 
