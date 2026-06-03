@@ -36,52 +36,52 @@ modules:
       - firewall-config
       - qps
       # Login/session
-      - sddm
-      - sddm-conf
-      - sddm-themes
+      #- sddm
+      #- sddm-conf
+      #- sddm-themes
       - xorg-x11-server-Xorg
       - dbus-x11
       # Remote Shutdown
       - python3-tkinter
     remove:
-      - kwin
-      - kwin-common
-      - kwin-libs
-      - plasma-browser-integration
-      - plasma-desktop
-      - plasma-desktop-doc
-      - plasma-disks
-      - plasma-drkonqi
-      - plasma-firewall
-      - plasma-firewall-firewalld
-      - plasma-keyboard
-      - plasma-login-manager
-      - plasma-lookandfeel-fedora
-      - plasma-milou
-      - plasma-nm
-      - plasma-nm-openconnect
-      - plasma-nm-openvpn
-      - plasma-nm-vpnc
-      - plasma-pa
-      - plasma-print-manager
-      - plasma-print-manager-libs
-      - plasma-setup
-      - plasma-systemmonitor
-      - plasma-thunderbolt
-      - plasma-vault
-      - plasma-wallpapers-dynamic
-      - plasma-wallpapers-dynamic-builder
-      - plasma-wallpapers-dynamic-builder-bash-completion
-      - plasma-wallpapers-dynamic-builder-fish-completion
-      - plasma-wallpapers-dynamic-builder-zsh-completion
-      - plasma-welcome
-      - plasma-workspace
-      - plasma-workspace-libs
-      - plasma-workspace-wallpapers
-      - powerdevil
-      - kcm-plasma-keyboard
-      - kde-settings-plasmalogin
-      - kcm-plasmalogin
+      #- kwin
+      #- kwin-common
+      #- kwin-libs
+      #- plasma-browser-integration
+      #- plasma-desktop
+      #- plasma-desktop-doc
+      #- plasma-disks
+      #- plasma-drkonqi
+      #- plasma-firewall
+      #- plasma-firewall-firewalld
+      #- plasma-keyboard
+      #- plasma-login-manager
+      #- plasma-lookandfeel-fedora
+      #- plasma-milou
+      #- plasma-nm
+      #- plasma-nm-openconnect
+      #- plasma-nm-openvpn
+      #- plasma-nm-vpnc
+      #- plasma-pa
+      #- plasma-print-manager
+      #- plasma-print-manager-libs
+      #- plasma-setup
+      #- plasma-systemmonitor
+      #- plasma-thunderbolt
+      #- plasma-vault
+      #- plasma-wallpapers-dynamic
+      #- plasma-wallpapers-dynamic-builder
+      #- plasma-wallpapers-dynamic-builder-bash-completion
+      #- plasma-wallpapers-dynamic-builder-fish-completion
+      #- plasma-wallpapers-dynamic-builder-zsh-completion
+      #- plasma-welcome
+      #- plasma-workspace
+      #- plasma-workspace-libs
+      #- plasma-workspace-wallpapers
+      #- powerdevil
+      #- kcm-plasma-keyboard
+      #- kde-settings-plasmalogin
+      #- kcm-plasmalogin
 
   - type: files
     files:
@@ -95,5 +95,5 @@ modules:
   - type: systemd
     system:
       enabled:
-        - sddm.service
+        #- sddm.service
         - remote-shutdown.service
