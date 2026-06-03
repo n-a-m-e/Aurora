@@ -2,6 +2,10 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
 
 modules:
+  - type: rpm-ostree
+    install:
+      - openssh-server
+
   - type: files
     files:
       - source: modules/thinlinc
