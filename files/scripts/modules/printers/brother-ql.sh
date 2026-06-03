@@ -26,8 +26,12 @@ cp -a "/tmp/brother-ql/brother_ql-0.8.3/brother_ql.egg-info" "$SITE_PACKAGES/"
 
 python3 - <<'PY'
 import brother_ql
+import brother_ql.brother_ql_analyse
+import brother_ql.brother_ql_create
+import brother_ql.brother_ql_print
+import brother_ql.brother_ql_debug
+import brother_ql.brother_ql_info
 import packbits
 from PIL import Image
 import numpy
-import future
 PY
