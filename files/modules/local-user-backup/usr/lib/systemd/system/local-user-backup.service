@@ -7,7 +7,7 @@ Before=display-manager.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/sbin/local-user-backup.sh
+ExecStart=/usr/bin/local-user-backup.sh
 
 [Install]
 WantedBy=multi-user.target
