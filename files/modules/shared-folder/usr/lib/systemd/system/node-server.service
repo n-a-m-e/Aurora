@@ -4,7 +4,7 @@ Description=node-server
 [Service]
 User=root
 WorkingDirectory=/
-ExecStart=/usr/sbin/node-server.sh
+ExecStart=/usr/bin/node-server.sh
 Type=simple
 Restart=always
 RestartSec=3
