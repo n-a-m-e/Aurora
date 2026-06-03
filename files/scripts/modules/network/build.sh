@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
+set -Eeuo pipefail
+source /usr/lib/bluebuild-debug.sh
 
-# Tell this script to exit if there are any errors.
-# You should have this in every custom script, to ensure that your completed
-# builds actually ran successfully without any errors!
-set -oue pipefail
-
-#Don't know how to build selinux module so disable it
-sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+chmod a+x "/usr/bin/pihole.sh"
 
 #add localhost to /usr/etc/hosts
 mkdir -p /usr/etc
 cat <<'EOF' >> /usr/etc/hosts
+
+# Loopback entries; do not change.
+127.0.0.1   aurora.home.arpa aurora
+::1         aurora.home.arpa aurora
 
 # Loopback entries; do not change.
 # For historical reasons, localhost precedes localhost.localdomain:
