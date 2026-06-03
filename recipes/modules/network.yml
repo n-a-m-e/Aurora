@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+
+modules:
+  - type: rpm-ostree
+    repos: []
+    install:
+      - vsftpd
+
+  - type: files
+    files:
+      - source: modules/network
+        destination: /
+
+  - type: script
+    scripts:
+      - modules/network/build.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - pihole.service
