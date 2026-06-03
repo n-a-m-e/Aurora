@@ -55,12 +55,9 @@ modules:
   - type: systemd
     system:
       enabled:
-        - node-server.service
         #- pihole.service
         #- restic-backup.service
         #- restic-backup.timer
-        #- install-davinci-resolve.service
-        #- manage-kargs.service
       disabled:
         - sleep.target
         - suspend.target
