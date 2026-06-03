@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec python3 -m brother_ql.brother_ql_analyse "$@"
