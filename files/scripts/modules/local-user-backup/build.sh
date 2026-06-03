@@ -2,4 +2,4 @@
 set -Eeuo pipefail
 source /usr/lib/bluebuild-debug.sh
 
-chmod a+x "/usr/sbin/local-user-backup.sh"
+chmod a+x "/usr/bin/local-user-backup.sh"
