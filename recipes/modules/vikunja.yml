@@ -1,0 +1,22 @@
+# recipes/modules/vikunja.yml
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+
+modules:
+  - type: rpm-ostree
+    install:
+      - https://github.com/n-a-m-e/Aurora-Files/releases/download/vikunja-0.24.6-x86_64/vikunja-0.24.6-x86_64.rpm
+
+  - type: files
+    files:
+      - source: modules/vikunja
+        destination: /
+
+  - type: script
+    scripts:
+      - modules/vikunja/build.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - vikunja-start.service
