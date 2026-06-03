@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+
+modules:
+  - type: rpm-ostree
+    install:
+      - python3
+      - python3-future
+      - python3-packbits
+      - python3-pillow
+      - python3-numpy
+      # Optional: enable this if you want USB printer backend support
+      # - python3-pyusb
+
+  - type: script
+    scripts:
+      - modules/printers/brother-ql.sh
