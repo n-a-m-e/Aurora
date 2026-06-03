@@ -43,7 +43,7 @@ modules:
       - dbus-x11
       # Remote Shutdown
       - python3-tkinter
-    remove:
+    remove: []
       #- kwin
       #- kwin-common
       #- kwin-libs
