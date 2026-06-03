@@ -18,6 +18,7 @@ modules:
   - from-file: modules/shared-folder.yml
   - from-file: modules/vikunja.yml
   - from-file: modules/printers.yml
+  - from-file: modules/flatpak.yml
 
   - type: rpm-ostree
     repos: []
@@ -54,8 +55,6 @@ modules:
   - type: systemd
     system:
       enabled:
-        - flatpak-native-messaging-hosts.service
-        - flatpak-force-x11.service
         - node-server.service
         #- pihole.service
         #- restic-backup.service
