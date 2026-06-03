@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+
+modules:
+  - type: files
+    files:
+      - source: modules/flatpak
+        destination: /
+
+  - type: script
+    scripts:
+      - modules/flatpak/build.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - flatpak-native-messaging-hosts.service
+        - flatpak-force-x11.service
