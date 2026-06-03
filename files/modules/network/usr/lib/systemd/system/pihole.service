@@ -4,7 +4,7 @@ Description=pihole
 [Service]
 User=root
 WorkingDirectory=/
-ExecStart=/usr/sbin/pihole.sh
+ExecStart=/usr/bin/pihole.sh
 Type=simple
 Restart=always
 RestartSec=3
