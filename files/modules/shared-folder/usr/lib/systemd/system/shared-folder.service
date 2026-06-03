@@ -5,4 +5,4 @@ Requires=local-fs.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/sbin/shared-folder.sh
+ExecStart=/usr/bin/shared-folder.sh
