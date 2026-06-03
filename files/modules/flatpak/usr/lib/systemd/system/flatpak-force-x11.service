@@ -4,7 +4,7 @@ Description=flatpak-force-x11
 [Service]
 User=root
 WorkingDirectory=/
-ExecStart=/bin/bash -c 'flatpak override --nosocket=wayland --socket=fallback-x11 --socket=x11'
+ExecStart=/bin/bash -c 'flatpak override --nosocket=wayland --nosocket=fallback-x11 --socket=x11'
 RemainAfterExit=true
 Type=oneshot
 
