@@ -54,16 +54,16 @@ sed -i 's|#import thinlinc . tlsetup . requirements|import thinlinc . tlsetup . 
 sed -i 's|show_intro=.*|show_intro=false|g' /opt/thinlinc/etc/conf.d/profiles.hconf
 cat > /opt/thinlinc/etc/conf.d/profiles.hconf <<'EOF'
 [/profiles]
-default=lxqt
-order=lxqt
+default=kde-x11
+order=kde-x11
 show_intro=false
 
-[/profiles/lxqt]
-xdg_session=lxqt
-name=LXQt
-description=LXQt desktop session.
-cmdline=/usr/bin/start-lxqt.sh
-testcmd=test -x /usr/bin/start-lxqt.sh
+[/profiles/kde-x11]
+xdg_session=plasma
+name=KDE X11
+description=X11 KDE Plasma desktop session using LXQt and XFWM4.
+cmdline=/usr/bin/start-kde-x11.sh
+testcmd=test -x /usr/bin/start-kde-x11.sh
 description_from_testcmd=false
 EOF
 
