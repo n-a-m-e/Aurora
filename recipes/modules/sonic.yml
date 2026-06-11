@@ -6,24 +6,29 @@ modules:
     repos:
       - https://n-a-m-e.github.io/rpm-repo-sonicde/sonicde-fedora-%OS_VERSION%.repo
     remove:
+      # KWin replacement
       - kwin
       - kwin-common
       - kwin-libs
+
+      # Plasma workspace replacement
       - plasma-workspace
       - plasma-workspace-common
       - plasma-workspace-libs
+
+      # Plasma desktop shell replacement
       - plasma-desktop
       - plasma-desktop-doc
+
+      # SonicDE runtime replacements
       - libplasma
-      - kf6-kglobalaccel
-      - kf6-kwindowsystem
       - kglobalacceld
       - libkscreen
       - kscreen
       - kscreenlocker
-      - libksysguard
-      - libksysguard-common
       - kinfocenter
+
+      # Aurora/Fedora Plasma defaults likely tied to upstream Plasma
       - plasma-lookandfeel-fedora
       - plasma-setup
     install:
@@ -32,11 +37,9 @@ modules:
       - sonic-win
       - sonic-desktop-interface
       - sonic-interface-libraries
-      - sonic-frameworks-keybind
-      - sonic-frameworks-windowsystem
       - sonic-keybind-daemon
-      - sonic-screen-library
       - sonic-screen
+      - sonic-screen-library
       - sonic-screenlocker
-      - sonic-sysguard-library
       - sonic-system-info
+      - sonic-silver-theme
