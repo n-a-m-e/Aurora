@@ -4,7 +4,7 @@
 modules:
   - type: rpm-ostree
     repos:
-      - https://YOUR-SONICDE-REPO/sonicde-fedora.repo
+      - https://n-a-m-e.github.io/rpm-repo-sonicde/sonicde-fedora-%OS_VERSION%.repo
     remove:
       - kwin
       - kwin-common
