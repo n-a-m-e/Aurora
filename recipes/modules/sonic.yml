@@ -1,0 +1,43 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+
+modules:
+  - type: rpm-ostree
+    repos:
+      - https://YOUR-SONICDE-REPO/sonicde-fedora.repo
+    remove:
+      - kwin
+      - kwin-common
+      - kwin-libs
+      - plasma-workspace
+      - plasma-workspace-common
+      - plasma-workspace-libs
+      - plasma-desktop
+      - plasma-desktop-doc
+      - libplasma
+      - kf6-kglobalaccel
+      - kf6-kwindowsystem
+      - kf6-kwindowsystem-devel
+      - kglobalacceld
+      - libkscreen
+      - kscreen
+      - kscreenlocker
+      - libksysguard
+      - libksysguard-common
+      - kinfocenter
+      - plasma-lookandfeel-fedora
+      - plasma-setup
+    install:
+      - sonic-workspace
+      - sonic-workspace-x11
+      - sonic-win
+      - sonic-desktop-interface
+      - sonic-interface-libraries
+      - sonic-frameworks-keybind
+      - sonic-frameworks-windowsystem
+      - sonic-keybind-daemon
+      - sonic-screen-library
+      - sonic-screen
+      - sonic-screenlocker
+      - sonic-sysguard-library
+      - sonic-system-info
