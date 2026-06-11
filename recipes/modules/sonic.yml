@@ -17,7 +17,6 @@ modules:
       - libplasma
       - kf6-kglobalaccel
       - kf6-kwindowsystem
-      - kf6-kwindowsystem-devel
       - kglobalacceld
       - libkscreen
       - kscreen
