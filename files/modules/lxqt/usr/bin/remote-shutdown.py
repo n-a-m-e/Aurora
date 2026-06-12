@@ -51,7 +51,14 @@ def thinlinc_users():
 
 
 def session_env(user):
-    pid = sh("pgrep", "-u", user, "-n", "xfwm4")
+    pid = None
+    for line in sh("loginctl", "list-sessions", "--no-legend").splitlines():
+        sid = line.split()[0]
+        vals = [sh("loginctl", "show-session", sid, "-p", k, "--value")
+                for k in ("Name", "Type", "Class", "Leader")]
+        if vals[:3] == [user, "x11", "user"] and vals[3]:
+            pid = vals[3]
+            break
     if not pid:
         return None
     try:
