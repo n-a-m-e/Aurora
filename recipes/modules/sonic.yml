@@ -5,6 +5,7 @@ modules:
   - type: rpm-ostree
     repos:
       - https://n-a-m-e.github.io/rpm-repo-sonicde/sonicde-fedora-%OS_VERSION%.repo
+      - copr:copr.fedorainfracloud.org:group_xlibre:xlibre-xserver
     remove:
       # KWin replacement
       - kwin
