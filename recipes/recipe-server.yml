@@ -13,6 +13,7 @@ modules:
         destination: / # copies files/system/* (* means everything inside it) into your image's root folder /
 
   - from-file: modules/local-user-backup.yml
+  - from-file: modules/remote-shutdown.yml
   - from-file: modules/sonic.yml
   - from-file: modules/thinlinc.yml
   - from-file: modules/shared-folder.yml
