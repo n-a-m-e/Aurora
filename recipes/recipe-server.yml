@@ -40,11 +40,7 @@ modules:
   - type: script
     scripts:
       - shared/konsole.sh
-  - type: script
-    scripts:
       - server/uivision.sh
-  - type: script
-    scripts:
       - server/kde-config.sh
   - type: script
     scripts:
