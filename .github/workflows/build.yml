@@ -33,7 +33,7 @@ jobs:
       thinclient: ${{ steps.changes.outputs.thinclient }}
       thinstation: ${{ steps.changes.outputs.thinstation }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -124,7 +124,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Cache ThinStation firmware maps
         uses: actions/cache@v6
@@ -188,7 +188,7 @@ jobs:
       contents: write
       packages: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Write ISO config
         run: |
