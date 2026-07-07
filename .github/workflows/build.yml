@@ -72,7 +72,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: blue-build/github-action@v1.11.1
+      - uses: blue-build/github-action@v1.12.0
         with:
           recipe: recipe-server.yml
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
@@ -90,7 +90,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: blue-build/github-action@v1.11.1
+      - uses: blue-build/github-action@v1.12.0
         with:
           recipe: recipe-client.yml
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
@@ -108,7 +108,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: blue-build/github-action@v1.11.1
+      - uses: blue-build/github-action@v1.12.0
         with:
           recipe: recipe-thinclient.yml
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
