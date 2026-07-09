@@ -2,37 +2,23 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
 
 modules:
-  - type: rpm-ostree
-    repos:
-      - https://n-a-m-e.github.io/rpm-repo-sonicde/sonicde-fedora-%OS_VERSION%.repo
-      #- https://copr.fedorainfracloud.org/coprs/g/xlibre/xlibre-xserver/repo/fedora-%OS_VERSION%/group_xlibre-xlibre-xserver-fedora-%OS_VERSION%.repo
-    remove:
-      - kwin
-      - kwin-common
-      - kwin-libs
-      - plasma-workspace
-      - plasma-workspace-common
-      - plasma-workspace-libs
-      - plasma-desktop
-      - plasma-desktop-doc
-      - libplasma
-      - kglobalacceld
-      - libkscreen
-      - kscreen
-      - kscreenlocker
-      - kinfocenter
-      - plasma-lookandfeel-fedora
-      - plasma-setup
-    install:
-      - task-sonicde
-      #- sonic-workspace
-      #- sonic-workspace-x11
-      #- sonic-win
-      #- sonic-desktop-interface
-      #- sonic-interface-libraries
-      #- sonic-keybind-daemon
-      #- sonic-screen
-      #- sonic-screen-library
-      #- sonic-screenlocker
-      #- sonic-system-info
-      #- sonic-silver-theme
+  - type: script
+    scripts:
+      - modules/sonic/build.sh
+#    remove:
+#      - kwin
+#      - kwin-common
+#      - kwin-libs
+#      - plasma-workspace
+#      - plasma-workspace-common
+#      - plasma-workspace-libs
+#      - plasma-desktop
+#      - plasma-desktop-doc
+#      - libplasma
+#      - kglobalacceld
+#      - libkscreen
+#      - kscreen
+#      - kscreenlocker
+#      - kinfocenter
+#      - plasma-lookandfeel-fedora
+#      - plasma-setup
