@@ -3,24 +3,14 @@
 name: aurora-server
 description: This is my personal OS image.
 
-base-image: ghcr.io/ublue-os/aurora
-image-version: stable
+base-image: ghcr.io/ublue-os/kinoite-main
+image-version: latest
 
 modules:
   - type: files
     files:
       - source: system
         destination: / # copies files/system/* (* means everything inside it) into your image's root folder /
-
-  - from-file: modules/local-user-backup.yml
-  - from-file: modules/remote-shutdown.yml
-  - from-file: modules/sonic.yml
-  - from-file: modules/thinlinc.yml
-  - from-file: modules/shared-folder.yml
-  - from-file: modules/vikunja.yml
-  - from-file: modules/printers.yml
-  - from-file: modules/flatpak.yml
-  - from-file: modules/network.yml
 
   - type: rpm-ostree
     repos: []
@@ -42,6 +32,17 @@ modules:
       - shared/konsole.sh
       - server/uivision.sh
       - server/kde-config.sh
+
+  - from-file: modules/local-user-backup.yml
+  - from-file: modules/remote-shutdown.yml
+  - from-file: modules/thinlinc.yml
+  - from-file: modules/shared-folder.yml
+  - from-file: modules/vikunja.yml
+  - from-file: modules/printers.yml
+  - from-file: modules/flatpak.yml
+  - from-file: modules/network.yml
+  - from-file: modules/sonic.yml
+
   - type: script
     scripts:
       - shared/bluebuild-cleanup.sh
